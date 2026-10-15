@@ -4,6 +4,7 @@
 - **Mirrorlake:** a hidden freshwater lake in the south wood behind an old gate. Four riddles open it: a carving at Lighthouse Point and a local on each island (Mara, Fern, Old Ivo). Nine freshwater fish and a new legend, The Mirror Cod.
 - **Cats:** the ten cats from Catoshi's Catch wander the town and islands. Pet them for hearts; at five hearts adopt one at the new Cat Café and it follows you around.
 - **Town and world:** a new lane with the Cat Café, a bakery, a cottage and garden plots; a fountain in the square (toss a Shell); flower boxes and wildflowers; a south wood with pines and toadstools; each island has its own look.
+- **Title sequence:** a full-screen intro: shadowy fish in deep water while the GULLHAVEN sign is hooked off the seabed and reeled up into the dusk. Tap to skip.
 - **Music:** different tunes for town, night, indoors, home, open sea, the deep, islands, the lake and storms.
 
 # Small RPG update

@@ -235,12 +235,13 @@ input.amt,input.txt,select.txt{width:100%;font:inherit;font-size:17px;padding:8p
 .gbox .gb{display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap}.gbox .gb .btn{min-width:120px}
 .gbox canvas.nftc{width:160px;height:160px;image-rendering:pixelated;border:3px solid var(--ink);margin:4px auto 0;display:block}
 /* intro */
-#intro{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 30%,rgba(20,40,70,.55),rgba(8,12,24,.88));padding:16px;z-index:40}
-#intro .box{max-width:420px;width:100%;padding:18px;display:flex;flex-direction:column;gap:10px;text-align:center}
-#intro h1{font-family:var(--f-display);font-size:68px;font-weight:400;margin:0;color:var(--sun);letter-spacing:.02em;line-height:.9;text-shadow:0 3px 0 var(--ink),0 0 18px rgba(255,210,77,.3)}
+#intro{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;background:#071226;padding:16px 16px calc(22px + env(safe-area-inset-bottom));z-index:40;overflow:hidden}
+#intro .box{position:relative;max-width:420px;width:100%;padding:18px;display:flex;flex-direction:column;gap:10px;text-align:center;opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s ease;pointer-events:none}
+#intro.show .box{opacity:1;transform:none;pointer-events:auto}
+#intro h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);margin:0}
 #intro .sub{font-family:var(--f-tiny);font-size:10px;color:var(--mint);letter-spacing:.08em}
 #intro p{margin:0;color:var(--muted);font-size:14px;line-height:1.45}
-#intro canvas{width:180px;height:90px;image-rendering:pixelated;margin:0 auto;border:3px solid var(--ink);background:#3a96c0}
+#introCv{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges;display:block;background:#0a1a32}
 #intro .keys{font-size:12px}
 #nameRow{display:flex;gap:6px}#nameRow input{flex:1;min-width:0;font:17px var(--f-body);padding:9px 10px;background:var(--cream);color:var(--ink);border:2px solid var(--ink)}
 #nameRow span{font-family:var(--f-display);font-size:24px;padding:4px 6px 0;color:var(--sea)}
@@ -297,10 +298,10 @@ input.amt,input.txt,select.txt{width:100%;font:inherit;font-size:17px;padding:8p
   <div id="fade" hidden></div>
   <section id="gacha" hidden aria-hidden="true"></section>
   <section id="intro">
+    <canvas id="introCv" width="195" height="422" aria-hidden="true"></canvas>
     <div class="box px">
-      <div class="sub">YOUR OWN ISLAND LIFE</div>
       <h1>Gullhaven</h1>
-      <canvas id="introCv" width="120" height="60"></canvas>
+      <div class="sub">YOUR OWN ISLAND LIFE</div>
       <p id="introTxt">Your own cottage, a boat to make yours, and islands to discover. Begin with 1,200 Shells. Fish, help the townsfolk, and share the sea with friends.</p>
       <div id="nameRow"><span>Name</span><input id="nameIn" maxlength="15" placeholder="your fisher name" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
       <button class="btn gold" id="introGo" style="font-size:18px;padding:12px" disabled>Setting the tide...</button>
