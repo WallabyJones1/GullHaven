@@ -1,0 +1,45 @@
+/* ================= harbour life: townsfolk, co-op boats, gulls, crabs, dolphins, fish shadows and hotspots ================= */
+const FOLK=[],AIBOATS=[],GULLS=[],CRABS=[],SHADOWS=[],HOTS=[],JUMPS=[];
+const FOLK_DEF=[['Bev','#e8604a','fishmonger'],['Captain Moe',null,'old salt'],['Tilly','#3f86bd','kid'],['Rangi',null,'deckhand'],['Prue',null,'retiree'],['Dex',null,'surfer'],['Nora',null,'baker'],['Sully',null,'net mender'],['Ivy',null,'marine biologist'],['Gus',null,'harbour cat lover'],['Wren',null,'lighthouse fan'],['Oskar',null,'tourist']];
+function walkablePx(x,y){const tx=Math.floor(x/16),ty=Math.floor(y/16);if(tx<0||ty<0||tx>=WORLD.w||ty>=WORLD.h)return false;return!WORLD.sol[ty*WORLD.w+tx]}
+function spawnLife(){const r=rng(31337);const pois=folkPOIs();
+  FOLK_DEF.forEach(([n,,role],i)=>{const p=pois[Math.floor(r()*pois.length)];FOLK.push({n,role,id:3100+i*61,x:p.x,y:p.y,dir:'down',f:0,ft:0,path:null,wait:r()*6,moving:false,bubble:null})});
+  COOPS.forEach((C,ci)=>{for(let k=0;k<2;k++){const B=WORLD.berths[(ci*2+k+9)%WORLD.berths.length];AIBOATS.push({co:C.id,k:['trawler','skiff','dinghy','cutter','dinghy'][ci],x:B.x,y:B.y,h:B.dir==='n'?-Math.PI/2:Math.PI/2,v:0,path:null,state:'moored',wait:10+r()*90+k*60,home:B})}});
+  for(let i=0;i<9;i++)GULLS.push({x:900+r()*400,y:700+r()*700,a:r()*6.28,r:30+r()*60,cx:0,cy:0,sp:.3+r()*.4,ph:r()*6});for(const g of GULLS){g.cx=g.x;g.cy=g.y}
+  const B=WORLD.combTiles.beach;for(let i=0;i<6&&B.length;i++){const[x,y]=B[Math.floor(r()*B.length)];CRABS.push({x:x*16+8,y:y*16+8,vx:0,t:0})}}
+function folkPOIs(){const S2=WORLD.spots;const out=[];for(const k of['market','tackle','boatyard','exchange','aquarium','tavern','harbourmaster','notice','tide','machine'])if(S2[k])out.push({x:S2[k].x,y:S2[k].y+12});
+  for(let y=46;y<84;y+=6)out.push({x:53*16+8,y:y*16+8});for(const h of(WORLD.houses||[]))out.push({x:h.x,y:h.y+10});for(let i=0;i<5;i++){const t=WORLD.combTiles.beach[i*37%Math.max(1,WORLD.combTiles.beach.length)];if(t)out.push({x:t[0]*16+8,y:t[1]*16-24})}return out.filter(p=>walkablePx(p.x,p.y))}
+const walkP=(x,y)=>x>=0&&y>=0&&x<WORLD.w&&y<WORLD.h&&!WORLD.sol[y*WORLD.w+x];
+const navP=(x,y)=>x>=0&&y>=0&&x<WORLD.w&&y<WORLD.h&&WORLD.nav[y*WORLD.w+x]===1;
+function lifeUpdate(dt){if(!WORLD)return;const t=gameT;
+  for(const f of FOLK){if(f.bubble){f.bubble.t-=dt;if(f.bubble.t<=0)f.bubble=null}if(f.talk>0){f.talk-=dt;f.moving=false;continue}
+    if(!f.path){f.wait-=dt;f.moving=false;if(f.wait<=0){const P=folkPOIs();const g=P[Math.floor(Math.random()*P.length)];const p=findPathP(walkP,WORLD.w,WORLD.h,Math.floor(f.x/16),Math.floor(f.y/16),Math.floor(g.x/16),Math.floor(g.y/16),6000);if(p&&p.length)f.path=p.map(q=>({x:q.tx*16+8,y:q.ty*16+10}));else f.wait=3}continue}
+    const q=f.path[0];const dx=q.x-f.x,dy=q.y-f.y,d=Math.hypot(dx,dy);if(d<1.5){f.path.shift();if(!f.path.length){f.path=null;f.wait=4+Math.random()*12;if(Math.random()<.25)f.bubble={text:folkMutter(f),t:3}}continue}const sp=Math.min(d,30*dt);f.x+=dx/d*sp;f.y+=dy/d*sp;f.dir=faceFrom(dx,dy,f.dir);f.moving=true;f.ft+=dt;if(f.ft>.14){f.ft=0;f.f=(f.f+1)%4}}
+  for(const b of AIBOATS){if(b.state==='moored'){b.wait-=dt;if(b.wait<=0){const zs=COOPI[b.co].zones;const z=zs[Math.floor(Math.random()*zs.length)];const tgt=randomWaterIn(z);if(tgt){const p=findPathP(navP,WORLD.w,WORLD.h,Math.floor(b.x/16),Math.floor(b.y/16),tgt[0],tgt[1],16000);if(p){b.path=p.map(q=>({x:q.tx*16+8,y:q.ty*16+8}));b.state='out'}}if(!b.path)b.wait=20}}
+    else if(b.state==='fish'){b.wait-=dt;b.v*=.95;if(b.wait<=0){const p=findPathP(navP,WORLD.w,WORLD.h,Math.floor(b.x/16),Math.floor(b.y/16),Math.floor(b.home.x/16),Math.floor(b.home.y/16),16000);if(p){b.path=p.map(q=>({x:q.tx*16+8,y:q.ty*16+8}));b.state='back'}else b.wait=10}}
+    else if(b.path){const q=b.path[0];const dx=q.x-b.x,dy=q.y-b.y,d=Math.hypot(dx,dy);if(d<8){b.path.shift();if(!b.path.length){b.path=null;if(b.state==='out'){b.state='fish';b.wait=30+Math.random()*90}else{b.state='moored';b.wait=60+Math.random()*120;b.x=b.home.x;b.y=b.home.y;b.h=b.home.dir==='n'?-Math.PI/2:Math.PI/2}}continue}
+      const want=Math.atan2(dy,dx);let dd=((want-b.h+Math.PI*3)%(Math.PI*2))-Math.PI;b.h+=clamp(dd,-2*dt,2*dt);b.v+=(52-b.v)*Math.min(1,dt);b.x+=Math.cos(b.h)*b.v*dt;b.y+=Math.sin(b.h)*b.v*dt;
+      if(b.v>20&&Math.random()<dt*14)WAKE.push({x:b.x-Math.cos(b.h)*16,y:b.y-Math.sin(b.h)*16,t:1,s:.6})}}
+  for(const g of GULLS){g.a+=g.sp*dt;g.x=g.cx+Math.cos(g.a)*g.r;g.y=g.cy+Math.sin(g.a*1.3)*g.r*.5;if(Math.random()<dt*.02){g.cx=600+Math.random()*1400;g.cy=500+Math.random()*1200}}
+  for(const c of CRABS){c.t-=dt;if(c.t<=0){c.vx=(Math.random()-.5)*30;c.t=.6+Math.random()*2;if(Math.random()<.5)c.vx=0}const nx=c.x+c.vx*dt;if(walkablePx(nx,c.y))c.x=nx}
+  // fish shadows near you, hotspots out at sea, jumping fish
+  if(scene===WORLD){const px=player.x,py=player.y;for(let i=SHADOWS.length-1;i>=0;i--){const s=SHADOWS[i];s.t+=dt;s.x+=s.vx*dt;s.y+=s.vy*dt;if(!isWaterPx(s.x,s.y)||!isWaterPx(s.x+s.vx*.5,s.y+s.vy*.5)){s.vx*=-1;s.vy*=-1}if(Math.random()<dt*.3){s.vx=(Math.random()-.5)*14;s.vy=(Math.random()-.5)*10}if(s.t>s.life||Math.hypot(s.x-px,s.y-py)>260)SHADOWS.splice(i,1)}
+    if(SHADOWS.length<5&&Math.random()<dt*.8){const a=Math.random()*6.28,r=50+Math.random()*130;const x=px+Math.cos(a)*r,y=py+Math.sin(a)*r;const z=zoneAtPx(x,y);if(z&&isWaterPx(x,y)&&isWaterPx(x+12,y)&&isWaterPx(x-12,y)){const big={harbour:.1,shallows:.2,estuary:.25,reef:.3,kelp:.35,wreck:.45,blue:.6,deep:.65}[z];const rr=Math.random();SHADOWS.push({x,y,r:rr<big*.25?3:rr<big?2:rr<.6?1:0,vx:(Math.random()-.5)*10,vy:(Math.random()-.5)*8,t:0,life:25+Math.random()*30,z})}}
+    for(let i=HOTS.length-1;i>=0;i--){const h=HOTS[i];h.t+=dt;h.x+=h.vx*dt;h.y+=h.vy*dt;if(h.t>h.life||!isWaterPx(h.x,h.y))HOTS.splice(i,1)}
+    if(player.boat&&HOTS.length<2&&Math.random()<dt*.025){const a=Math.random()*6.28,r=140+Math.random()*120;const x=px+Math.cos(a)*r,y=py+Math.sin(a)*r;const z=zoneAtPx(x,y);if(z&&z!=='harbour'&&z!=='estuary'&&isWaterPx(x,y)){const kinds=z==='blue'||z==='deep'?['birds','debris','schools']:['birds','schools'];const k=kinds[Math.floor(Math.random()*kinds.length)];HOTS.push({kind:k,x,y,vx:(Math.random()-.5)*6,vy:(Math.random()-.5)*4,t:0,life:70+Math.random()*50,z});if(S.gear.sonar>=0||k==='birds')toast(k==='birds'?'Birds diving to the '+dirWord(x-px,y-py)+'!':k==='debris'?'Floating debris to the '+dirWord(x-px,y-py)+'. Mahi love it.':'Sonar: a bait school to the '+dirWord(x-px,y-py)+'.')}}
+    if(Math.random()<dt*.4){const s=SHADOWS[Math.floor(Math.random()*SHADOWS.length)];if(s&&inView(s.x-8,s.y-8,16,16))JUMPS.push({x:s.x,y:s.y,t:0})}
+    for(let i=JUMPS.length-1;i>=0;i--){JUMPS[i].t+=dt;if(JUMPS[i].t>.8)JUMPS.splice(i,1)}}}
+const dirWord=(dx,dy)=>{const a=Math.atan2(dy,dx);return['east','south-east','south','south-west','west','north-west','north','north-east'][((Math.round(a/(Math.PI/4))%8)+8)%8]};
+function isWaterPx(x,y){const tx=Math.floor(x/16),ty=Math.floor(y/16);return tileT(WORLD,tx,ty)==='o'}
+function randomWaterIn(z){const zi=ZONE_ORDER.indexOf(z);for(let k=0;k<60;k++){const i=Math.floor(Math.random()*WORLD.zone.length);if(WORLD.zone[i]===zi&&WORLD.nav[i])return[i%WORLD.w,Math.floor(i/WORLD.w)]}return null}
+// what the casting player is near (for hookTable)
+function nearFeatures(x,y){const n={};for(const h of HOTS)if(Math.hypot(h.x-x,h.y-y)<56)n[h.kind]=true;return n}
+function shadowAt(x,y,r){let best=null,bd=r||40;for(const s of SHADOWS){const d=Math.hypot(s.x-x,s.y-y);if(d<bd){bd=d;best=s}}return best}
+/* talking to people */
+function lifeActs(consider){for(const f of FOLK){consider(f.x,f.y,18,{label:'Talk to '+f.n,icon:'talk',act:()=>talkFolk(f)})}}
+function talkFolk(f){f.talk=4;f.dir=faceFrom(player.x-f.x,player.y-f.y,f.dir);f.bubble={text:folkLine(f),t:5}}
+function folkLine(f){const r=Math.random();const unl=CAT.filter(e=>(e.cat==='fish'||e.cat==='legend')&&!logged(e.id)&&e.cp&&!e.cp.flags.includes('oddone'));
+  if(r<.45&&unl.length){const e=unl[Math.floor(Math.random()*unl.length)];return`I hear the ${e.n}... ${e.hint.replace(/^Bites |^Sighted /,'').replace(/\.$/,'')}.`}
+  const E=envAt();const lines=[`Tide's ${E.tideState} right now. ${E.tide<0?'Good time to comb the beach.':'Fish come in close on a high tide.'}`,`${E.nextSky==='storm'?'Storm coming. Big sharks love it, small boats hate it.':E.sky==='storm'?'Batten down! Only a skiff or bigger should be out in this.':'Weather looks '+E.nextSky+' next.'}`,
+    `Catch of the Day at the market is ${catchOfDay(E.day).n}. Double price!`,`${cupStandings()[0]?COOPI[cupStandings()[0].id].s:''} are leading today's Cup.`,'Ice your catch. A fresh fish sells for twice a tired one.','Cast at a fish shadow and you get that fish, more or less.','The workshop has new furniture. A bookshelf makes a cottage feel lived in.','Old Gravel-Jaw only comes up in storms. Strong line, mind.'];return lines[Math.floor(Math.random()*lines.length)]}
+function folkMutter(f){return['Lovely day for it.','Smells like rain.','Ahoy!','Gulls stole my chips again.','Anyone seen my cat?','Bait prices, honestly.'][Math.floor(Math.random()*6)]}
