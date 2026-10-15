@@ -1,0 +1,15 @@
+{
+  "name": "gullhaven",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Gullhaven: a free pixel fishing RPG with island adventures, custom cottages and boats, and a shared multiplayer harbour.",
+  "main": "server.js",
+  "scripts": {
+    "build": "python3 build.py",
+    "start": "node server.js",
+    "play": "GH_MODE=play node server.js",
+    "test": "node test/server.test.js"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": { "ws": "^8.18.0" }
+}
