@@ -1,0 +1,4 @@
+{
+  "_comment": "Optional server/config.json. Gullhaven always runs free with earned Shells. Legacy token and machine configuration is ignored.",
+  "adminToken": "change-me-to-a-long-random-string"
+}

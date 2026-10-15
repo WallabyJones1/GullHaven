@@ -1,0 +1,6 @@
+const[c,x]=mk(420,300);x.fillStyle='#3f86bd';x.fillRect(0,0,420,150);x.fillStyle='#ecd8a4';x.fillRect(0,150,420,150);
+let px=4,py=4;BOATS.forEach((b,i)=>{for(let h=0;h<4;h++){const im=boatImg(b.k,h*2,null,i%2?'reef':null);x.drawImage(im,px,py);px+=im.width+2}px=4;py+=52});
+x.drawImage(boatSide('trawler'),240,4);x.drawImage(boatSide('cutter'),240,40);x.drawImage(boatSide('row'),240,80);x.drawImage(boatSide('skiff'),300,80);
+const items=[artBuoy('#e8402a',0),artBuoy('#3aa060',1),artPotFloat('#f0c040'),artBollard(),artLifebuoy(),artNetRack(),artFishCrate(0),artFishCrate(1),artBarrelC(),artRope(),artAnchorDecor(),artCrabPot(),artDeckChair('#3f86bd'),artTowel('#e8604a'),artSandcastle(),artRescueFlag(0),artSeaStack(0),artSeaStack(1),artPalmC(0),artPalmC(1),artMangrove(0),artReedsC(),artKelpTop(0),artWreckMast(0),artWreckMast(1),artGullPerch(0),artPelican(),artCrabBeach(0),artStarfishRock(),artFishShadow(2),artBirds(0),artDebris(),artSchool(0),artSalvageSpot(1),artLighthouse(1),artJettyPost(),artStall('#3f86bd','fish'),artStall('#e8604a','bait'),artTideBoard(),artFuelPump(),artNoticeBoard()];
+px=4;py=160;let rh=0;for(const im of items){if(px+im.width>416){px=4;py+=rh+4;rh=0}x.drawImage(im,px,py);px+=im.width+4;rh=Math.max(rh,im.height)}
+return c.toDataURL();

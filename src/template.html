@@ -38,7 +38,7 @@ canvas.pix,.pix canvas{image-rendering:pixelated}
 .chip b{display:block;font-family:var(--f-display);font-size:16px;font-weight:400;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chip small{display:block;font-family:var(--f-tiny);font-size:8px;color:var(--mint);white-space:nowrap}
 @keyframes qbob{50%{transform:translateY(-2px)}}
-#tripChip{box-shadow:inset 3px 0 0 var(--sea)}#tripChip small{color:var(--muted)}
+#tripChip{box-shadow:inset 3px 0 0 var(--sea)}#hullChip{box-shadow:inset 3px 0 0 #ff7a6b}#hullChip small{color:#ffb0a0}#tripChip small{color:var(--muted)}
 #holdChip{box-shadow:inset 3px 0 0 var(--coral)}
 .hudR{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
 .money{display:flex;gap:6px}
@@ -261,6 +261,7 @@ input.amt,input.txt,select.txt{width:100%;font:inherit;font-size:17px;padding:8p
   <div id="leftHud">
     <button id="quest" class="chip px" hidden><i>!</i><span><b id="questName">Quest</b><small id="questProg"></small></span></button>
     <button id="holdChip" class="chip px" hidden><canvas id="holdIc" width="16" height="16"></canvas><span><b id="holdTxt">Hold 0/6</b><small id="holdSub"></small></span></button>
+    <button id="hullChip" class="chip px" hidden><canvas id="hullIc" width="16" height="16"></canvas><span><b id="hullTxt">Hull</b><small id="hullSub"></small></span></button>
     <button id="tripChip" class="chip px" hidden><canvas id="tripIc" width="16" height="16"></canvas><span><b id="tripTxt">Crew</b><small id="tripSub"></small></span></button>
   </div>
   <div id="joyBase"></div>

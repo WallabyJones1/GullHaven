@@ -18,8 +18,9 @@ const ZONES={
   wreck:{n:'Wreck Graveyard',short:'Wrecks',depth:12,need:3,col:'#4a6a8a'},
   blue:{n:'Open Blue',short:'Open Blue',depth:30,need:4,col:'#2f5fb0'},
   deep:{n:'The Deep',short:'The Deep',depth:80,need:5,col:'#26265a'},
+  lake:{n:'Mirrorlake',short:'Mirrorlake',depth:3,need:0,col:'#5cb8a8',fresh:1},
   beach:{n:'Beach',short:'Beach'},rocks:{n:'Rock platform',short:'Rocks'},any:{n:'Anywhere',short:'Anywhere'},unknown:{n:'Unknown',short:'?'}};
-const ZONE_ORDER=['harbour','shallows','estuary','reef','kelp','wreck','blue','deep'];
+const ZONE_ORDER=['harbour','shallows','estuary','reef','kelp','wreck','blue','deep','lake'];
 /* fish: [name, zone, rarity, conditions, minCm, maxCm, art] ; art = shape|back|side|belly|pattern|patCol|fin(|extra) */
 const FISH_RAW=[
  ['Yellowtail Scad','harbour',0,'any',14,30,'torp|#5f8fa0|#b9cdd6|#eef3f4|lat|#e8c84a|#e8c84a'],
@@ -175,6 +176,19 @@ BOTTLE_LETTERS.forEach(([t,z,r],i)=>addEntry({id:'letter_'+(i+1),n:`Letter ${i+1
 for(const[n,r,where,col]of COINS){const[z,...rest]=where.split(' ');addEntry({id:n==='First Harbour Coin'?'the_first_reel':slug(n),n,cat:'set',set:'coins',z,r,how:z==='beach'||z==='rocks'?'comb':z==='gift'?'gift':'salvage',c:rest.join(' ')||'any',price:r<4?FIND_PRICE.set[r]:0,art:'coin|'+col})}
 for(const[n,r,z,art]of LURES)addEntry({id:slug(n),n,cat:'set',set:'lures',z,r,how:'snag',c:'any',price:FIND_PRICE.set[r]+10,art:'lure|'+art});
 for(const[n,r,art]of JUNK_RAW)addEntry({id:slug(n),n,cat:'junk',z:'any',r,how:'hook',c:'any',price:FIND_PRICE.junk[r],art:'junk|'+art});
+/* Mirrorlake: freshwater fish behind the old gate (added last so older Logbook numbers stay put) */
+const LAKE_RAW=[
+ ['Silver Perch','lake',0,'any',15,35,'deep|#7a8a90|#c0ccd0|#eef2f2|spots|#5a6a70|#9aa8b0'],
+ ['Redfin','lake',0,'day',15,35,'deep|#5a6a3a|#a8b070|#f0e8c0|bars|#2a3a1a|#e85a30'],
+ ['Rainbow Trout','lake',1,'dawn/dusk',25,60,'torp|#5a7a6a|#c8c8b8|#f4f0ec|lat|#e88aa0|#7a8a7a'],
+ ['Golden Perch','lake',1,'rain',30,60,'deep|#8a7a3a|#d8c060|#f8f0c0|none|#000|#e0b040'],
+ ['Australian Bass','lake',1,'night',25,50,'deep|#4a4a3a|#8a8a6a|#d8d4c0|none|#000|#5a5a4a'],
+ ['Longfin Eel','lake',1,'night rain',60,150,'eel|#4a4a2a|#6a6a40|#a8a888|none|#000|#4a4a2a'],
+ ['Brown Trout','lake',2,'dawn fog',35,75,'torp|#6a5a3a|#b8a070|#f0e4c8|spots|#c84a3a|#8a7a5a'],
+ ['Murray Cod','lake',2,'any',60,130,'grouper|#4a5a3a|#7a8a5a|#e0e0c0|spots|#2a3a20|#4a5a3a|big'],
+ ['Saratoga','lake',3,'day summer calm',50,90,'torp|#6a6a40|#c8b878|#f0e8c8|scales|#c84a3a|#8a8a50|big']];
+for(const[n,z,r,c,a,b,art]of LAKE_RAW)addEntry({id:slug(n),n,cat:'fish',z,r,how:'fish',c,sz:[a,b],price:FISH_PRICE[r],art});
+addEntry({id:'the_mirror_cod',n:'The Mirror Cod',cat:'legend',z:'lake',r:4,how:'fish',c:'night fullmoon',sz:[150,185],price:FISH_PRICE[4],art:'grouper|#3a4a5a|#8aa0b8|#e8f0f8|spots|#ffffff|#3a4a5a|legend',what:'A Murray cod so old its scales hold the moon'});
 const SETS={bottles:{n:'Messages in Bottles',reward:'The bottle story and the lighthouse key room',shells:1500},coins:{n:'Old Gullhaven Coins',reward:'First Harbour Coin',shells:1000},lures:{n:'Vintage Lures',reward:'A trophy lure case and 1,000 Shells',shells:1000}};
 /* ---------- conditions ---------- */
 const TOKENS_TIME=new Set(['any','day','night','dawn','dusk','dawn/dusk','dusk/night','midnight']);

@@ -37,7 +37,7 @@ function update(dt){gameT+=dt;
     if(scene&&scene.exitFn&&p.y>(scene.h-1)*16+2&&!MG){const f=scene.exitFn;cancelPath();f();return}}
   if(tapFx){tapFx.t-=dt;if(tapFx.t<=0)tapFx=null}
   if(MG){MG.update(dt);if(MG){mgTick(dt);drawMG()}}
-  lifeUpdate(dt);updWake(dt);updateAmbient(dt);
+  lifeUpdate(dt);worldTick(dt);updWake(dt);updateAmbient(dt);
   for(const pe of NET.peers.values()){const k=Math.min(1,dt*10);pe.x+=(pe.tx-pe.x)*k;pe.y+=(pe.ty-pe.y)*k;pe.ft+=dt;if(pe.ft>.12){pe.ft=0;pe.f=(pe.f+1)%4}if(pe.bubble){pe.bubble.t-=dt;if(pe.bubble.t<=0)pe.bubble=null}if(pe.emote){pe.emote.t-=dt;if(pe.emote.t<=0)pe.emote=null}}
   if(p.bubble){p.bubble.t-=dt;if(p.bubble.t<=0)p.bubble=null}if(p.emote){p.emote.t-=dt;if(p.emote.t<=0)p.emote=null}
   for(let i=floats.length-1;i>=0;i--){floats[i].t-=dt;floats[i].y-=dt*14;if(floats[i].t<=0)floats.splice(i,1)}

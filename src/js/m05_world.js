@@ -38,12 +38,14 @@ function landF(x,y){const P=16;const yi=clamp(Math.floor(y*P),0,WORLD_H*P-1),xi=
   let L=Math.max(COAST.cx[yi]-x,y-COAST.sy[xi]);
   for(const I of COAST.islands){const dx=x-I.x,dy=(y-I.y)*1.2,reach=I.r+.4-L;if(reach<=0||dx*dx+dy*dy>=reach*reach)continue;const d=Math.sqrt(dx*dx+dy*dy);L=Math.max(L,I.r-d+(I.rock?0:(NZ.at(x*9,y*9)-.5)*.8))}
   if(y<36){const r=Math.abs(y-COAST.rv[xi])-COAST.rw[xi]*(1+smooth(50,64,x)*1.6);L=Math.min(L,r)}
+  if(inLakeBox(x,y))L=Math.min(L,lakeD(x,y));
   return L}
 // what lines this stretch of coast
-function shoreKind(x,y){const island=islandShoreAt(x,y);if(island)return island.shore;const n=(NZ.at(x*3,y*3)-.5)*4;if(x>98&&x<108&&y>96)return'rock';for(const I of COAST.islands)if(I.rock&&Math.hypot(x-I.x,y-I.y)<I.r+2)return'rock';
+function shoreKind(x,y){if(inLakeBox(x,y))return'wall';const island=islandShoreAt(x,y);if(island)return island.shore;const n=(NZ.at(x*3,y*3)-.5)*4;if(x>98&&x<108&&y>96)return'rock';for(const I of COAST.islands)if(I.rock&&Math.hypot(x-I.x,y-I.y)<I.r+2)return'rock';
   if(y<31+n)return x<66+n?'mud':'sand';if(y<43.5&&x>48)return'rock';if(y>=43.5&&y<84.6&&x<58)return'wall';return'sand'}
-function sandWidth(x,y){if(islandShoreAt(x,y))return 2.2;if(y>=30&&y<44&&x>48)return 6.5+NZ.at(x*4,y*4)*2.5;if(x>98&&x<108&&y>96)return 3;if(y<34)return x<64?1.8:1.4;if(y>96)return 4.5+NZ.at(x*3,7)*1.5;if(y>84)return 2.6;return 1.6}
+function sandWidth(x,y){if(inLakeBox(x,y))return .4;if(islandShoreAt(x,y))return 2.2;if(y>=30&&y<44&&x>48)return 6.5+NZ.at(x*4,y*4)*2.5;if(x>98&&x<108&&y>96)return 3;if(y<34)return x<64?1.8:1.4;if(y>96)return 4.5+NZ.at(x*3,7)*1.5;if(y>84)return 2.6;return 1.6}
 function zoneOfXY(x,y){
+  if(inLakeBox(x,y))return'lake';
   if(x>=57&&x<74.5&&y>=43.5&&y<85)return'harbour';
   const islandZone=islandSeaZone(x,y);if(islandZone)return islandZone;
   const n=(NZ.at(x*2.3,y*2.3)-.5)*8,m=(NZ.at(x*1.1+40,y*1.1)-.5)*10;
@@ -54,10 +56,10 @@ function zoneOfXY(x,y){
   if(x>=107+n)return y>94+m?'kelp':'wreck';
   return'reef'}
 function depthAt(x,y,L,z){const d=-L;switch(z){case'harbour':return 2+Math.min(3,d*.35);case'estuary':return .8+Math.min(3,d*.3);case'shallows':return .6+Math.min(5,d*.35);
-  case'reef':return 3+Math.min(6,d*.12)-(NZ.at(x*4,y*4)>.62?2.5:0);case'kelp':return 6+Math.min(6,d*.15);case'wreck':return 10+Math.min(10,d*.1);case'blue':return 30+(x-132)*2;default:return 80+(x-146)*6}}
+  case'reef':return 3+Math.min(6,d*.12)-(NZ.at(x*4,y*4)>.62?2.5:0);case'kelp':return 6+Math.min(6,d*.15);case'wreck':return 10+Math.min(10,d*.1);case'lake':return 1+Math.min(5,d*.5);case'blue':return 30+(x-132)*2;default:return 80+(x-146)*6}}
 /* ---------- painting the ground ---------- */
 const SEA={harbour:['#7ad0d4','#4ab0c8','#3a96c0','#3284b0'],estuary:['#8ab49a','#6a9e8e','#548a80','#467a74'],shallows:['#9ae4dc','#6ad0d4','#48b6cc','#3a9cc2'],reef:['#7adcd8','#4ac4d0','#36aac8','#2c94bc'],
-  kelp:['#5aa49c','#3e8c8c','#307682','#286474'],wreck:['#3a86ac','#2f72a0','#2a6292','#245484'],blue:['#2a62a8','#24529a','#20468a','#1c3a7a'],deep:['#1c2c66','#18245a','#141c4c','#10163e']};
+  kelp:['#5aa49c','#3e8c8c','#307682','#286474'],wreck:['#3a86ac','#2f72a0','#2a6292','#245484'],blue:['#2a62a8','#24529a','#20468a','#1c3a7a'],deep:['#1c2c66','#18245a','#141c4c','#10163e'],lake:['#8ad4bc','#5cb8a8','#43a09c','#33868e']};
 function seaPx(wx,wy,x,y,L,z){// colour zone sampled with a jitter so neighbouring grounds dither into each other
   let jz=zoneOfXY(x+(hash2(wx,wy,31)-.5)*3,y+(hash2(wx,wy,32)-.5)*3);if(jz==='harbour'||z==='harbour')jz=z;const P=SEA[jz]||SEA.reef;const n=NZ.at(wx*.7,wy*.7)*.6+NZ.at(wx*2.1+50,wy*2.1)*.4;const sh=-L;
   let k=sh<1.2?0:sh<3?1:sh<7?2:3;if(jz==='deep'||jz==='blue'||jz==='wreck'){k=n>.72?1:n<.28?3:2}else if(k>=2)k=n>.7?1:n<.3?3:2;
@@ -67,6 +69,7 @@ function seaPx(wx,wy,x,y,L,z){// colour zone sampled with a jitter so neighbouri
   if(jz==='kelp'&&NZ.at(wx*1.6+9,wy*1.6)>.66)col=mix(col,'#4a5a2a',.45);
   if(jz==='reef'&&sh>3&&NZ.at(wx*1.3+33,wy*1.3)>.74)col=hash2(wx>>2,wy>>2,9)<.5?mix(col,'#e88a8a',.35):mix(col,'#f0c880',.3);
   if(jz==='wreck'&&NZ.at(wx*1.8+71,wy*1.8)>.78)col=mix(col,'#3a4a5a',.45);
+  if(jz==='lake'&&NZ.at(wx*1.2+5,wy*1.2)>.7)col=mix(col,'#cfeee4',.25);
   return col}
 function paintWorldGround(S){const W=S.w,H=S.h;const B=mkBuf(W*16,H*16);const foam=mkBuf(W*16,H*16),tide=mkBuf(W*16,H*16);
   // land tiles first, with the usual tile painters
@@ -185,7 +188,7 @@ function genWorld(){buildCoast();
   const tr=rng(77);for(let i=0;i<260;i++){const x=Math.floor(tr()*160),y=Math.floor(tr()*120);const i2=idx(x,y);if(S.g[i2]!=='g'||S.res[i2]||S.sol[i2])continue;const L=landF(x+.5,y+.5);if(L<3)continue;
     const wild=y<11||(y>96&&x<40)||(x<8);if(!wild&&tr()<.85)continue;treeAt(S,x,y,wild?(tr()<.5?3:tr()<.5?0:2):(tr()<.5?1:4))}
   for(let i=0;i<60;i++){const x=Math.floor(tr()*60),y=Math.floor(tr()*120);const i2=idx(x,y);if(S.g[i2]!=='g'||S.res[i2]||S.sol[i2])continue;addProp(S,artBush(['#ff7a6b','#fbf1dc','#f08bbf',null][i%4]),x*16-2,y*16,{sy:y*16+14});S.sol[i2]=1}
-  addIslandSettlements(S,set,pier);
+  addIslandSettlements(S,set,pier);addWilds(S,set,pier);
   // fixed salvage sites (bubbles over wrecks, a lockbox in the mangroves, a coffer and an altar further out)
   S.salvage=[{tx:114,ty:30,zone:'wreck'},{tx:118,ty:56,zone:'wreck'},{tx:111,ty:72,zone:'wreck'},{tx:124,ty:24,zone:'wreck'},{tx:72,ty:20,zone:'estuary'},{tx:138,ty:46,zone:'blue'},{tx:152,ty:60,zone:'deep'},{tx:150,ty:28,zone:'deep'}];
   for(const s of S.salvage){s.x=s.tx*16+8;s.y=s.ty*16+8;if(S.g[idx(s.tx,s.ty)]!=='o'){s.dead=1;continue}const v=s.tx%2;const im=artWreckMast(v);if(s.zone==='wreck')addProp(S,im,s.x-15+20,s.y-34+6,{sy:s.y+6})}

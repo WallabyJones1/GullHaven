@@ -56,20 +56,24 @@ function sfx(k){if(!SFX.ctx||!S||S.sound===0)return;try{switch(k){
   case'whistle':tone(1900,.14,{type:'sine',vol:.05});tone(1500,.18,{at:.16,type:'sine',vol:.05});break}}catch(e){}}
 /* ================= music: a gentle procedural chiptune that follows the town clock (and gets peppy at the Capsule Machine) ================= */
 const MUS={on:false,next:0,step:0,timer:null,gain:null,mel:2};
-const PROGS={day:{bpm:92,ch:[[60,64,67],[57,60,64],[53,57,60],[55,59,62]],sc:[72,74,76,79,81,84]},night:{bpm:70,ch:[[57,60,64],[53,57,60],[48,52,55],[52,56,59]],sc:[69,72,74,76,79,81]},arcade:{bpm:128,ch:[[60,64,67],[65,69,72],[67,71,74],[60,64,67]],sc:[72,74,76,79,81,84,86]}};
+const PROGS={day:{bpm:92,ch:[[60,64,67],[57,60,64],[53,57,60],[55,59,62]],sc:[72,74,76,79,81,84]},night:{bpm:70,ch:[[57,60,64],[53,57,60],[48,52,55],[52,56,59]],sc:[69,72,74,76,79,81]},arcade:{bpm:128,ch:[[60,64,67],[65,69,72],[67,71,74],[60,64,67]],sc:[72,74,76,79,81,84,86]},
+  sea:{bpm:100,ch:[[62,66,69],[57,61,64],[59,62,66],[55,59,62]],sc:[74,76,78,81,83,86]},deep:{bpm:64,soft:1,ch:[[57,60,64],[53,57,60],[55,59,62],[52,55,59]],sc:[69,71,72,76,77,81]},
+  island:{bpm:112,ch:[[65,69,72],[70,74,77],[72,76,79],[65,69,72]],sc:[77,79,81,84,86,89]},lake:{bpm:74,soft:1,ch:[[60,64,71],[57,64,67],[65,69,76],[62,65,72]],sc:[72,74,76,79,83,84]},
+  storm:{bpm:124,ch:[[57,60,64],[58,62,65],[57,60,64],[56,59,64]],sc:[69,70,72,74,76]},inside:{bpm:84,ch:[[60,64,67],[65,69,72],[62,65,69],[67,71,74]],sc:[72,74,76,77,79,81]},home:{bpm:72,soft:1,ch:[[65,69,72],[62,65,69],[58,62,65],[60,64,67]],sc:[72,74,77,79,81,84]}};
+PROGS.night.soft=1;
 const mtof=m=>440*Math.pow(2,(m-69)/12);
 function mnote(f,dur,type,vol,at){const A=SFX.ctx;const o=A.createOscillator(),g=A.createGain();o.type=type;o.frequency.setValueAtTime(f,at);g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(vol,at+.01);g.gain.exponentialRampToValueAtTime(.0005,at+dur);o.connect(g);g.connect(MUS.gain);o.start(at);o.stop(at+dur+.03)}
 function mhat(at){const A=SFX.ctx;if(!SFX.noiseBuf)return;const s=A.createBufferSource();s.buffer=SFX.noiseBuf;const f=A.createBiquadFilter();f.type='highpass';f.frequency.value=7000;const g=A.createGain();g.gain.setValueAtTime(.025,at);g.gain.exponentialRampToValueAtTime(.0005,at+.04);s.connect(f);f.connect(g);g.connect(MUS.gain);s.start(at);s.stop(at+.06)}
 function startMusic(){if(MUS.on||!SFX.ctx||!S||S.music===0)return;MUS.on=true;MUS.gain=SFX.ctx.createGain();MUS.gain.gain.setValueAtTime(0,SFX.ctx.currentTime);MUS.gain.gain.linearRampToValueAtTime(.5,SFX.ctx.currentTime+4);MUS.gain.connect(SFX.master);MUS.next=SFX.ctx.currentTime+.15;MUS.step=0;MUS.timer=setInterval(musTick,120)}
 function stopMusic(){if(!MUS.on)return;MUS.on=false;clearInterval(MUS.timer);try{const g=MUS.gain;g.gain.linearRampToValueAtTime(0,SFX.ctx.currentTime+.4);setTimeout(()=>g.disconnect(),600)}catch(e){}}
-function musTick(){const A=SFX.ctx;if(!A||A.state!=='running')return;let mode='day';try{const h=ghour();mode=typeof gachaOpen!=='undefined'&&gachaOpen?'arcade':(h<6||h>=20.5)?'night':'day'}catch(e){}const P=PROGS[mode];const st=60/P.bpm/2;
+function musTick(){const A=SFX.ctx;if(!A||A.state!=='running')return;let mode='day';try{mode=musMode()}catch(e){}const P=PROGS[mode]||PROGS.day;const soft=!!P.soft;const st=60/P.bpm/2;
   if(MUS.next<A.currentTime)MUS.next=A.currentTime+.05;
   while(MUS.next<A.currentTime+.6){const s=MUS.step,beat=s%8,bar=Math.floor(s/8)%4,ch=P.ch[bar],at=MUS.next;
-    if(beat===0||beat===4)mnote(mtof(ch[0]-12),st*3.6,'triangle',mode==='night'?.09:.11,at);
-    if(mode==='arcade'&&beat%2===1)mnote(mtof(ch[0]-12),st*.8,'triangle',.07,at);
-    const pat=[0,1,2,1,0,2,1,2];if(mode!=='night'||beat%2===0)mnote(mtof(ch[pat[beat]]+12),st*.9,'square',mode==='arcade'?.03:.02,at);
-    if(mode!=='night'&&beat%2===1)mhat(at);
-    if((beat===0||beat===3||beat===6)&&Math.random()<(mode==='night'?.45:.6)){MUS.mel=clamp(MUS.mel+Math.floor(Math.random()*3)-1,0,P.sc.length-1);const n=P.sc[MUS.mel];if(ch.some(c=>(n-c)%12===0)||Math.random()<.5)mnote(mtof(n),st*(beat===6?2.5:1.6),'triangle',mode==='night'?.045:.05,at)}
+    if(beat===0||beat===4)mnote(mtof(ch[0]-12),st*3.6,'triangle',soft?.09:.11,at);
+    if((mode==='arcade'||mode==='storm')&&beat%2===1)mnote(mtof(ch[0]-12),st*.8,'triangle',.07,at);
+    const pat=[0,1,2,1,0,2,1,2];if(!soft||beat%2===0)mnote(mtof(ch[pat[beat]]+12),st*.9,mode==='lake'||mode==='deep'?'sine':'square',mode==='arcade'?.03:.02,at);
+    if(!soft&&beat%2===1)mhat(at);
+    if((beat===0||beat===3||beat===6)&&Math.random()<(soft?.45:.6)){MUS.mel=clamp(MUS.mel+Math.floor(Math.random()*3)-1,0,P.sc.length-1);const n=P.sc[MUS.mel];if(ch.some(c=>(n-c)%12===0)||Math.random()<.5)mnote(mtof(n),st*(beat===6?2.5:1.6),'triangle',soft?.045:.05,at)}
     MUS.next+=st;MUS.step++}}
 document.addEventListener('visibilitychange',()=>{if(!SFX.ctx)return;if(document.hidden)SFX.ctx.suspend().catch(()=>{});else SFX.ctx.resume().catch(()=>{})});
 window.addEventListener('pointerdown',()=>{if(SFX.ctx&&S&&S.music!==0&&!MUS.on&&S.tutorial)startMusic()});

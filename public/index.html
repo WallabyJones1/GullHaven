@@ -39,7 +39,7 @@ canvas.pix,.pix canvas{image-rendering:pixelated}
 .chip b{display:block;font-family:var(--f-display);font-size:16px;font-weight:400;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chip small{display:block;font-family:var(--f-tiny);font-size:8px;color:var(--mint);white-space:nowrap}
 @keyframes qbob{50%{transform:translateY(-2px)}}
-#tripChip{box-shadow:inset 3px 0 0 var(--sea)}#tripChip small{color:var(--muted)}
+#tripChip{box-shadow:inset 3px 0 0 var(--sea)}#hullChip{box-shadow:inset 3px 0 0 #ff7a6b}#hullChip small{color:#ffb0a0}#tripChip small{color:var(--muted)}
 #holdChip{box-shadow:inset 3px 0 0 var(--coral)}
 .hudR{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
 .money{display:flex;gap:6px}
@@ -262,6 +262,7 @@ input.amt,input.txt,select.txt{width:100%;font:inherit;font-size:17px;padding:8p
   <div id="leftHud">
     <button id="quest" class="chip px" hidden><i>!</i><span><b id="questName">Quest</b><small id="questProg"></small></span></button>
     <button id="holdChip" class="chip px" hidden><canvas id="holdIc" width="16" height="16"></canvas><span><b id="holdTxt">Hold 0/6</b><small id="holdSub"></small></span></button>
+    <button id="hullChip" class="chip px" hidden><canvas id="hullIc" width="16" height="16"></canvas><span><b id="hullTxt">Hull</b><small id="hullSub"></small></span></button>
     <button id="tripChip" class="chip px" hidden><canvas id="tripIc" width="16" height="16"></canvas><span><b id="tripTxt">Crew</b><small id="tripSub"></small></span></button>
   </div>
   <div id="joyBase"></div>
@@ -460,20 +461,24 @@ function sfx(k){if(!SFX.ctx||!S||S.sound===0)return;try{switch(k){
   case'whistle':tone(1900,.14,{type:'sine',vol:.05});tone(1500,.18,{at:.16,type:'sine',vol:.05});break}}catch(e){}}
 /* ================= music: a gentle procedural chiptune that follows the town clock (and gets peppy at the Capsule Machine) ================= */
 const MUS={on:false,next:0,step:0,timer:null,gain:null,mel:2};
-const PROGS={day:{bpm:92,ch:[[60,64,67],[57,60,64],[53,57,60],[55,59,62]],sc:[72,74,76,79,81,84]},night:{bpm:70,ch:[[57,60,64],[53,57,60],[48,52,55],[52,56,59]],sc:[69,72,74,76,79,81]},arcade:{bpm:128,ch:[[60,64,67],[65,69,72],[67,71,74],[60,64,67]],sc:[72,74,76,79,81,84,86]}};
+const PROGS={day:{bpm:92,ch:[[60,64,67],[57,60,64],[53,57,60],[55,59,62]],sc:[72,74,76,79,81,84]},night:{bpm:70,ch:[[57,60,64],[53,57,60],[48,52,55],[52,56,59]],sc:[69,72,74,76,79,81]},arcade:{bpm:128,ch:[[60,64,67],[65,69,72],[67,71,74],[60,64,67]],sc:[72,74,76,79,81,84,86]},
+  sea:{bpm:100,ch:[[62,66,69],[57,61,64],[59,62,66],[55,59,62]],sc:[74,76,78,81,83,86]},deep:{bpm:64,soft:1,ch:[[57,60,64],[53,57,60],[55,59,62],[52,55,59]],sc:[69,71,72,76,77,81]},
+  island:{bpm:112,ch:[[65,69,72],[70,74,77],[72,76,79],[65,69,72]],sc:[77,79,81,84,86,89]},lake:{bpm:74,soft:1,ch:[[60,64,71],[57,64,67],[65,69,76],[62,65,72]],sc:[72,74,76,79,83,84]},
+  storm:{bpm:124,ch:[[57,60,64],[58,62,65],[57,60,64],[56,59,64]],sc:[69,70,72,74,76]},inside:{bpm:84,ch:[[60,64,67],[65,69,72],[62,65,69],[67,71,74]],sc:[72,74,76,77,79,81]},home:{bpm:72,soft:1,ch:[[65,69,72],[62,65,69],[58,62,65],[60,64,67]],sc:[72,74,77,79,81,84]}};
+PROGS.night.soft=1;
 const mtof=m=>440*Math.pow(2,(m-69)/12);
 function mnote(f,dur,type,vol,at){const A=SFX.ctx;const o=A.createOscillator(),g=A.createGain();o.type=type;o.frequency.setValueAtTime(f,at);g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(vol,at+.01);g.gain.exponentialRampToValueAtTime(.0005,at+dur);o.connect(g);g.connect(MUS.gain);o.start(at);o.stop(at+dur+.03)}
 function mhat(at){const A=SFX.ctx;if(!SFX.noiseBuf)return;const s=A.createBufferSource();s.buffer=SFX.noiseBuf;const f=A.createBiquadFilter();f.type='highpass';f.frequency.value=7000;const g=A.createGain();g.gain.setValueAtTime(.025,at);g.gain.exponentialRampToValueAtTime(.0005,at+.04);s.connect(f);f.connect(g);g.connect(MUS.gain);s.start(at);s.stop(at+.06)}
 function startMusic(){if(MUS.on||!SFX.ctx||!S||S.music===0)return;MUS.on=true;MUS.gain=SFX.ctx.createGain();MUS.gain.gain.setValueAtTime(0,SFX.ctx.currentTime);MUS.gain.gain.linearRampToValueAtTime(.5,SFX.ctx.currentTime+4);MUS.gain.connect(SFX.master);MUS.next=SFX.ctx.currentTime+.15;MUS.step=0;MUS.timer=setInterval(musTick,120)}
 function stopMusic(){if(!MUS.on)return;MUS.on=false;clearInterval(MUS.timer);try{const g=MUS.gain;g.gain.linearRampToValueAtTime(0,SFX.ctx.currentTime+.4);setTimeout(()=>g.disconnect(),600)}catch(e){}}
-function musTick(){const A=SFX.ctx;if(!A||A.state!=='running')return;let mode='day';try{const h=ghour();mode=typeof gachaOpen!=='undefined'&&gachaOpen?'arcade':(h<6||h>=20.5)?'night':'day'}catch(e){}const P=PROGS[mode];const st=60/P.bpm/2;
+function musTick(){const A=SFX.ctx;if(!A||A.state!=='running')return;let mode='day';try{mode=musMode()}catch(e){}const P=PROGS[mode]||PROGS.day;const soft=!!P.soft;const st=60/P.bpm/2;
   if(MUS.next<A.currentTime)MUS.next=A.currentTime+.05;
   while(MUS.next<A.currentTime+.6){const s=MUS.step,beat=s%8,bar=Math.floor(s/8)%4,ch=P.ch[bar],at=MUS.next;
-    if(beat===0||beat===4)mnote(mtof(ch[0]-12),st*3.6,'triangle',mode==='night'?.09:.11,at);
-    if(mode==='arcade'&&beat%2===1)mnote(mtof(ch[0]-12),st*.8,'triangle',.07,at);
-    const pat=[0,1,2,1,0,2,1,2];if(mode!=='night'||beat%2===0)mnote(mtof(ch[pat[beat]]+12),st*.9,'square',mode==='arcade'?.03:.02,at);
-    if(mode!=='night'&&beat%2===1)mhat(at);
-    if((beat===0||beat===3||beat===6)&&Math.random()<(mode==='night'?.45:.6)){MUS.mel=clamp(MUS.mel+Math.floor(Math.random()*3)-1,0,P.sc.length-1);const n=P.sc[MUS.mel];if(ch.some(c=>(n-c)%12===0)||Math.random()<.5)mnote(mtof(n),st*(beat===6?2.5:1.6),'triangle',mode==='night'?.045:.05,at)}
+    if(beat===0||beat===4)mnote(mtof(ch[0]-12),st*3.6,'triangle',soft?.09:.11,at);
+    if((mode==='arcade'||mode==='storm')&&beat%2===1)mnote(mtof(ch[0]-12),st*.8,'triangle',.07,at);
+    const pat=[0,1,2,1,0,2,1,2];if(!soft||beat%2===0)mnote(mtof(ch[pat[beat]]+12),st*.9,mode==='lake'||mode==='deep'?'sine':'square',mode==='arcade'?.03:.02,at);
+    if(!soft&&beat%2===1)mhat(at);
+    if((beat===0||beat===3||beat===6)&&Math.random()<(soft?.45:.6)){MUS.mel=clamp(MUS.mel+Math.floor(Math.random()*3)-1,0,P.sc.length-1);const n=P.sc[MUS.mel];if(ch.some(c=>(n-c)%12===0)||Math.random()<.5)mnote(mtof(n),st*(beat===6?2.5:1.6),'triangle',soft?.045:.05,at)}
     MUS.next+=st;MUS.step++}}
 document.addEventListener('visibilitychange',()=>{if(!SFX.ctx)return;if(document.hidden)SFX.ctx.suspend().catch(()=>{});else SFX.ctx.resume().catch(()=>{})});
 window.addEventListener('pointerdown',()=>{if(SFX.ctx&&S&&S.music!==0&&!MUS.on&&S.tutorial)startMusic()});
@@ -1811,6 +1816,167 @@ function artFuelPump(){return cc('fpump',()=>{const N=PN(14,22);N.ell(7,20,6,1.5
 function artNoticeBoard(){return cc('nb',()=>{const N=PN(28,28);for(const x of[3,23])N.rect(x,12,2,15,WOOD[3],0);N.rect(1,1,26,15,(i,j)=>i===0||j===0||i===25||j===14?WOOD[2]:'#d8b888',1);for(let i=0;i<4;i++)N.rect(3+i*6,3+(i%2)*2,5,7,['#fbf6ea','#f4e4c0','#e8f0f8','#fbf6ea'][i],2);for(let i=0;i<4;i++)N.px(5+i*6,3+(i%2)*2,'#d83a3a',3);N.outline();return N.canvas()})}
 function artMachineSign(){return cc('msign',()=>{const N=PN(30,12);N.rect(0,0,30,11,(i,j)=>j===0||j===10||i===0||i===29?'#ff6fd0':'#2a1838',1);return N.canvas()})}
 
+/* ================= the cats of Gullhaven =================
+   Art ported as-is from Catoshi's Catch (the user's cat fishing game): ten coats, a sitting side view, a front
+   portrait and little walking sprites. (Catoshi himself is not in Gullhaven, by request.)
+   catSide(coat,frame) 30x28 sitting (frame 0/1 tail swish, 2 blink) \u00b7 catFace(coat) 24x22 portrait
+   catWalk(coat,dir,frame) 20x20, dir 0 down 1 left 2 right 3 up */
+const COATS=[
+  {k:'ginger',n:'Ginger',name:'Marmalade',base:'#e8873a',stripe:'#b85a22',eye:'#9ccf4a'},
+  {k:'black',n:'Black',name:'Midnight',base:'#2e2b36',eye:'#e8c040'},
+  {k:'grey',n:'Grey',name:'Smokey',base:'#8a93a3',eye:'#e8b040'},
+  {k:'tabby',n:'Brown Tabby',name:'Tiger',base:'#a07a50',stripe:'#4f3a26',eye:'#8cc850'},
+  {k:'tux',n:'Tuxedo',name:'Domino',base:'#2e2b36',white:'tux',eye:'#9ccf4a'},
+  {k:'calico',n:'Calico',name:'Patches',base:'#f1ece2',patch:['#e0853a','#2e2b36'],eye:'#e8b040'},
+  {k:'tortie',n:'Tortoiseshell',name:'Toffee',base:'#33292a',mottle:'#c8692e',eye:'#e8a030'},
+  {k:'cream',n:'Cream',name:'Biscuit',base:'#ecd0a0',stripe:'#d4a870',eye:'#c8a040'},
+  {k:'siamese',n:'Siamese',name:'Mochi',base:'#efe2cb',point:'#4b3a33',eye:'#5aa8e8'},
+  {k:'bicolor',n:'Ginger and White',name:'Pumpkin',base:'#e8873a',stripe:'#c06a2a',white:'bi',eye:'#e8b040'}];
+const COATI=Object.fromEntries(COATS.map(c=>[c.k,c]));
+const PINK='#e89aa0';
+const hn=(x,y,s)=>{const v=Math.sin(x*12.9898+y*78.233+s*37.719)*43758.5453;return v-Math.floor(v)};
+function blotch(x,y,s){return Math.sin(x*.55+s)*Math.cos(y*.62+s*1.7)+.5*Math.sin((x+y)*.31+s*2.3)}
+/* the coat colour of one pixel. region: head ear earIn muzzle chest body haunch leg paw tail ; u = tail position 0..1 */
+function coatAt(cd,reg,x,y,u){
+  if(reg==='earIn')return cd.k==='siamese'?shade(cd.point,.25):PINK;
+  if(cd.point){ // siamese: dark points, soft body shading
+    if(reg==='ear'||reg==='paw'||reg==='muzzle'||(reg==='tail'&&u>.25)||(reg==='leg'&&y>21))return cd.point;
+    if(reg==='head'&&cd.face&&cd.face(x,y))return cd.point;
+    return reg==='haunch'||reg==='body'?mix(cd.base,'#c8b090',.25):cd.base}
+  if(cd.white==='tux'&&(reg==='chest'||reg==='paw'||reg==='muzzle'||(reg==='head'&&cd.blaze&&cd.blaze(x,y))))return '#f3f0ea';
+  if(cd.white==='bi'&&(reg==='chest'||reg==='paw'||reg==='muzzle'||reg==='leg'||(reg==='haunch'&&y>21)||(reg==='tail'&&u>.85)))return '#f3f0ea';
+  if(cd.patch){if(reg==='paw'||reg==='chest'||reg==='muzzle')return cd.base;const b=blotch(x,y,3.1);return b>.55?cd.patch[0]:b<-.65?cd.patch[1]:cd.base}
+  if(cd.mottle){const b=blotch(x*1.3,y*1.3,1.7)+hn(x,y,2)*.6;return b>.55?cd.mottle:b>.35?shade(cd.mottle,-.25):cd.base}
+  if(cd.stripe){
+    if(reg==='tail')return (u*7)%1<.38?cd.stripe:cd.base;
+    if(reg==='body'||reg==='haunch')return ((x+y*.45)%3.4)<1.05?cd.stripe:cd.base;
+    if(reg==='head'&&cd.fore&&cd.fore(x,y))return cd.stripe;
+    if(reg==='leg'&&y%3===0)return cd.stripe;
+    if(reg==='chest'||reg==='muzzle')return mix(cd.base,'#fff3e0',.35);
+    return cd.base}
+  if(reg==='muzzle'&&cd.k!=='black'&&cd.k!=='tortie')return mix(cd.base,'#ffffff',.15);
+  return cd.base}
+const rampC=new Map();
+function rampOfC(hex){let r=rampC.get(hex);if(!r){r=ramp5(hex);rampC.set(hex,r)}return r}
+const shadeC=(hex,lit)=>rampPick(rampOfC(hex),lit);
+/* ---------- side view (facing right) ---------- */
+function catSidePN(k,frame){const cd=Object.assign({},COATI[k]);const N=PN(30,28);
+  cd.fore=(x,y)=>y<8&&x>15&&x<21&&(x%2===0);cd.blaze=(x,y)=>x>20&&y>8;cd.face=(x,y)=>x>19&&y>7;
+  const F=(reg)=>(nx,ny,lit,x,y)=>shadeC(coatAt(cd,reg,x,y,0),lit);
+  // tail: curls up behind the back
+  const sw=frame===1?1.5:0;
+  const tp=t=>{const a=t*Math.PI*.95;return[8-Math.sin(a)*6.5-sw*t*t,23-t*13+Math.cos(a)*1.5-sw*t*.4]};
+  N.tube(tp,t=>2-t*.6,(t,side,lit)=>shadeC(coatAt(cd,'tail',0,0,t),lit+.1),70,-1);
+  N.ell(11,19.5,6.8,6.2,F('haunch'),0);           // haunch
+  N.ell(9.5,25,3.8,1.6,F('paw'),1);               // back foot
+  N.ell(15,15.5,5,7.2,F('body'),1);               // body / back
+  N.ell(17.4,16.5,3.2,5.4,F('chest'),2);          // chest
+  N.rect(19,19,2,6,(i,j)=>shadeC(coatAt(cd,'leg',19+i,19+j),-.25),1);   // far leg
+  N.rect(16.5,19,2.4,6,(i,j)=>shadeC(coatAt(cd,'leg',16+i,19+j),.15-i*.2),3); // near leg
+  N.rect(16.5,24.5,3,1.5,(i,j)=>shadeC(coatAt(cd,'paw',0,0),.3),4);
+  N.rect(19.2,24.5,2.6,1.5,(i,j)=>shadeC(coatAt(cd,'paw',0,0),0),2);
+  // head
+  N.poly([[15.2,7],[16.2,1],[19.6,5.4]],(x,y)=>shadeC(coatAt(cd,'ear',x,y),.4),5);
+  N.poly([[16.4,5.6],[16.8,3],[18.4,5.4]],(x,y)=>coatAt(cd,'earIn',x,y),6);
+  N.poly([[19,5],[21.6,.8],[22.6,6.2]],(x,y)=>shadeC(coatAt(cd,'ear',x,y),0),4);
+  N.ell(19.4,9.6,5.6,4.9,F('head'),5);
+  N.ell(23.2,11.2,2.4,1.9,F('muzzle'),6);
+  N.px(25.3,10.3,PINK,7);
+  // eye
+  if(frame===2){N.px(21,9,shade(coatAt(cd,'head',21,9),-.45),7);N.px(22,9,shade(coatAt(cd,'head',22,9),-.45),7)}
+  else{N.px(21,8,cd.eye,7);N.px(21,9,cd.eye,7);N.px(22,8,'#1a1418',7);N.px(22,9,'#1a1418',7);N.px(21,8,mix(cd.eye,'#ffffff',.5),8)}
+  N.outline();return N}
+const catSideCache=new Map();
+function catSide(k,frame=0){const key=k+frame;let c=catSideCache.get(key);if(!c){c=catSidePN(k,frame).canvas();catSideCache.set(key,c)}return c}
+/* ---------- front portrait ---------- */
+function catFacePN(k){const cd=Object.assign({},COATI[k]);const N=PN(24,22);
+  cd.fore=(x,y)=>y<9&&x>8&&x<16&&(x%2===1);cd.blaze=(x,y)=>Math.abs(x+.5-12)<2.2-((10-y)*.05)&&y>7;cd.face=(x,y)=>Math.hypot(x+.5-12,(y+.5-14)*1.2)<4.6;
+  const F=(reg)=>(nx,ny,lit,x,y)=>shadeC(coatAt(cd,reg,x,y,0),lit);
+  N.poly([[3,9],[4,1],[10,5]],(x,y)=>shadeC(coatAt(cd,'ear',x,y),.35),0);
+  N.poly([[21,9],[20,1],[14,5]],(x,y)=>shadeC(coatAt(cd,'ear',x,y),-.1),0);
+  N.poly([[5,7.5],[5.2,3.6],[8.4,5.6]],PINK,1);N.poly([[19,7.5],[18.8,3.6],[15.6,5.6]],PINK,1);
+  if(cd.k==='siamese'){N.poly([[5,7.5],[5.2,3.6],[8.4,5.6]],shade(cd.point,.25),2);N.poly([[19,7.5],[18.8,3.6],[15.6,5.6]],shade(cd.point,.25),2)}
+  N.ell(12,12.5,9.2,7.8,F('head'),3);
+  N.ell(12,16,4.6,3,F('muzzle'),4);
+  // eyes
+  for(const ex of [7,15]){N.rect(ex,11,3,3,cd.eye,5);N.px(ex+1,11,'#1a1418',6);N.px(ex+1,12,'#1a1418',6);N.px(ex+1,13,'#1a1418',6);N.px(ex,11,mix(cd.eye,'#ffffff',.55),6)}
+  N.rect(11,15,2,1,PINK,6);N.px(11.5,16,shade(PINK,-.3),6);
+  const mc=shade(coatAt(cd,'muzzle',11,17),-.45);N.px(10,17,mc,6);N.px(13,17,mc,6);
+  N.outline();return N}
+const faceCache=new Map();
+function catFace(k){let c=faceCache.get(k);if(!c){c=catFacePN(k).canvas();faceCache.set(k,c)}return c}
+/* ---------- world sprites: little cats walking the town (3/4 top-down), and Catoshi in miniature ----------
+   catWalk(coat,dir,frame): dir 0 down, 1 left, 2 right, 3 up; frame 0 stand, 1/2 steps. 20x20, feet at y=18. */
+function catWalkPN(k,dir,fr){const cd=Object.assign({},COATI[k]);cd.fore=(x,y)=>false;cd.blaze=(x,y)=>dir===0&&Math.abs(x+.5-10)<1.6&&y>7;cd.face=(x,y)=>dir===0&&Math.hypot(x+.5-10,y+.5-10)<3.2;
+  const N=PN(20,20);const C=(reg,x,y,lit,u)=>shadeC(coatAt(cd,reg,x,y,u||0),lit);const st=fr===0?0:fr===1?1:-1;
+  if(dir===0||dir===3){const up=dir===3;
+    N.tube(t=>[14+t*3.5,15-t*7+Math.sin(t*3)*1],t=>1.4-t*.4,(t,s,lit)=>C('tail',0,0,lit+.1,t),40,-1);
+    N.ell(10,14.6,4.6,3.6,(nx,ny,lit,x,y)=>C(up?'body':'chest',x,y,lit),1);
+    for(const[px,s]of[[8,st],[12,-st]])N.ell(px,18-(s>0?1:0),1.6,1.1,(nx,ny,lit)=>C('paw',0,0,lit+.2),2);
+    N.poly([[4.2,7],[4.8,1.2],[8.6,4.2]],(x,y)=>C('ear',x,y,.3),3);N.poly([[15.8,7],[15.2,1.2],[11.4,4.2]],(x,y)=>C('ear',x,y,0),3);
+    if(!up){N.poly([[5.4,5.6],[5.7,2.9],[7.6,4.4]],PINK,4);N.poly([[14.6,5.6],[14.3,2.9],[12.4,4.4]],PINK,4)}
+    N.ell(10,8.4,6.2,5.2,(nx,ny,lit,x,y)=>C('head',x,y,lit),5);
+    if(!up){N.ell(10,10.6,2.6,1.6,(nx,ny,lit)=>C('muzzle',10,11,lit+.2),6);for(const ex of[6,13]){N.px(ex,8,cd.eye,7);N.px(ex+1,8,'#1a1418',7);N.px(ex,9,shade(cd.eye,-.2),7);N.px(ex+1,9,'#1a1418',7)}N.px(9,10,PINK,7);N.px(10,10,PINK,7)}}
+  else{N.tube(t=>[5-t*3,12.5-t*6],t=>1.3-t*.4,(t,s,lit)=>C('tail',0,0,lit+.1,t),40,-1);
+    for(const[lx,s,far]of[[5.5,st,1],[7.5,-st,0],[11.5,-st,1],[13.5,st,0]])N.rect(lx+s*.8,14.5,1.6,3,(i,j)=>C('leg',lx,15+j,far?-.35:.1),far?0:2);
+    N.ell(9.5,13,5.5,3.4,(nx,ny,lit,x,y)=>C(ny>.35?'chest':'body',x,y,lit),1);
+    N.poly([[11.4,6],[12,1],[14.4,4.4]],(x,y)=>C('ear',x,y,.2),3);N.poly([[14,4.4],[16.6,1.2],[17,6]],(x,y)=>C('ear',x,y,0),3);
+    N.ell(14.4,8.4,4.6,4.2,(nx,ny,lit,x,y)=>C('head',x,y,lit),4);N.ell(17.6,9.8,1.8,1.4,(nx,ny,lit)=>C('muzzle',18,10,lit+.2),5);N.px(16,8,cd.eye,6);N.px(16,7,cd.eye,6);N.px(19,9,PINK,6)}
+  N.outline();const c=N.canvas();if(dir===1){const[m,x]=mk(20,20);x.translate(20,0);x.scale(-1,1);x.drawImage(c,0,0);return m}return c}
+const walkCache=new Map();
+function catWalk(k,dir,fr){const key=k+dir+fr;let c=walkCache.get(key);if(!c){c=catWalkPN(k,dir,fr);walkCache.set(key,c)}return c}
+
+/* ================= art for the wilds, the lake, the town square and the sea floor =================
+   Painted with the same PN pixel painter and ramps as the rest of Gullhaven. */
+// a little cluster of wildflowers (flat ground decal)
+function artFlowers(v){return cc('fl'+v,()=>{const N=PN(16,12);const cols=[['#ff7a6b','#fff6c0'],['#f6bccb','#ffffff'],['#9ab8ff','#fff6c0'],['#ffd24d','#e8604a']][v%4];const r=rng(v*71+5);
+  for(let i=0;i<5;i++){const x=2+r()*12|0,y=3+r()*7|0;N.line(x,y+1,x,y+3,'#3f7a45',1,1);N.px(x-1,y,cols[0],2);N.px(x+1,y,cols[0],2);N.px(x,y-1,cols[0],2);N.px(x,y+1,cols[0],2);N.px(x,y,cols[1],3)}
+  for(let i=0;i<4;i++){const x=1+r()*14|0,y=6+r()*5|0;N.px(x,y,'#579a4f',0);N.px(x,y-1,'#79b85a',0)}return N.canvas()})}
+// toadstools for the old wood
+function artToadstools(v){return cc('mush'+v,()=>{const N=PN(14,12);const cap=v?ramp5('#c8443a'):ramp5('#c89a5a');for(const[cx,cy,s]of[[4,6,3],[9,8,2.4]]){N.rect(cx-1,cy,2,4,'#f4ecd8',1);N.ell(cx,cy,s,s*.7,(nx,ny,l)=>(v&&((cx*7+nx*9|0)+(ny*5|0))%3===0&&ny<0)?'#fff6e8':rampPick(cap,l),2)}N.outline();return N.canvas()})}
+// lily pads float on the lake (flat)
+function artLily(v){return cc('lily'+v,()=>{const N=PN(14,10);const G=ramp5('#4f9a4a');N.ell(6,5,5.5,3.6,(nx,ny,l)=>(Math.abs(Math.atan2(ny,nx)-.3)<.35&&Math.hypot(nx,ny)>.2)?null:rampPick(G,l),1);if(v){N.ell(10,3,2,1.6,'#f6bccb',3);N.px(10,3,'#fff6c0',4)}N.outline('#2f5b3a');return N.canvas()})}
+// a carved standing stone (holds a riddle)
+function artRuneStone(){return cc('rune',()=>{const N=PN(16,24);const st=ramp5('#8a8aa0');N.poly([[3,23],[2,8],[5,2],[11,1],[14,7],[13,23]],(x,y)=>rampPick(st,.5-x/16-y/40),1);
+  for(const[x,y]of[[6,6],[9,6],[7,10],[6,14],[10,13],[8,17]])N.px(x,y,'#3e3a52',2);N.line(6,8,10,8,'#5c5873',1,2);N.line(7,15,9,18,'#5c5873',1,2);N.px(4,20,'#579a4f',3);N.px(12,21,'#579a4f',3);N.px(5,21,'#79b85a',3);N.outline();
+  const c=N.canvas();const[o,x]=mk(16,26);ell(x,8,24,7,2,SHADOW);x.drawImage(c,0,0);return o})}
+// the old iron gate between two stone pillars, closed or open
+function artLakeGate(open){return cc('gate'+open,()=>{const W=52,H=40;const N=PN(W,H);const st=ramp5('#7c7894');
+  for(const px of[1,W-11]){N.rect(px,8,10,30,(i,j)=>(j%6===0||((i+(j/6|0)*3)%5===0))?st[1]:rampPick(st,.4-i/12),1);N.rect(px-1,5,12,4,st[3],2);N.rect(px,3,10,2,st[4],2);N.ell(px+5,2,2.5,2,BRASS,3)}
+  const bar=IRON;if(!open){for(let i=0;i<7;i++){const x=13+i*4;N.line(x,12,x,37,bar[1],1,1);N.px(x,11,bar[3],2)}N.line(12,16,40,16,bar[2],1,2);N.line(12,30,40,30,bar[2],1,2);N.ell(26,23,3,3,BRASS,3);N.px(26,24,'#2a1e33',4)}
+  else{for(let i=0;i<3;i++){N.line(12,14+i*2,12,37,bar[1],1,1);N.line(40-i,14+i*2,40-i,37,bar[1],1,1)}N.line(11,16,14,16,bar[2],1,2);N.line(38,16,41,16,bar[2],1,2)}
+  for(let i=0;i<9;i++){const x=1+i*6;N.px(x,38,'#579a4f',0);N.px(x+1,37,'#79b85a',0)}N.outline();
+  const c=N.canvas();const[o,x]=mk(W,H+2);ell(x,W/2,H-1,W/2,3,SHADOW);x.drawImage(c,0,0);return o})}
+// the town fountain (animated)
+function artTownFountain(f){return cc('fount'+f,()=>{const W=44,H=36;const N=PN(W,H);const st=ramp5('#c1bfd2');
+  N.ell(22,26,20,8,(nx,ny,l)=>Math.hypot(nx,ny)>.82?rampPick(st,l+.2):null,1);N.ell(22,25,16.5,6,(nx,ny)=>{const w=Math.sin(nx*9+f*1.7+ny*4);return w>.6?'#bfe8f4':w<-.6?'#3f86bd':'#5ea9d8'},2);
+  N.rect(19,10,6,15,(i,j)=>rampPick(st,.4-i/6),3);N.ell(22,11,7,3,(nx,ny,l)=>Math.hypot(nx,ny)>.6?rampPick(st,l):'#8fd0ea',4);
+  for(let i=0;i<6;i++){const a=i/6*Math.PI*2+f*.5;const x=22+Math.cos(a)*(5+f%2),y=8-Math.abs(Math.sin(a))*2;N.px(x,y,'#e8fbff',5);N.px(22+Math.cos(a)*(9+f%3),15+(i+f)%3,'#d6f2f8',5)}N.px(22,4+f%2,'#ffffff',5);N.px(22,5,'#bfe8f4',5);
+  N.outline();const c=N.canvas();const[o,x]=mk(W,H+3);ell(x,22,H-3,21,4,SHADOW);x.drawImage(c,0,0);return o})}
+// a garden planter box with flowers
+function artFlowerBox(v){return cc('plant'+v,()=>{const N=PN(30,16);N.rect(1,8,28,7,(i,j)=>rampPick(WOOD,j<1?.6:.1-j/10),1);const cols=['#ff7a6b','#f6bccb','#ffd24d','#9ab8ff'];
+  for(let i=0;i<7;i++){const x=3+i*3.8;N.ell(x,6,2.4,2.2,ramp5('#579a4f'),2);N.ell(x+.5,4.5,1.3,1.3,ramp5(cols[(i+v)%4]),3)}N.outline();return N.canvas()})}
+// a wooden signpost
+function artSignpost(){return cc('signpost',()=>{const N=PN(22,26);N.rect(10,6,3,19,WOOD,1);N.poly([[1,5],[17,5],[21,8],[17,11],[1,11]],(x,y)=>rampPick(WOOD,.6-y/14),2);N.poly([[4,13],[20,13],[20,18],[4,18],[1,15.5]],(x,y)=>rampPick(WOOD,.5-y/22),2);N.line(4,8,15,8,'#4a2e28',1,3);N.line(6,15,17,15,'#4a2e28',1,3);N.outline();return N.canvas()})}
+// a hay bale and a garden plot for the farm edge
+function artVeg(v){return cc('veg'+v,()=>{const N=PN(32,18);N.rect(1,3,30,14,(i,j)=>j%4===0?'#5a3d2c':j%4===1?'#7d573d':'#a3774f',1);
+  for(let r=0;r<3;r++)for(let i=0;i<6;i++){const x=4+i*5,y=5+r*4;if(v===0){N.ell(x,y,1.8,1.5,ramp5('#79b85a'),2);N.px(x,y-1,'#a7d872',3)}else{N.ell(x,y+1,1.6,1.3,ramp5('#e8873a'),2);N.line(x,y-1,x,y-2,'#579a4f',1,3)}}N.outline();return N.canvas()})}
+/* ---------- under the sea ---------- */
+function artKelp(v){return cc('kelp'+v,()=>{const H=40+v*8;const N=PN(18,H);const G=ramp5(v%2?'#4a7a3a':'#5a8a4a');for(let s=0;s<3;s++){const ox=4+s*5;N.tube(t=>[ox+Math.sin(t*7+s)*2,H-1-t*(H-6-s*5)],t=>1.4-t*.6,(t,side,l)=>rampPick(G,l),40,1+s);
+  for(let k=0;k<5;k++){const t=.2+k*.15;const y=H-1-t*(H-6-s*5),x=ox+Math.sin(t*7+s)*2;N.ell(x+(k%2?2:-2),y,2.2,1.2,G,4)}}N.outline();return N.canvas()})}
+function artSeaRock(v){return cc('srock'+v,()=>{const W=v?30:22,H=v?20:16;const N=PN(W,H);const R5=ramp5('#4a5a72');N.ell(W/2,H/2+1,W/2-1,H/2-1,(nx,ny,l)=>rampPick(R5,l+(hash2(nx*9|0,ny*9|0,3)-.5)*.5),1);
+  for(let i=0;i<4;i++)N.ell(3+i*(W-6)/3,H-4,2,1.4,['#e88aa8','#f0c880','#7fdcc0','#c39bff'][(i+v)%4],2);N.outline();return N.canvas()})}
+function artSeaChest(open){return cc('schest'+open,()=>{const N=PN(22,18);N.rect(2,7,18,10,(i,j)=>i%6===0?IRON[2]:rampPick(WOOD,.3-j/12),1);if(open){N.rect(2,1,18,4,(i,j)=>rampPick(WOOD,.5),2);N.rect(4,6,14,3,'#ffd24d',2);N.px(7,6,'#fff6c0',3);N.px(13,7,'#fff6c0',3)}else{N.ell(11,7,9,4,(nx,ny,l)=>ny<0?rampPick(WOOD,l):null,2);N.rect(10,8,2,3,BRASS[2],3)}
+  N.px(4,15,'#7fdcc0',4);N.px(17,14,'#e88aa8',4);N.outline();return N.canvas()})}
+function artWreckHull(){return cc('whull',()=>{const W=120,H=58;const N=PN(W,H);const T=ramp5('#5a4632');
+  N.poly([[4,40],[18,18],[96,12],[116,20],[110,44],[60,54],[16,50]],(x,y)=>{const plank=(y+((x/14)|0)*2)%5===0;return plank?T[0]:rampPick(T,.4-y/60+(hash2(x>>2,y,5)-.5)*.3)},1);
+  N.poly([[22,24],[92,18],[104,24],[98,36],[30,40]],(x,y)=>rampPick(ramp5('#2a2018'),-.2+(hash2(x>>3,y>>2,8)-.5)*.3),2);
+  for(let i=0;i<6;i++)N.line(30+i*13,20,32+i*13,38,T[3],2,3);N.line(66,2,64,30,T[2],3,4);N.line(56,8,78,6,T[1],2,4);
+  for(let i=0;i<14;i++)N.px(10+i*7,44+(i%3),'#7fdcc0',5);for(let i=0;i<5;i++)N.ell(20+i*20,48,3,1.5,'#e88aa8',5);N.outline();return N.canvas()})}
+function artBubble(){return cc('bubble',()=>{const N=PN(5,5);N.ell(2.5,2.5,2.2,2.2,(nx,ny)=>Math.hypot(nx,ny)>.6?'#d6f2f8':ny<-.1&&nx<0?'#ffffff':null,1);return N.canvas()})}
+// a small heart for petting
+function artHeart(){return cc('heart',()=>{const[c,x]=mk(7,6);stamp(x,['.kk.kk.','kRWkRRk','kRRRRRk','.kRRRk.','..kRk..','...k...'],{k:'#6a1a2a',R:'#ff7a8a',W:'#ffd0d8'},0,0);return c})}
+
 /* ================= gear, bait and boats (shared with the server) ================= */
 const GEAR={
   rod:[{n:'Bamboo Rod',price:0,cast:.55,power:1},{n:'Glass Rod',price:400,cast:.7,power:1.25},{n:'Graphite Rod',price:1600,cast:.82,power:1.55},{n:'Boron Rod',price:5500,cast:.92,power:1.9},{n:'Gullwing Custom',price:16000,cast:1,power:2.35}],
@@ -1909,8 +2075,9 @@ const ZONES={
   wreck:{n:'Wreck Graveyard',short:'Wrecks',depth:12,need:3,col:'#4a6a8a'},
   blue:{n:'Open Blue',short:'Open Blue',depth:30,need:4,col:'#2f5fb0'},
   deep:{n:'The Deep',short:'The Deep',depth:80,need:5,col:'#26265a'},
+  lake:{n:'Mirrorlake',short:'Mirrorlake',depth:3,need:0,col:'#5cb8a8',fresh:1},
   beach:{n:'Beach',short:'Beach'},rocks:{n:'Rock platform',short:'Rocks'},any:{n:'Anywhere',short:'Anywhere'},unknown:{n:'Unknown',short:'?'}};
-const ZONE_ORDER=['harbour','shallows','estuary','reef','kelp','wreck','blue','deep'];
+const ZONE_ORDER=['harbour','shallows','estuary','reef','kelp','wreck','blue','deep','lake'];
 /* fish: [name, zone, rarity, conditions, minCm, maxCm, art] ; art = shape|back|side|belly|pattern|patCol|fin(|extra) */
 const FISH_RAW=[
  ['Yellowtail Scad','harbour',0,'any',14,30,'torp|#5f8fa0|#b9cdd6|#eef3f4|lat|#e8c84a|#e8c84a'],
@@ -2066,6 +2233,19 @@ BOTTLE_LETTERS.forEach(([t,z,r],i)=>addEntry({id:'letter_'+(i+1),n:`Letter ${i+1
 for(const[n,r,where,col]of COINS){const[z,...rest]=where.split(' ');addEntry({id:n==='First Harbour Coin'?'the_first_reel':slug(n),n,cat:'set',set:'coins',z,r,how:z==='beach'||z==='rocks'?'comb':z==='gift'?'gift':'salvage',c:rest.join(' ')||'any',price:r<4?FIND_PRICE.set[r]:0,art:'coin|'+col})}
 for(const[n,r,z,art]of LURES)addEntry({id:slug(n),n,cat:'set',set:'lures',z,r,how:'snag',c:'any',price:FIND_PRICE.set[r]+10,art:'lure|'+art});
 for(const[n,r,art]of JUNK_RAW)addEntry({id:slug(n),n,cat:'junk',z:'any',r,how:'hook',c:'any',price:FIND_PRICE.junk[r],art:'junk|'+art});
+/* Mirrorlake: freshwater fish behind the old gate (added last so older Logbook numbers stay put) */
+const LAKE_RAW=[
+ ['Silver Perch','lake',0,'any',15,35,'deep|#7a8a90|#c0ccd0|#eef2f2|spots|#5a6a70|#9aa8b0'],
+ ['Redfin','lake',0,'day',15,35,'deep|#5a6a3a|#a8b070|#f0e8c0|bars|#2a3a1a|#e85a30'],
+ ['Rainbow Trout','lake',1,'dawn/dusk',25,60,'torp|#5a7a6a|#c8c8b8|#f4f0ec|lat|#e88aa0|#7a8a7a'],
+ ['Golden Perch','lake',1,'rain',30,60,'deep|#8a7a3a|#d8c060|#f8f0c0|none|#000|#e0b040'],
+ ['Australian Bass','lake',1,'night',25,50,'deep|#4a4a3a|#8a8a6a|#d8d4c0|none|#000|#5a5a4a'],
+ ['Longfin Eel','lake',1,'night rain',60,150,'eel|#4a4a2a|#6a6a40|#a8a888|none|#000|#4a4a2a'],
+ ['Brown Trout','lake',2,'dawn fog',35,75,'torp|#6a5a3a|#b8a070|#f0e4c8|spots|#c84a3a|#8a7a5a'],
+ ['Murray Cod','lake',2,'any',60,130,'grouper|#4a5a3a|#7a8a5a|#e0e0c0|spots|#2a3a20|#4a5a3a|big'],
+ ['Saratoga','lake',3,'day summer calm',50,90,'torp|#6a6a40|#c8b878|#f0e8c8|scales|#c84a3a|#8a8a50|big']];
+for(const[n,z,r,c,a,b,art]of LAKE_RAW)addEntry({id:slug(n),n,cat:'fish',z,r,how:'fish',c,sz:[a,b],price:FISH_PRICE[r],art});
+addEntry({id:'the_mirror_cod',n:'The Mirror Cod',cat:'legend',z:'lake',r:4,how:'fish',c:'night fullmoon',sz:[150,185],price:FISH_PRICE[4],art:'grouper|#3a4a5a|#8aa0b8|#e8f0f8|spots|#ffffff|#3a4a5a|legend',what:'A Murray cod so old its scales hold the moon'});
 const SETS={bottles:{n:'Messages in Bottles',reward:'The bottle story and the lighthouse key room',shells:1500},coins:{n:'Old Gullhaven Coins',reward:'First Harbour Coin',shells:1000},lures:{n:'Vintage Lures',reward:'A trophy lure case and 1,000 Shells',shells:1000}};
 /* ---------- conditions ---------- */
 const TOKENS_TIME=new Set(['any','day','night','dawn','dusk','dawn/dusk','dusk/night','midnight']);
@@ -2258,12 +2438,14 @@ function landF(x,y){const P=16;const yi=clamp(Math.floor(y*P),0,WORLD_H*P-1),xi=
   let L=Math.max(COAST.cx[yi]-x,y-COAST.sy[xi]);
   for(const I of COAST.islands){const dx=x-I.x,dy=(y-I.y)*1.2,reach=I.r+.4-L;if(reach<=0||dx*dx+dy*dy>=reach*reach)continue;const d=Math.sqrt(dx*dx+dy*dy);L=Math.max(L,I.r-d+(I.rock?0:(NZ.at(x*9,y*9)-.5)*.8))}
   if(y<36){const r=Math.abs(y-COAST.rv[xi])-COAST.rw[xi]*(1+smooth(50,64,x)*1.6);L=Math.min(L,r)}
+  if(inLakeBox(x,y))L=Math.min(L,lakeD(x,y));
   return L}
 // what lines this stretch of coast
-function shoreKind(x,y){const island=islandShoreAt(x,y);if(island)return island.shore;const n=(NZ.at(x*3,y*3)-.5)*4;if(x>98&&x<108&&y>96)return'rock';for(const I of COAST.islands)if(I.rock&&Math.hypot(x-I.x,y-I.y)<I.r+2)return'rock';
+function shoreKind(x,y){if(inLakeBox(x,y))return'wall';const island=islandShoreAt(x,y);if(island)return island.shore;const n=(NZ.at(x*3,y*3)-.5)*4;if(x>98&&x<108&&y>96)return'rock';for(const I of COAST.islands)if(I.rock&&Math.hypot(x-I.x,y-I.y)<I.r+2)return'rock';
   if(y<31+n)return x<66+n?'mud':'sand';if(y<43.5&&x>48)return'rock';if(y>=43.5&&y<84.6&&x<58)return'wall';return'sand'}
-function sandWidth(x,y){if(islandShoreAt(x,y))return 2.2;if(y>=30&&y<44&&x>48)return 6.5+NZ.at(x*4,y*4)*2.5;if(x>98&&x<108&&y>96)return 3;if(y<34)return x<64?1.8:1.4;if(y>96)return 4.5+NZ.at(x*3,7)*1.5;if(y>84)return 2.6;return 1.6}
+function sandWidth(x,y){if(inLakeBox(x,y))return .4;if(islandShoreAt(x,y))return 2.2;if(y>=30&&y<44&&x>48)return 6.5+NZ.at(x*4,y*4)*2.5;if(x>98&&x<108&&y>96)return 3;if(y<34)return x<64?1.8:1.4;if(y>96)return 4.5+NZ.at(x*3,7)*1.5;if(y>84)return 2.6;return 1.6}
 function zoneOfXY(x,y){
+  if(inLakeBox(x,y))return'lake';
   if(x>=57&&x<74.5&&y>=43.5&&y<85)return'harbour';
   const islandZone=islandSeaZone(x,y);if(islandZone)return islandZone;
   const n=(NZ.at(x*2.3,y*2.3)-.5)*8,m=(NZ.at(x*1.1+40,y*1.1)-.5)*10;
@@ -2274,10 +2456,10 @@ function zoneOfXY(x,y){
   if(x>=107+n)return y>94+m?'kelp':'wreck';
   return'reef'}
 function depthAt(x,y,L,z){const d=-L;switch(z){case'harbour':return 2+Math.min(3,d*.35);case'estuary':return .8+Math.min(3,d*.3);case'shallows':return .6+Math.min(5,d*.35);
-  case'reef':return 3+Math.min(6,d*.12)-(NZ.at(x*4,y*4)>.62?2.5:0);case'kelp':return 6+Math.min(6,d*.15);case'wreck':return 10+Math.min(10,d*.1);case'blue':return 30+(x-132)*2;default:return 80+(x-146)*6}}
+  case'reef':return 3+Math.min(6,d*.12)-(NZ.at(x*4,y*4)>.62?2.5:0);case'kelp':return 6+Math.min(6,d*.15);case'wreck':return 10+Math.min(10,d*.1);case'lake':return 1+Math.min(5,d*.5);case'blue':return 30+(x-132)*2;default:return 80+(x-146)*6}}
 /* ---------- painting the ground ---------- */
 const SEA={harbour:['#7ad0d4','#4ab0c8','#3a96c0','#3284b0'],estuary:['#8ab49a','#6a9e8e','#548a80','#467a74'],shallows:['#9ae4dc','#6ad0d4','#48b6cc','#3a9cc2'],reef:['#7adcd8','#4ac4d0','#36aac8','#2c94bc'],
-  kelp:['#5aa49c','#3e8c8c','#307682','#286474'],wreck:['#3a86ac','#2f72a0','#2a6292','#245484'],blue:['#2a62a8','#24529a','#20468a','#1c3a7a'],deep:['#1c2c66','#18245a','#141c4c','#10163e']};
+  kelp:['#5aa49c','#3e8c8c','#307682','#286474'],wreck:['#3a86ac','#2f72a0','#2a6292','#245484'],blue:['#2a62a8','#24529a','#20468a','#1c3a7a'],deep:['#1c2c66','#18245a','#141c4c','#10163e'],lake:['#8ad4bc','#5cb8a8','#43a09c','#33868e']};
 function seaPx(wx,wy,x,y,L,z){// colour zone sampled with a jitter so neighbouring grounds dither into each other
   let jz=zoneOfXY(x+(hash2(wx,wy,31)-.5)*3,y+(hash2(wx,wy,32)-.5)*3);if(jz==='harbour'||z==='harbour')jz=z;const P=SEA[jz]||SEA.reef;const n=NZ.at(wx*.7,wy*.7)*.6+NZ.at(wx*2.1+50,wy*2.1)*.4;const sh=-L;
   let k=sh<1.2?0:sh<3?1:sh<7?2:3;if(jz==='deep'||jz==='blue'||jz==='wreck'){k=n>.72?1:n<.28?3:2}else if(k>=2)k=n>.7?1:n<.3?3:2;
@@ -2287,6 +2469,7 @@ function seaPx(wx,wy,x,y,L,z){// colour zone sampled with a jitter so neighbouri
   if(jz==='kelp'&&NZ.at(wx*1.6+9,wy*1.6)>.66)col=mix(col,'#4a5a2a',.45);
   if(jz==='reef'&&sh>3&&NZ.at(wx*1.3+33,wy*1.3)>.74)col=hash2(wx>>2,wy>>2,9)<.5?mix(col,'#e88a8a',.35):mix(col,'#f0c880',.3);
   if(jz==='wreck'&&NZ.at(wx*1.8+71,wy*1.8)>.78)col=mix(col,'#3a4a5a',.45);
+  if(jz==='lake'&&NZ.at(wx*1.2+5,wy*1.2)>.7)col=mix(col,'#cfeee4',.25);
   return col}
 function paintWorldGround(S){const W=S.w,H=S.h;const B=mkBuf(W*16,H*16);const foam=mkBuf(W*16,H*16),tide=mkBuf(W*16,H*16);
   // land tiles first, with the usual tile painters
@@ -2405,7 +2588,7 @@ function genWorld(){buildCoast();
   const tr=rng(77);for(let i=0;i<260;i++){const x=Math.floor(tr()*160),y=Math.floor(tr()*120);const i2=idx(x,y);if(S.g[i2]!=='g'||S.res[i2]||S.sol[i2])continue;const L=landF(x+.5,y+.5);if(L<3)continue;
     const wild=y<11||(y>96&&x<40)||(x<8);if(!wild&&tr()<.85)continue;treeAt(S,x,y,wild?(tr()<.5?3:tr()<.5?0:2):(tr()<.5?1:4))}
   for(let i=0;i<60;i++){const x=Math.floor(tr()*60),y=Math.floor(tr()*120);const i2=idx(x,y);if(S.g[i2]!=='g'||S.res[i2]||S.sol[i2])continue;addProp(S,artBush(['#ff7a6b','#fbf1dc','#f08bbf',null][i%4]),x*16-2,y*16,{sy:y*16+14});S.sol[i2]=1}
-  addIslandSettlements(S,set,pier);
+  addIslandSettlements(S,set,pier);addWilds(S,set,pier);
   // fixed salvage sites (bubbles over wrecks, a lockbox in the mangroves, a coffer and an altar further out)
   S.salvage=[{tx:114,ty:30,zone:'wreck'},{tx:118,ty:56,zone:'wreck'},{tx:111,ty:72,zone:'wreck'},{tx:124,ty:24,zone:'wreck'},{tx:72,ty:20,zone:'estuary'},{tx:138,ty:46,zone:'blue'},{tx:152,ty:60,zone:'deep'},{tx:150,ty:28,zone:'deep'}];
   for(const s of S.salvage){s.x=s.tx*16+8;s.y=s.ty*16+8;if(S.g[idx(s.tx,s.ty)]!=='o'){s.dead=1;continue}const v=s.tx%2;const im=artWreckMast(v);if(s.zone==='wreck')addProp(S,im,s.x-15+20,s.y-34+6,{sy:s.y+6})}
@@ -2420,18 +2603,17 @@ function genWorld(){buildCoast();
 /* Small additions to the original world, painted with Gullhaven's existing pixel art. */
 const ISLAND_TOWNS=[
   {id:'tideglass',n:'Tideglass Cay',x:128,y:125,r:12,shore:'sand',zone:'shallows',shopKind:'bait',shopLabel:'BAIT & TEA',roof:'#3f7a8a',wall:'#f4e4c8',desc:'A quiet sandy cay with a bait shop, beachcombing and harbour errands. Follow the southern shallows in any boat.'},
-  {id:'mossbank',n:'Mossbank',x:169,y:49,r:13,shore:'sand',zone:'reef',shopKind:'home',shopLabel:'HOME GOODS',roof:'#3f7a5a',wall:'#e8f0d8',desc:'A little garden village on the coral shelf. Browse home decorations and take on local fishing bounties. Bring a dinghy or better.'},
-  {id:'lantern',n:'Lantern Key',x:197,y:118,r:14,shore:'rock',zone:'kelp',shopKind:'boatyard',shopLabel:'BOATWORKS',roof:'#5a4a7a',wall:'#d8e8f4',desc:'A rocky fishing outpost among the kelp, with a boat workshop and deep-water stories. The eastern reef passage is safe for a dinghy or better.'}
+  {id:'mossbank',n:'Mossbank',x:169,y:49,r:13,shore:'sand',zone:'reef',shopKind:'home',shopLabel:'HOME GOODS',roof:'#3f7a5a',wall:'#e8f0d8',desc:'A little garden village on the coral shelf. Browse home decorations and take on local fishing bounties. Open water out here is rough on small boats.'},
+  {id:'lantern',n:'Lantern Key',x:197,y:118,r:14,shore:'rock',zone:'kelp',shopKind:'boatyard',shopLabel:'BOATWORKS',roof:'#5a4a7a',wall:'#d8e8f4',desc:'A rocky fishing outpost among the kelp, with a boat workshop and deep-water stories. Far out past the deep: a skiff or bigger makes the trip safely.'}
 ];
 function islandShoreAt(x,y){if(x<110)return null;for(const I of ISLAND_TOWNS){const dx=x-I.x,dy=(y-I.y)*1.2;if(dx*dx+dy*dy<(I.r+3)*(I.r+3))return I}return null}
 function islandSeaZone(x,y){
   // Broad, visible shelves leave the old fishing grounds available and give every dock a safe approach.
   if(x>=74.5&&x<83.5&&y>56&&y<91)return'shallows';
-  if(x>94&&x<148&&y>98&&y<145&&x<y+18)return'shallows';
+  const wb=(NZ.at(x*.6+11,y*.6+5)-.5)*9;
+  if(x>94&&x<148&&y>98&&y<145&&x<y+18+wb)return'shallows';
   if(x<110)return null;
   for(const I of ISLAND_TOWNS){const dx=x-I.x,dy=(y-I.y)*1.2;if(dx*dx+dy*dy<(I.r+6)*(I.r+6))return I.zone}
-  if(x>128&&y>35&&y<128&&Math.abs(x+y*.55-196)<9)return'reef';
-  if(x>166&&y>45&&y<137&&Math.abs(x-y*.4-150)<11)return'reef';
   return null}
 function addIslandSettlements(S,set,pier){
   S.islands=[];S.islandActs=[];const idx=(x,y)=>y*S.w+x;
@@ -2527,6 +2709,81 @@ function genInterior(kind){const th=ROOM_THEME[kind.startsWith('hall_')?'harbour
     propAt(S,artBoatModel(['trawler','skiff','dinghy','cutter','row'][COOPS.indexOf(C)]),1,6,3,2);signBoard(S,C.n,7*16,C.col)}
   else{S=roomShell('in:'+kind,12,9,'hf',th)}
   S.kind='in';S.in=kind;setExit(S,()=>goWorld(kind));return S}
+
+/* ================= the wilds: Mirrorlake behind the old gate, the south wood, and a richer town and islands =================
+   The lake is carved out of the same land field as the coast (landF), so its banks paint like every other shore. */
+const LAKE={x:22,y:126,rx:9.5,ry:6.5,RX:16.5,RY:13};
+const inLakeBox=(x,y)=>x>LAKE.x-LAKE.rx-3&&x<LAKE.x+LAKE.rx+3&&y>LAKE.y-LAKE.ry-3&&y<LAKE.y+LAKE.ry+3;
+// signed distance-ish to the lake bank (tile units): negative inside the water
+function lakeD(x,y){const dx=(x-LAKE.x)/LAKE.rx,dy=(y-LAKE.y)/LAKE.ry;const e=Math.sqrt(dx*dx+dy*dy);const wob=(NZ.at(x*4+90,y*4)-.5)*1.4+Math.sin(Math.atan2(dy,dx)*3+1)*.45;return(e-1)*Math.min(LAKE.rx,LAKE.ry)+wob}
+// position on the wood ring around the lake (1 = inner edge of the trees)
+const ringE=(x,y)=>Math.hypot((x-LAKE.x)/LAKE.RX,(y-LAKE.y)/LAKE.RY);
+const STORY_CLUES=[
+  {id:'lh',sym:'anchor',who:'An old carving at Lighthouse Point',text:'FIRST: I hold a ship still when the wind wants it gone.'},
+  {id:'tideglass',sym:'moon',who:'Mara at Tideglass Cay',text:'SECOND: I pull the sea up the sand twice a day and never touch it.'},
+  {id:'mossbank',sym:'shell',who:'Fern at Mossbank',text:'THIRD: a house that once walked the reef, washed up empty for you.'},
+  {id:'lantern',sym:'lighthouse',who:'Old Ivo at Lantern Key',text:'FOURTH: I stand on the point and keep one eye open all night.'}];
+const LOCK_SYMS=['anchor','moon','shell','lighthouse','sun','fish','boat','storm'];
+function clearTiles(W,x0,y0,x1,y1){W.props=W.props.filter(p=>{const im=p.img;if(!im||im.height>60)return true;const ax=Math.floor((p.x+im.width/2)/16),ay=Math.floor((p.sy-1)/16);if(ax<x0||ax>x1||ay<y0||ay>y1)return true;W.sol[ay*W.w+ax]=0;return false})}
+function freeG(W,x,y){const i=y*W.w+x;return x>=0&&y>=0&&x<W.w&&y<W.h&&W.g[i]==='g'&&!W.sol[i]&&!W.res[i]}
+function addWilds(W,set,pier){const idx=(x,y)=>y*W.w+x;const r=rng(9091);const L=LAKE;
+  const deco=(im,tx,ty,o={})=>addProp(W,im,tx*16+8-im.width/2,(ty+1)*16-im.height+(o.dy||0),Object.assign({sy:(ty+1)*16-1},o));
+  const solidDeco=(im,tx,ty,o)=>{if(!freeG(W,tx,ty))return false;deco(im,tx,ty,o);W.sol[idx(tx,ty)]=1;W.res[idx(tx,ty)]=1;return true};
+  const flat=(im,tx,ty)=>{addProp(W,im,tx*16+8-im.width/2,ty*16+2,{flat:1,sy:ty*16});W.res[idx(tx,ty)]=1};
+  /* ---- the road south to the old gate ---- */
+  const road=(x0,y0,x1,y1)=>{clearTiles(W,x0,y0,x1,y1);set('w',x0,y0,x1,y1);for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)W.sol[idx(x,y)]=0};
+  const GX=L.x-1;road(30,93,31,106);road(GX,105,31,106);
+  /* ---- the wood ring around Mirrorlake, with a gate in its north side ---- */
+  const gateTiles=[];let gateTop=999;
+  for(let ty=Math.floor(L.y-L.RY*1.3);ty<=Math.ceil(L.y+L.RY*1.3);ty++)for(let tx=Math.floor(L.x-L.RX*1.3);tx<=Math.ceil(L.x+L.RX*1.3);tx++){if(tx<0||ty<0||tx>=W.w||ty>=W.h)continue;const e=ringE(tx+.5,ty+.5);if(e<1||e>1.26)continue;const i=idx(tx,ty);if(W.g[i]==='o')continue;
+    if((tx===GX||tx===GX+1)&&ty<L.y){clearTiles(W,tx,ty,tx,ty);W.g[i]='w';W.sol[i]=1;W.res[i]=1;gateTiles.push(i);gateTop=Math.min(gateTop,ty);continue}
+    clearTiles(W,tx,ty,tx,ty);W.sol[i]=1;W.res[i]=1;W.g[i]='g';const k=r();if(k<.62)treeAt(W,tx,ty,k<.3?3:k<.48?0:k<.56?2:4);else if(k<.8)deco(artBush(k<.7?null:'#f6bccb'),tx,ty);}
+  road(GX,107,GX+1,gateTop-1);
+  const gateRows=[...new Set(gateTiles.map(i=>Math.floor(i/W.w)))].sort((a,b)=>a-b);const gy=gateRows[0];
+  addProp(W,artLakeGate(false),(GX+1)*16-26,(gy+1)*16-41,{sy:(gy+1)*16-1,anim:()=>artLakeGate(lakeOpen())});
+  W.lakeGate={tiles:gateTiles,x:(GX+1)*16,y:(gy+1)*16+10};
+  // the clearing path from the gate down to the lake
+  for(let ty=gateRows[gateRows.length-1]+1;ty<L.y;ty++){let wet=false;for(const tx of[GX,GX+1]){const i=idx(tx,ty);if(W.g[i]==='o'){wet=true;W.g[i]='pr';W.sol[i]=0;W.nav[i]=0;W.res[i]=1}else{clearTiles(W,tx,ty,tx,ty);W.g[i]='w';W.res[i]=1;W.sol[i]=0}}if(wet){for(let k=1;k<=2;k++)for(const tx of[GX,GX+1]){const i=idx(tx,ty+k);if(W.g[i]==='o'){W.g[i]='pr';W.sol[i]=0;W.nav[i]=0;W.res[i]=1}}break}}
+  /* ---- the lakeside: reeds, lilies, a warden's hut, a bench and a name sign ---- */
+  for(let ty=Math.floor(L.y-L.RY);ty<=Math.ceil(L.y+L.RY);ty++)for(let tx=Math.floor(L.x-L.RX);tx<=Math.ceil(L.x+L.RX);tx++){if(tx<0||ty<0)continue;const i=idx(tx,ty);const d=lakeD(tx+.5,ty+.5);if(ringE(tx+.5,ty+.5)>=1)continue;
+    if(W.g[i]==='o'){if(d<-.6&&d>-2.6&&r()<.16)flat(artLily(r()<.3?1:0),tx,ty);continue}
+    if(W.g[i]!=='g'||W.sol[i]||W.res[i])continue;
+    if(d<1.4&&r()<.18){deco(artReedsC(),tx,ty,{dy:2});continue}
+    if(d>2.5&&r()<.12)flat(artFlowers(Math.floor(r()*4)),tx,ty);else if(d>2.5&&r()<.06)solidDeco(artToadstools(r()<.5?1:0),tx,ty)}
+  {const hx=14,hy=117;let ok=true;for(let y=hy-2;y<=hy+2;y++)for(let x=hx;x<hx+4;x++){const i=idx(x,y);if(W.g[i]!=='g'||W.sol[i]||ringE(x+.5,y+.5)>=1||lakeD(x+.5,y+.5)<.5)ok=false}
+    if(ok){clearTiles(W,hx,hy-2,hx+3,hy+2);const h=placeBuilding(W,hx,hy,4,2,2,{wall:'#d8d0b8',mat:'logs',roof:'#4f6b4a',door:1,win:[3],chimney:1,doorC:'#5a4a3a',flowers:1});W.spots.warden=h.door}}
+  {const sx=GX+3,sy=Math.floor(L.y-L.ry-2);solidDeco(artSignpost(),sx,sy);W.spots.lakeSign={x:sx*16+8,y:sy*16+20};solidDeco(artBench(),GX-3,Math.floor(L.y-L.ry-1))}
+  /* ---- the south wood: trees, toadstools and wildflowers ---- */
+  for(let ty=96;ty<W.h-1;ty++)for(let tx=0;tx<106;tx++){if(!freeG(W,tx,ty))continue;const e=ringE(tx+.5,ty+.5);if(e<1.26)continue;const Lf=landF(tx+.5,ty+.5);if(Lf<3)continue;
+    let nearRoad=false;for(let dy=-1;dy<=1&&!nearRoad;dy++)for(let dx=-1;dx<=1;dx++)if(W.g[idx(tx+dx,ty+dy)]==='w'){nearRoad=true;break}if(nearRoad)continue;
+    const n=NZ.at(tx*5+3,ty*5+7);const dens=(e<1.5?.32:.04+.24*n)*(tx<60?1:.6);const k=r();
+    if(k<dens){const v=r();treeAt(W,tx,ty,v<.5?3:v<.88?0:v<.95?2:4)}else if(k<dens+.02)solidDeco(artToadstools(r()<.4?1:0),tx,ty);else if(k<dens+.05)flat(artFlowers(Math.floor(r()*4)),tx,ty)}
+  /* ---- the carving at Lighthouse Point ---- */
+  {let best=null;for(let rr=0;rr<5&&!best;rr++)for(let dy=-rr;dy<=rr&&!best;dy++)for(let dx=-rr;dx<=rr;dx++){const x=63+dx,y=40+dy,i=idx(x,y);if(x<0||y<0)continue;if(W.sol[i]||W.g[i]==='o'||W.g[i]==='pr'||W.g[i]==='bw')continue;if(Math.abs(x-60)<2&&y<41)continue;best=[x,y];break}
+    if(best){deco(artRuneStone(),best[0],best[1]);W.sol[idx(best[0],best[1])]=1;W.spots.carving={x:best[0]*16+8,y:best[1]*16+22}}}
+  /* ---- town: a new lane with the Cat Caf\u00e9, a bakery and a cottage, a little farm, the square fountain ---- */
+  clearTiles(W,4,67,29,78);road(4,71,29,72);
+  const cafe=placeBuilding(W,5,69,6,2,2,{wall:'#f8e4d4',mat:'plaster',roof:'#c86a8a',door:3,win:[1,4],awning:['#e88aa8','#fbf6ea'],label:'CAT CAFE',labelBg:'#fff4e0',doorC:'#c86a8a',lamp:1,curtain:'#f6bccb',flowers:1});W.spots.cafe=cafe.door;
+  const bakery=placeBuilding(W,13,69,5,2,2,{wall:'#f4e4b8',mat:'siding',roof:'#8a5a3a',door:2,win:[0,4],awning:['#e8c040','#fbf6ea'],label:'BAKERY',labelBg:'#fff4e0',doorC:'#8a5a3a',chimney:1});W.spots.bakery=bakery.door;
+  const cot=placeBuilding(W,21,69,4,2,2,{wall:'#e4d8f0',mat:'planks',roof:'#5a4a7a',door:1,win:[3],flowers:1,chimney:1,doorC:'#f0c040'});(W.houses=W.houses||[]).push(cot.door);
+  for(const[x,y]of[[12,71],[26,71]]){const i=idx(x,y-1);if(!W.sol[i]){const lamp=artLamp();addProp(W,lamp,x*16+2,(y-1)*16+14-33);W.sol[i]=1;W.lights.push({x:x*16+8,y:(y-1)*16-12,r:40,c:'rgba(255,200,120,'})}}
+  for(const[x,y,v]of[[6,74,0],[9,74,1],[12,74,0],[6,76,1],[9,76,0],[12,76,1]]){addProp(W,artVeg(v),x*16,y*16-1,{flat:1,sy:y*16});reserve(W,x,y,x+1,y)}
+  solidDeco(artSignpost(),15,74);
+  {const fx=40,fy=57;const fr=[0,1,2,3].map(artTownFountain);addProp(W,fr[0],fx*16-22,(fy+1)*16-37,{sy:(fy+1)*16-1,anim:t=>fr[Math.floor(t*5)%4]});solidRect(W,fx-1,fy-1,fx+1,fy);W.spots.fountain={x:fx*16,y:(fy+1)*16+8}}
+  for(const h of W.houses||[]){const tx=Math.floor(h.x/16),ty=Math.floor(h.y/16)-1;if(tx>58)continue;for(const dx of[-2,2])if(freeG(W,tx+dx,ty)&&r()<.7)flat(artFlowers(Math.floor(r()*4)),tx+dx,ty)}
+  for(let ty=0;ty<96;ty++)for(let tx=0;tx<56;tx++){if(!freeG(W,tx,ty))continue;if(r()<.025)flat(artFlowers(Math.floor(r()*4)),tx,ty)}
+  for(const[x,y]of[[35,64],[44,64]])if(freeG(W,x,y)||W.g[idx(x,y)]==='p'){if(!W.sol[idx(x,y)]){deco(artFlowerBox((x+y)%4),x,y);W.sol[idx(x,y)]=1}}
+  /* ---- islands: each settlement gets its own character and a local who knows a riddle ---- */
+  const NPC={tideglass:['Mara',4211],mossbank:['Fern',4277],lantern:['Old Ivo',4355]};W.npcs=[];
+  for(const I of W.islands||[]){const x=I.x,y=I.y;const near=[];for(let dy=-I.r;dy<=I.r;dy++)for(let dx=-I.r;dx<=I.r;dx++){const tx=x+dx,ty=y+dy;if(tx<0||ty<0||tx>=W.w||ty>=W.h)continue;const i=idx(tx,ty);if(W.sol[i]||W.res[i])continue;near.push([tx,ty,W.g[i]])}
+    const sand=near.filter(p=>p[2]==='sa'),grass=near.filter(p=>p[2]==='g');const pickT=a=>a.length?a.splice(Math.floor(r()*a.length),1)[0]:null;
+    if(I.id==='tideglass'){for(let k=0;k<4;k++){const p=pickT(sand);if(!p)break;const col=['#e8604a','#3f86bd','#f0c040','#5aa070'][k];addProp(W,artUmbrella(col),p[0]*16-8,p[1]*16-26,{sy:p[1]*16+14});W.sol[idx(p[0],p[1])]=1;W.res[idx(p[0],p[1])]=1}
+      for(let k=0;k<3;k++){const p=pickT(sand);if(p)solidDeco(artDeckChair(['#3f86bd','#e8604a','#f0c040'][k]),p[0],p[1])}}
+    if(I.id==='mossbank'){for(let k=0;k<10;k++){const p=pickT(grass);if(p)flat(artFlowers(k%4),p[0],p[1])}for(let k=0;k<3;k++){const p=pickT(grass);if(p&&freeG(W,p[0],p[1]))treeAt(W,p[0],p[1],1)}for(let k=0;k<2;k++){const p=pickT(grass);if(p)solidDeco(artFlowerBox(k),p[0],p[1])}}
+    if(I.id==='lantern'){for(let k=0;k<5;k++){const p=pickT(grass)||pickT(sand);if(p)solidDeco(artRock(false,3),p[0],p[1])}for(let k=0;k<3;k++){const p=pickT(grass);if(p&&freeG(W,p[0],p[1]))treeAt(W,p[0],p[1],3)}}
+    const n=NPC[I.id];if(n){const nx=(x-3)*16+8,ny=(y+2)*16+12;W.keepers.push({id:n[1],x:nx,y:ny,dir:'down'});W.npcs.push({island:I.id,n:n[0],x:nx,y:ny})}}
+  W.lakeCenter={x:L.x*16,y:L.y*16}}
+function lakeOpen(){return!!(typeof S!=='undefined'&&S&&S.story&&S.story.lake)}
 
 /* ================= game state (save v7, Gullhaven) ================= */
 const SAVE_KEY='gullhaven.save';
@@ -2703,6 +2960,7 @@ function boatAct(){const b=player.boat;if(!b)return null;const z=zoneAtPx(b.x,b.
   for(const s of WORLD.salvage)if(!s.dead&&Math.hypot(s.x-b.x,s.y-b.y)<30)return{label:'Grapple',icon:'grapple',act:()=>startSalvage(s)};
   if(Math.hypot(WORLD.spots.fuel.x-b.x,WORLD.spots.fuel.y-b.y)<56&&S.gear.engine>0&&S.fuel<fuelCap()-1)return{label:'Refuel',icon:'fuel',act:refuel};
   if(Math.abs(b.v)>14)return null;const tie=canTieUp();if(tie&&Math.abs(b.v)<6&&(tileT(WORLD,Math.floor(tie.x/16),Math.floor(tie.y/16))==='pr'||!z||z==='harbour'))return{label:'Tie up',icon:'anchor',act:tieUp};
+  if(z&&ZONES[z].need>boatTier()){const need=BOATS.find(x=>x.tier>=ZONES[z].need);return{label:'Too rough',icon:'storm',act:()=>toast(`Too rough to fish ${ZONES[z].n} from a ${BOATI[b.k].n.toLowerCase()}. You need a ${need?need.n.toLowerCase():'bigger boat'}.`)}}
   return z?{label:'Cast',icon:'rod_'+S.gear.rod,act:()=>startFishing({x:b.x+Math.cos(b.h)*40,y:b.y+Math.sin(b.h)*40,zone:z,boat:true})}:null}
 // the second button: pots from the boat, bait choice on foot
 function secondAct(){if(player.boat){const z=zoneAtPx(player.boat.x,player.boat.y);if(z&&!['blue'].includes(z))return{label:S.pots.length>=potCap()?'Pots out':'Drop pot',icon:'pot',act:dropPot};return null}return{label:'Bait',icon:'bait_'+S.baitSel,act:()=>openPanel('hold','bait')}}
@@ -2717,7 +2975,7 @@ function setupWorldActs(){const Sc=WORLD,s=Sc.spots;
   for(const a of Sc.islandActs||[])act(Sc,a.x,a.y,20,a.label,a.icon||'talk',()=>a.kind==='shop'?openPanel(a.shopKind==='home'?'home':'shop',a.shopKind==='home'?null:a.shopKind):openPanel('island',a.id));
   act(Sc,s.tide.x,s.tide.y,18,'Tide board','tide',()=>openPanel('weather'));act(Sc,s.notice.x,s.notice.y,18,'Notice board','talk',()=>openPanel('notice'));
   act(Sc,s.bait.x,s.bait.y,20,'Bait stall','bait_prawn',()=>openPanel('shop','bait'));act(Sc,s.fuel.x,s.fuel.y,18,'Fuel pump','fuel',refuel);
-  for(const h of(Sc.houses||[]))act(Sc,h.x,h.y,14,'Knock','door',()=>knock(h))}
+  for(const h of(Sc.houses||[]))act(Sc,h.x,h.y,14,'Knock','door',()=>knock(h));wildsActs()}
 function knock(h){const lines=['Nobody home. A gull watches you from the gutter.','"Out on the water, love. Try the tavern later."','A dog barks. Nobody answers.','"If you\'re selling bait, I\'ve got plenty!"','A note on the door: Gone fishing.'];toast(lines[(Math.abs(hashStr(h.x+','+h.y))+envAt().tday)%lines.length])}
 function refuel(){if(S.gear.engine===0){toast('Oars don\'t need fuel. Buy an outboard at the Boatyard.');return}const need=Math.ceil(fuelCap()-S.fuel);if(need<=0){toast('Your tank is full.');return}const cost=need*2;if(S.shells<cost){const can=Math.floor(S.shells/2);if(can<=0){toast('Fuel is 2 Shells a litre.','warn');return}S.fuel+=can;S.shells-=can*2}else{S.fuel+=need;S.shells-=cost}markDirty();updHUD();sfx('buy');toast(`Tank ${Math.round(S.fuel)}/${fuelCap()} L.`)}
 /* ---------- catches ---------- */
@@ -2772,7 +3030,7 @@ function marketMul(e){const E=envAt();if(e.cat!=='fish'&&e.cat!=='legend')return
 let zoneWarnT=0;
 function boatTier(){return S.boat?BOATI[S.boat].tier:0}
 function navOK(x,y,quiet){if(x<4||y<4||x>WORLD.w*16-4||y>WORLD.h*16-4)return false;const tx=Math.floor(x/16),ty=Math.floor(y/16);const i=ty*WORLD.w+tx;if(!WORLD.nav[i])return false;
-  const z=WORLD.zone[i];if(z!==255){const Z=ZONES[ZONE_ORDER[z]];if(Z.need>boatTier()){if(!quiet&&performance.now()>zoneWarnT){zoneWarnT=performance.now()+3500;const need=BOATS.find(b=>b.tier>=Z.need);toast(`The ${Z.n} needs a ${need?need.n.toLowerCase():'bigger boat'} or better.`,'warn');sfx('error')}return false}}return true}
+  return true}
 function boatSpeedMax(){const B=BOATI[player.boat.k];const eng=GEAR.engine[S.gear.engine];const fuel=eng.burn===0||S.fuel>0;const E=envAt();
   let m=(fuel?eng.speed:1)*B.spd*(S.coop==='gullwing'?1.1:1)*(1+.03*myCoopFleetLvl());if(E.sky==='storm'&&B.storm<2)m*=.7;return 44*m}
 function boatUpdate(dt,mx,my){const b=player.boat;if(!b)return;const maxV=boatSpeedMax();let thr=0;
@@ -2783,7 +3041,7 @@ function boatUpdate(dt,mx,my){const b=player.boat;if(!b)return;const maxV=boatSp
   const E=envAt();const drift=E.wind*(E.sky==='storm'?7:2);
   const nx=b.x+Math.cos(b.h)*b.v*dt+Math.cos(E.t/9000)*drift*dt,ny=b.y+Math.sin(b.h)*b.v*dt+Math.sin(E.t/11000)*drift*dt*.6;
   const bow=[nx+Math.cos(b.h)*12,ny+Math.sin(b.h)*12];
-  if(navOK(nx,ny,true)&&navOK(bow[0],bow[1],b.v<4)){b.x=nx;b.y=ny}else{navOK(bow[0],bow[1],false);if(Math.abs(b.v)>16){sfx('thud');splash(bow[0],bow[1],5)}b.v*=-.2;b.tgt=null}
+  if(navOK(nx,ny,true)&&navOK(bow[0],bow[1],b.v<4)){b.x=nx;b.y=ny}else{navOK(bow[0],bow[1],false);if(Math.abs(b.v)>16){sfx('thud');splash(bow[0],bow[1],5);hullHit(Math.abs(b.v)/10)}b.v*=-.2;b.tgt=null}
   const eng=GEAR.engine[S.gear.engine];if(eng.burn>0&&thr>0&&S.fuel>0){S.fuel=Math.max(0,S.fuel-eng.burn*Math.abs(b.v)*dt/16/9);if(S.fuel===0)toast('Out of fuel! Rowing home.','warn');markDirty()}
   player.x=b.x;player.y=b.y;player.moving=Math.abs(b.v)>3;player.dir=faceFrom(Math.cos(b.h),Math.sin(b.h),player.dir);
   if(Math.abs(b.v)>12){b.wt=(b.wt||0)+dt;if(b.wt>.06){b.wt=0;const k=-14-Math.random()*4;WAKE.push({x:b.x+Math.cos(b.h)*k+(Math.random()-.5)*6,y:b.y+Math.sin(b.h)*k+(Math.random()-.5)*6,t:1.2,s:Math.abs(b.v)/60})}}
@@ -2791,7 +3049,7 @@ function boatUpdate(dt,mx,my){const b=player.boat;if(!b)return;const maxV=boatSp
 const WAKE=[];
 function updWake(dt){for(let i=WAKE.length-1;i>=0;i--){WAKE[i].t-=dt;if(WAKE[i].t<=0)WAKE.splice(i,1)}}
 function sailTo(wx,wy){const b=player.boat;const tx=Math.floor(wx/16),ty=Math.floor(wy/16);if(!navOK(wx,wy,false))return false;
-  const pass=(x,y)=>{if(x<0||y<0||x>=WORLD.w||y>=WORLD.h)return false;const i=y*WORLD.w+x;if(!WORLD.nav[i])return false;const z=WORLD.zone[i];return z===255||ZONES[ZONE_ORDER[z]].need<=boatTier()};
+  const pass=(x,y)=>{if(x<0||y<0||x>=WORLD.w||y>=WORLD.h)return false;return!!WORLD.nav[y*WORLD.w+x]};
   const path=findPathP(pass,WORLD.w,WORLD.h,Math.floor(b.x/16),Math.floor(b.y/16),tx,ty,20000);if(!path){toast("Can't find a way through.");return false}
   const pts=path.map(p=>({x:p.tx*16+8,y:p.ty*16+8}));const simp=[];let last={x:b.x,y:b.y};for(let i=0;i<pts.length;i++){if(i===pts.length-1||!losNav(last,pts[i+1])){simp.push(pts[i]);last=pts[i]}}if(!simp.length)simp.push({x:wx,y:wy});simp[simp.length-1]={x:wx,y:wy};b.tgt=simp;tapFx={x:wx,y:wy,t:.5};return true}
 function losNav(a,b){const d=Math.hypot(b.x-a.x,b.y-a.y);const n=Math.ceil(d/6);for(let i=1;i<=n;i++){const k=i/n;if(!navOK(a.x+(b.x-a.x)*k,a.y+(b.y-a.y)*k,true))return false}return true}
@@ -2915,12 +3173,12 @@ function randomWaterIn(z){const zi=ZONE_ORDER.indexOf(z);for(let k=0;k<60;k++){c
 function nearFeatures(x,y){const n={};for(const h of HOTS)if(Math.hypot(h.x-x,h.y-y)<56)n[h.kind]=true;return n}
 function shadowAt(x,y,r){let best=null,bd=r||40;for(const s of SHADOWS){const d=Math.hypot(s.x-x,s.y-y);if(d<bd){bd=d;best=s}}return best}
 /* talking to people */
-function lifeActs(consider){for(const f of FOLK){consider(f.x,f.y,18,{label:'Talk to '+f.n,icon:'talk',act:()=>talkFolk(f)})}}
+function lifeActs(consider){for(const f of FOLK){consider(f.x,f.y,18,{label:'Talk to '+f.n,icon:'talk',act:()=>talkFolk(f)})}catActs(consider)}
 function talkFolk(f){f.talk=4;f.dir=faceFrom(player.x-f.x,player.y-f.y,f.dir);f.bubble={text:folkLine(f),t:5}}
 function folkLine(f){const r=Math.random();const unl=CAT.filter(e=>(e.cat==='fish'||e.cat==='legend')&&!logged(e.id)&&e.cp&&!e.cp.flags.includes('oddone'));
   if(r<.45&&unl.length){const e=unl[Math.floor(Math.random()*unl.length)];return`I hear the ${e.n}... ${e.hint.replace(/^Bites |^Sighted /,'').replace(/\.$/,'')}.`}
   const E=envAt();const lines=[`Tide's ${E.tideState} right now. ${E.tide<0?'Good time to comb the beach.':'Fish come in close on a high tide.'}`,`${E.nextSky==='storm'?'Storm coming. Big sharks love it, small boats hate it.':E.sky==='storm'?'Batten down! Only a skiff or bigger should be out in this.':'Weather looks '+E.nextSky+' next.'}`,
-    `Catch of the Day at the market is ${catchOfDay(E.day).n}. Double price!`,`${cupStandings()[0]?COOPI[cupStandings()[0].id].s:''} are leading today's Cup.`,'Ice your catch. A fresh fish sells for twice a tired one.','Cast at a fish shadow and you get that fish, more or less.','The workshop has new furniture. A bookshelf makes a cottage feel lived in.','Old Gravel-Jaw only comes up in storms. Strong line, mind.'];return lines[Math.floor(Math.random()*lines.length)]}
+    `Catch of the Day at the market is ${catchOfDay(E.day).n}. Double price!`,`${cupStandings()[0]?COOPI[cupStandings()[0].id].s:''} are leading today's Cup.`,'Ice your catch. A fresh fish sells for twice a tired one.','Cast at a fish shadow and you get that fish, more or less.','The workshop has new furniture. A bookshelf makes a cottage feel lived in.','Old Gravel-Jaw only comes up in storms. Strong line, mind.','There was a lake in the south wood, behind a gate. Four riddles open it, they say.','Storms chew up little boats. Stay in the harbour or buy something sturdier.','The Cat Caf\u00e9 cats will follow you home if you are kind to them.'];return lines[Math.floor(Math.random()*lines.length)]}
 function folkMutter(f){return['Lovely day for it.','Smells like rain.','Ahoy!','Gulls stole my chips again.','Anyone seen my cat?','Bait prices, honestly.'][Math.floor(Math.random()*6)]}
 
 /* ================= crew fishing trips =================
@@ -2937,7 +3195,7 @@ const crewIsNft=c=>c.id.startsWith('nft:');
 const crewAv=c=>crewIsNft(c)?+c.id.slice(4):9000+(+c.id.slice(5))*37;
 const crewName=c=>crewIsNft(c)?nftName(+c.id.slice(4)):HAND_NAMES[(+c.id.slice(5))%HAND_NAMES.length];
 function hireHand(){const n=S.hired||0;if(n>=CFG.CREW.maxHired){toast('Your crew bunkhouse is full.');return}const cost=CFG.CREW.hireShells[n];if(!payShells(cost))return;S.hired=n+1;S.crew.push({id:'hand:'+n,lvl:1,xp:0,trip:null});markDirty();toast(`${HAND_NAMES[n]} signs on. Send them out from the Crew panel.`,'lvl');renderPanel()}
-function crewZones(){return ZONE_ORDER.filter(z=>ZONES[z].need<=Math.max(1,boatTier()))}
+function crewZones(){return ZONE_ORDER.filter(z=>z!=='lake'&&ZONES[z].need<=Math.max(1,boatTier()))}
 async function sendTrip(c,zone,ti){const T=CFG.CREW.trips[ti];if(c.trip){toast('Already out.');return}if(!S.licence){toast('Crew fish under your licence. Get one at the Harbourmaster.','warn');return}
   if(CHAIN.live){const r=await NET.req({t:'crew',crew:c.id,zone,trip:ti,lvl:c.lvl});if(!r.ok){toast(r.err,'warn');return}applyAcct(r.acct);c.trip={zone,trip:ti,start:r.start,end:r.end,server:1}}
   else{if(!payShells(T.fee))return;feeLog('crew',T.fee);S.mpool=S.mpool||{put:0,paid:0};S.mpool.cput=(S.mpool.cput||0)+Math.round(T.fee*CFG.CREW.split.pool);const now=Date.now();c.trip={zone,trip:ti,start:now,end:now+T.min*60000,seed:Math.floor(Math.random()*1e9)}}
@@ -2954,6 +3212,78 @@ function crewFromServer(trips){if(!trips)return;syncCrew();for(const c of S.crew
 function showHaul(c,haul,shells,pts,reel,m){sfx(m>=3?'fanfare2':'coin');const by={};for(const h of haul)by[h.id]=(by[h.id]||0)+1;const top=Object.entries(by).sort((a,b)=>CATI[b[0]].r-CATI[a[0]].r||b[1]-a[1]).slice(0,4).map(([id,n])=>`${n} ${CATI[id].n}`).join(', ');
   toast(`${crewName(c)} is back: ${haul.length} fish (${top||'nothing much'}). +${fmt(shells)} Shells${pts?`, +${pts} Cup points`:''}.`,'rare');if(m>=3)burst(player.x,player.y-20,['#ffd24d','#fff6c0','#7fdcc0'],18);renderPanel();updHUD()}
 function crewReady(){return(S.crew||[]).filter(c=>c.trip&&Date.now()>=c.trip.end).length}
+
+/* ================= the wider world: hull damage and storms, the Mirrorlake puzzle, town cats and the Cat Caf\u00e9 =================
+   Open water is free to cross in any boat, but rough water beyond your boat's rating (and any storm) wears the hull down.
+   A swamped boat is towed back to the harbour. */
+const HULL={repairPerHp:6,tow:150};
+function hullOf(k){S.hull=S.hull||{};const v=S.hull[k];return v==null?100:v}
+function setHull(k,v){S.hull=S.hull||{};S.hull[k]=clamp(v,0,100);markDirty()}
+let hullStep=4,roughZone=null;
+function hullHit(n){if(player.boat){setHull(player.boat.k,hullOf(player.boat.k)-n);if(hullOf(player.boat.k)<=0)wreckBoat()}}
+function hullTick(dt){const b=player.boat;if(!b||scene!==WORLD||MG&&MG.type!=='fish')return;const z=b.zone;if(!z){roughZone=null;return}const E=envAt(),B=BOATI[b.k],Z=ZONES[z];
+  const over=Math.max(0,(Z.need||0)-B.tier);let d=over*.4;
+  if(E.sky==='storm'&&!['harbour','lake','estuary'].includes(z))d+=({shallows:.5,reef:.9,kelp:1,wreck:1.3,blue:1.6,deep:1.9}[z]||1)*Math.max(.08,1-B.storm*.24);
+  if(over&&roughZone!==z){roughZone=z;const need=BOATS.find(x=>x.tier>=Z.need);toast(`Rough water for a ${B.n.toLowerCase()}! ${Z.n} is ${need?need.n.toLowerCase():'big boat'} country. Your hull will take a beating.`,'warn');sfx('error')}if(!over)roughZone=null;
+  if(!d)return;const h=hullOf(b.k)-d*dt;setHull(b.k,h);const step=Math.ceil(h/25);if(step<hullStep&&h>0){hullStep=step;toast(`Hull at ${Math.round(h)}%. ${h<30?'Head for the harbour!':'She is taking water.'}`,'warn');sfx('thud')}if(h<=0)wreckBoat()}
+function wreckBoat(){const b=player.boat;if(!b)return;const k=b.k;closeMG();player.boat=null;S.boatPos=null;setHull(k,35);hullStep=4;
+  const lost=Math.floor(S.hold.length/3);for(let i=0;i<lost;i++)S.hold.splice(Math.floor(Math.random()*S.hold.length),1);const fee=Math.min(S.shells,HULL.tow);S.shells-=fee;markDirty();
+  const f=$('fade');f.hidden=false;f.textContent='Towed home...';sfx('rumble');
+  setTimeout(()=>{f.hidden=true;const sp=WORLD.spots.spawn;setScene(WORLD,sp.x,sp.y,'up');updHUD();toast(`Your ${BOATI[k].n.toLowerCase()} was swamped! The harbour tug towed you home${fee?' for '+fee+' Shells':''}${lost?' and '+lost+' fish went overboard':''}. Repairs at the Boatyard.`,'warn')},1500)}
+function repairCost(k){return Math.ceil((100-hullOf(k))*HULL.repairPerHp)}
+function hullRow(){if(!S.boat)return el('div');const k=S.boat,h=hullOf(k),c=repairCost(k);return itemRow(boatIcon(k),'Hull '+Math.round(h)+'%',h>=100?'Shipshape. Storms and rough water wear it down.':'Repairs cost '+fmt(c)+' Shells',h>=100?el('b',null,'OK'):btn('Repair',()=>{if(!payShells(c))return;setHull(k,100);hullStep=4;sfx('buy');toast('Good as new.');renderPanel()},'sm gold'))}
+function updHullChip(){const c=$('hullChip');if(!c)return;const b=player.boat;const E=envAt();const show=b&&(hullOf(b.k)<100||E.sky==='storm');c.hidden=!show;if(!show)return;const h=hullOf(b.k);$('hullTxt').textContent='Hull '+Math.round(h)+'%';$('hullSub').textContent=E.sky==='storm'?'Storm! Small boats suffer':roughZone?'Rough water':'Repair at the Boatyard';paintIcon($('hullIc'),uiIcon(E.sky==='storm'?'storm':'boat'))}
+/* ---------- Mirrorlake: four riddles, one gate ---------- */
+function storyInit(){S.story=S.story||{};S.story.clues=S.story.clues||{};S.story.dials=Array.isArray(S.story.dials)&&S.story.dials.length===4?S.story.dials:[4,5,6,7];S.catLove=S.catLove||{};S.hull=S.hull||{}}
+function applyGate(){if(WORLD&&WORLD.lakeGate)for(const i of WORLD.lakeGate.tiles)WORLD.sol[i]=lakeOpen()?0:1}
+function clue(i){const c=STORY_CLUES[i];const fresh=!S.story.clues[c.id];S.story.clues[c.id]=1;markDirty();toast(`${c.who}: "${c.text}"`,fresh?'lvl':null);if(fresh){sfx('pin');const n=Object.keys(S.story.clues).length;if(n===4&&!lakeOpen())setTimeout(()=>toast('You have all four riddles. The old gate in the south wood is waiting.','rare'),3500)}}
+const NPC_TALK={tideglass:['"Tideglass grows the best bait in the sea, and the slowest gossip."','"The wardens left a riddle with my gran. I keep it for anyone who asks."'],mossbank:['"Mind the flowers! Everything here grows sideways from the salt."','"There was a gate in the south wood, once. My riddle opens a quarter of it."'],lantern:['"Out here the kelp sings when a storm comes. Head home when it does."','"Old wardens, old lake, old riddle. Here, take it."']};
+function wildsActs(){storyInit();applyGate();const W=WORLD,s=W.spots;
+  if(W.lakeGate){const gy=Math.min(...W.lakeGate.tiles.map(i=>Math.floor(i/W.w)));act(W,W.lakeGate.x,gy*16-4,22,'Old gate','map',()=>lakeOpen()?toast('The gate stands open. Mirrorlake lies beyond.'):openPanel('gate'))}
+  if(s.carving)act(W,s.carving.x,s.carving.y,20,'Read the old carving','book',()=>clue(0));
+  for(const n of W.npcs||[]){const i=STORY_CLUES.findIndex(c=>c.id===n.island);act(W,n.x,n.y,20,'Talk to '+n.n,'talk',()=>{const l=NPC_TALK[n.island];if(S.story.clues[n.island]&&Math.random()<.5){toast(n.n+': '+l[0]);return}toast(n.n+': '+l[1]);setTimeout(()=>clue(i),1800)})}
+  if(s.lakeSign)act(W,s.lakeSign.x,s.lakeSign.y,18,'Signpost','map',()=>toast('MIRRORLAKE. Freshwater only. Mind the cod.'));
+  if(s.cafe)act(W,s.cafe.x,s.cafe.y,16,'Cat Caf\u00e9','door',()=>openPanel('cafe'));
+  if(s.bakery)act(W,s.bakery.x,s.bakery.y,16,'Bakery','door',()=>toast(['Nora: "Fresh loaves at dawn. Bread dough bait is always free, love."','Nora: "The cats get the crusts. Don\'t tell the caf\u00e9."','The bakery smells of cinnamon and warm bread.'][Math.floor(Math.random()*3)]));
+  if(s.fountain)act(W,s.fountain.x,s.fountain.y,22,'Toss a Shell','shell',()=>{if(!payShells(1))return;sfx('coin');splash(s.fountain.x,s.fountain.y-20,4);toast(['You wish for a big one.','You wish for calm seas.','You wish for a legend on the line.','A gull eyes your wish suspiciously.'][Math.floor(Math.random()*4)])});
+  spawnCats()}
+function panelGate(body,H){head('The old gate','Four rusted dials on a brass lock',uiIcon('map'));tabs(null);
+  if(lakeOpen()){H('p','The gate stands open. Mirrorlake is yours to fish.');return}
+  H('p','Cut into the pillar: "Four keepers of the sea each hold a mark. Ask at the point, and on every isle." Tap a dial to turn it.');
+  const l=el('div','list');STORY_CLUES.forEach((c,i)=>{const got=S.story.clues[c.id];l.append(itemRow(uiIcon(got?'book':'map'),got?c.text:'Riddle '+(i+1)+': not found yet',got?c.who:'Somewhere around the sea'))});body.append(l);
+  const d=S.story.dials;const row=el('div','row');row.style.cssText='margin:12px 0;justify-content:center;gap:10px';d.forEach((v,i)=>{const b=el('button','btn alt');b.setAttribute('aria-label','Dial '+(i+1)+': '+LOCK_SYMS[v]);const ic=cvIcon(uiIcon(LOCK_SYMS[v]));ic.style.width=ic.style.height='32px';b.append(ic);b.onclick=()=>{d[i]=(d[i]+1)%LOCK_SYMS.length;sfx('click');markDirty();renderPanel()};row.append(b)});body.append(row);
+  body.append(btn('Try the lock',()=>{if(!d.every((v,i)=>LOCK_SYMS[v]===STORY_CLUES[i].sym)){sfx('error');toast('The dials grind, but the lock holds.');return}
+    S.story.lake=1;markDirty();applyGate();closePanel();sfx('fanfare2');addShells(500);bumpQuest('zone','lake');toast('The old gate swings open! Mirrorlake: freshwater fish, and an old cod nobody has landed. +500 Shells','rare')},'gold'))}
+/* ---------- the town cats (art from Catoshi's Catch) ---------- */
+const TOWN_CATS=[];let petF=null;
+function spawnCats(){TOWN_CATS.length=0;const s=WORLD.spots;const I=k=>(WORLD.islands||[]).find(i=>i.id===k);
+  const homes=[s.cafe,s.cafe,s.cafe,s.fountain,s.spawn,s.carving,I('tideglass')&&I('tideglass').bounty,I('mossbank')&&I('mossbank').bounty,s.lakeSign,s.market];
+  COATS.forEach((c,i)=>{const h=homes[i]||s.spawn;if(!h)return;const x=h.x+((i*37)%5-2)*10,y=h.y+8+((i*13)%3)*6;TOWN_CATS.push({k:c.k,n:c.name,x,y,hx:x,hy:y,dir:0,f:0,ft:0,t:Math.random()*4,mv:null,heart:0})})}
+function catsTick(dt){for(const c of TOWN_CATS){if(c.heart>0)c.heart-=dt;c.t-=dt;
+    if(c.mv){const dx=c.mv.x-c.x,dy=c.mv.y-c.y,d=Math.hypot(dx,dy);if(d<1.5||c.t<=0){c.mv=null;c.t=3+Math.random()*7;continue}const sp=Math.min(d,20*dt),nx=c.x+dx/d*sp,ny=c.y+dy/d*sp;if(!walkablePx(nx,ny)){c.mv=null;c.t=2;continue}c.x=nx;c.y=ny;c.dir=Math.abs(dx)>Math.abs(dy)?(dx<0?1:2):(dy<0?3:0);c.ft+=dt;if(c.ft>.15){c.ft=0;c.f=c.f?0:1}}
+    else if(c.t<=0){const a=Math.random()*6.28,r=10+Math.random()*40;const tx=c.hx+Math.cos(a)*r,ty=c.hy+Math.sin(a)*r*.6;if(walkablePx(tx,ty)){c.mv={x:tx,y:ty};c.t=5}else c.t=1.5;c.f=0}}
+  // your adopted cat trots after you
+  if(S.pet&&COATI[S.pet]){if(!petF||petF.sc!==scene){petF={x:player.x-12,y:player.y+4,dir:0,f:0,ft:0,sc:scene}}const tx=player.x-(player.dir==='right'?14:player.dir==='left'?-14:0),ty=player.y+(player.dir==='up'?12:player.dir==='down'?-10:4);
+    const dx=tx-petF.x,dy=ty-petF.y,d=Math.hypot(dx,dy);if(d>60){petF.x=tx;petF.y=ty}else if(d>6){const sp=Math.min(d,(d>24?90:60)*dt);petF.x+=dx/d*sp;petF.y+=dy/d*sp;petF.dir=Math.abs(dx)>Math.abs(dy)?(dx<0?1:2):(dy<0?3:0);petF.ft+=dt;if(petF.ft>.13){petF.ft=0;petF.f=petF.f?0:1}}else petF.f=0}}
+function drawCats(list,t,Sc){const one=(k,x,y,dir,f,heart)=>list.push({sy:y,draw:()=>{const im=catWalk(k,dir,f);ctx.drawImage(im,Math.round(x-camX)-10,Math.round(y-camY)-17);if(heart>0)ctx.drawImage(artHeart(),Math.round(x-camX)-3,Math.round(y-camY)-26-Math.round((1.5-heart)*8))}});
+  if(Sc===WORLD)for(const c of TOWN_CATS){if(c.k===S.pet||!inView(c.x-12,c.y-20,24,24))continue;one(c.k,c.x,c.y,c.dir,c.mv?c.f:0,c.heart)}
+  if(S.pet&&petF&&petF.sc===Sc&&!player.boat)one(S.pet,petF.x,petF.y,petF.dir,petF.f,0)}
+function catActs(consider){for(const c of TOWN_CATS){if(c.k===S.pet)continue;consider(c.x,c.y-4,18,{label:'Pet '+c.n,icon:'hand',act:()=>petCat(c)})}}
+function petCat(c){c.mv=null;c.t=4;c.heart=1.5;c.dir=0;sfx('purr');const now=Date.now();S.catPet=S.catPet||{};const love=S.catLove[c.k]||0;
+  if(now-(S.catPet[c.k]||0)>90000&&love<5){S.catPet[c.k]=now;S.catLove[c.k]=love+1;markDirty();toast(love+1>=5?`${c.n} adores you! Visit the Cat Caf\u00e9 to take ${c.n} home.`:`${c.n} purrs. (${'\u2665'.repeat(love+1)}${'\u2661'.repeat(4-love)})`,love+1>=5?'rare':null)}
+  else toast(`${c.n} ${['purrs happily.','headbutts your hand.','rolls over for a belly rub. It is a trap.','blinks slowly at you.'][Math.floor(Math.random()*4)]}`)}
+function panelCafe(body,H){head('Cat Caf\u00e9','Tea, cake and the harbour cats',uiIcon('home'));tabs(null);
+  H('p','Every cat in Gullhaven drops by. Pet a cat around town to earn its trust (one heart every couple of minutes). At five hearts it will come home with you and follow you about.');
+  const l=el('div','list');for(const c of COATS){const love=S.catLove[c.k]||0,mine=S.pet===c.k;
+    l.append(itemRow(catFace(c.k),c.name+' \u00b7 '+c.n,love?'\u2665'.repeat(love)+'\u2661'.repeat(5-love):'Not met yet. Look around town.',mine?btn('Send home',()=>{S.pet=null;petF=null;markDirty();renderPanel()},'sm alt'):love>=5?btn('Adopt',()=>{S.pet=c.k;petF=null;markDirty();sfx('purr');toast(c.name+' is your companion now.','lvl');renderPanel()},'sm gold'):null))}
+  body.append(l)}
+function worldTick(dt){catsTick(dt);hullTick(dt);worldTick.t=(worldTick.t||0)+dt;if(worldTick.t>.5){worldTick.t=0;updHullChip()}}
+const EXTRA_PANELS={gate:panelGate,cafe:panelCafe};
+// background music follows where you are
+function musMode(){if(typeof gachaOpen!=='undefined'&&gachaOpen)return'arcade';const h=ghour(),night=h<6||h>=20.5;if(!scene||!WORLD)return night?'night':'day';
+  if(scene!==WORLD)return scene.homeOwner?'home':'inside';const E=envAt();if(E.sky==='storm')return'storm';const px=player.x/16,py=player.y/16;
+  if(Math.hypot(px-LAKE.x,(py-LAKE.y)*1.3)<LAKE.RX)return'lake';if((WORLD.islands||[]).some(I=>Math.hypot(px-I.x,py-I.y)<I.r+6))return'island';
+  if(player.boat){const z=player.boat.zone;if(z==='blue'||z==='deep')return'deep';if(z&&z!=='harbour')return'sea'}return night?'night':'day'}
 
 /* ================= rendering: the coast, the sea, boats, people, weather and light ================= */
 const cv=$('cv');const ctx=cv.getContext('2d');let VW=320,VH=240,SCALE=2,camX=0,camY=0;
@@ -3016,6 +3346,7 @@ function render(t){const Sc=scene;const ww=Sc.w*16,wh=Sc.h*16;const fx0=player.b
     if(player.boat){const b=player.boat;boatDraw(list,b.k,b.x,b.y,b.h,S.paint[b.k],S.coop,{id:ACTIVE(),f:MG&&MG.type==='fish'?(Math.floor(t*6)%2?1:2):0},t,{name:S.boatName||null,col:'#bfe8f4',decor:boatDetail(b.k)})}
     for(const f of FOLK){if(!inView(f.x-10,f.y-30,20,34))continue;list.push({sy:f.y,draw:()=>{drawChar(ctx,f.id,f.x-camX,f.y-camY,f.dir,f.moving?WALK[f.f]:0);if(f.bubble)bubble(ctx,f.bubble.text,f.x-camX,f.y-camY-26)}})}
     for(const c of CRABS){if(!inView(c.x-6,c.y-6,12,12))continue;list.push({sy:c.y,draw:()=>ctx.drawImage(artCrabBeach(Math.floor(t*8)%2),Math.round(c.x-camX)-6,Math.round(c.y-camY)-5)})}}
+  drawCats(list,t,Sc);
   for(const kp of(Sc.keepers||[]))list.push({sy:kp.y,draw:()=>drawChar(ctx,kp.id,kp.x-camX,kp.y-camY,kp.dir||'down',Math.floor(t*1.5+kp.x)%7===0?1:0)});
   for(const[k,pe]of NET.peers){if(pe.sc!==Sc.name)continue;const col=pe.co?COOPI[pe.co].lt==='#ffffff'?'#bfe8f4':COOPI[pe.co].lt:'#7fdcc0';
     if(pe.b&&Sc===WORLD){boatDraw(list,pe.b.k,pe.x,pe.y,pe.b.h,pe.b.p,pe.co,{id:pe.id,f:pe.fish?(Math.floor(t*6)%2?1:2):0},t,{name:pe.b.n||pe.n,col,decor:pe.b.de,fishing:pe.fish});continue}
@@ -3126,7 +3457,7 @@ function update(dt){gameT+=dt;
     if(scene&&scene.exitFn&&p.y>(scene.h-1)*16+2&&!MG){const f=scene.exitFn;cancelPath();f();return}}
   if(tapFx){tapFx.t-=dt;if(tapFx.t<=0)tapFx=null}
   if(MG){MG.update(dt);if(MG){mgTick(dt);drawMG()}}
-  lifeUpdate(dt);updWake(dt);updateAmbient(dt);
+  lifeUpdate(dt);worldTick(dt);updWake(dt);updateAmbient(dt);
   for(const pe of NET.peers.values()){const k=Math.min(1,dt*10);pe.x+=(pe.tx-pe.x)*k;pe.y+=(pe.ty-pe.y)*k;pe.ft+=dt;if(pe.ft>.12){pe.ft=0;pe.f=(pe.f+1)%4}if(pe.bubble){pe.bubble.t-=dt;if(pe.bubble.t<=0)pe.bubble=null}if(pe.emote){pe.emote.t-=dt;if(pe.emote.t<=0)pe.emote=null}}
   if(p.bubble){p.bubble.t-=dt;if(p.bubble.t<=0)p.bubble=null}if(p.emote){p.emote.t-=dt;if(p.emote.t<=0)p.emote=null}
   for(let i=floats.length-1;i>=0;i--){floats[i].t-=dt;floats[i].y-=dt*14;if(floats[i].t<=0)floats.splice(i,1)}
@@ -3205,7 +3536,7 @@ function updDock(){document.querySelectorAll('#dock button').forEach(b=>b.classL
 function paintDock(){document.querySelectorAll('#dock canvas[data-i]').forEach(c=>paintIcon(c,uiIcon(c.dataset.i)));paintIcon($('icShell'),uiIcon('shell'));paintIcon($('icReel'),uiIcon('reel'));paintIcon($('gIc'),uiIcon('reel'));paintIcon($('chatBtn').querySelector('canvas'),uiIcon('chat'))}
 document.querySelectorAll('#dock button').forEach(b=>b.addEventListener('click',()=>{const p=b.dataset.p;if(p==='book')return toggleBook();togglePanel(p)}));
 $('who').addEventListener('click',()=>openPanel('menu','me'));$('quest').addEventListener('click',()=>openPanel('quest'));$('miniBtn').addEventListener('click',()=>openPanel('map'));$('env').addEventListener('click',()=>openPanel('weather'));
-$('holdChip').addEventListener('click',()=>openPanel('hold'));$('tripChip').addEventListener('click',()=>openPanel('crew'));$('chatBtn').addEventListener('click',()=>toggleChat());
+$('holdChip').addEventListener('click',()=>openPanel('hold'));$('tripChip').addEventListener('click',()=>openPanel('crew'));$('hullChip').addEventListener('click',()=>openPanel('boatDecor'));$('chatBtn').addEventListener('click',()=>toggleChat());
 /* chat */
 function chatLine(name,txt){const log=$('chatLog');const d=document.createElement('div');const b=document.createElement('b');b.textContent=name+': ';d.append(b,document.createTextNode(txt));log.append(d);while(log.children.length>40)log.firstChild.remove();log.scrollTop=log.scrollHeight;if($('chatBar').hidden)toast(name+': '+txt)}
 function toggleChat(force){const b=$('chatBar');const show=force===true?true:b.hidden;b.hidden=!show;if(show){closePanel();setTimeout(()=>$('chatIn').focus(),30)}updDock()}
@@ -3224,7 +3555,7 @@ function renderPanel(){if($('panel').hidden||!panelName)return;const body=$('pan
   // never rebuild the panel under someone's typing: wait until they leave the field
   const ae=document.activeElement;if(ae&&(ae.tagName==='INPUT'||ae.tagName==='TEXTAREA'||ae.tagName==='SELECT')&&body.contains(ae)){if(!ae.dataset.defer){ae.dataset.defer=1;ae.addEventListener('blur',()=>setTimeout(renderPanel,0),{once:true})}return}
  const st=body.scrollTop;body.innerHTML='';const H=(tag,txt,cls)=>{const e=el(tag,cls,txt);body.append(e);return e};
-  const fn={hold:panelHold,map:panelMap,coop:panelCoop,crew:panelCrew,menu:panelMenu,shop:panelShop,exchange:panelExchange,character:panelCharacter,home:panelHome,boatDecor:panelBoatDecor,island:panelIsland,aquarium:panelAquarium,tavern:panelTavern,licence:panelLicence,weather:panelWeather,notice:panelNotice,quest:panelQuest}[panelName];if(fn)fn(body,H);if(panelRenderKeep)body.scrollTop=st;panelRenderKeep=true}
+  const fn={hold:panelHold,map:panelMap,coop:panelCoop,crew:panelCrew,menu:panelMenu,shop:panelShop,exchange:panelExchange,character:panelCharacter,home:panelHome,boatDecor:panelBoatDecor,island:panelIsland,aquarium:panelAquarium,tavern:panelTavern,licence:panelLicence,weather:panelWeather,notice:panelNotice,quest:panelQuest,...EXTRA_PANELS}[panelName];if(fn)fn(body,H);if(panelRenderKeep)body.scrollTop=st;panelRenderKeep=true}
 let panelRenderKeep=false;
 function priceTag(n,kind){const s=el('span','price');s.append(cvIcon(uiIcon(kind==='reel'?'reel':'shell')),document.createTextNode(fmt(n)));return s}
 function itemRow(img,title,sub,right){const r=el('div','item');if(img)r.append(cvIcon(img));const g=el('div','grow');g.append(document.createTextNode(title));if(sub)g.append(el('small',null,sub));r.append(g);if(right)r.append(right);return r}
@@ -3246,7 +3577,7 @@ function panelMap(body,H){head('Sea chart','Tap a place to walk or sail there',u
   if(t==='zones'){for(const z of ZONE_ORDER){const Z=ZONES[z];const need=BOATS.find(b=>b.tier>=Z.need);const got=CAT.filter(e=>e.z===z);const n=got.filter(e=>logged(e.id)).length;const r=itemRow(null,Z.n,`${Z.need?'Needs a '+need.n.toLowerCase():'From the shore or any boat'} \u00b7 about ${Z.depth} m deep \u00b7 ${n}/${got.length} logged`);r.style.boxShadow=`inset 4px 0 0 ${Z.col}`;body.append(r)}H('p','Better boats reach further grounds. Storms make the open sea dangerous for small boats.');return}
   if(!mapBase)buildMapBase();const scr=el('div','');scr.style.cssText='overflow:auto;max-height:min(58vh,520px);border:2px solid var(--ink);background:#0e1626;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y';const w=el('div','');w.style.cssText='position:relative;width:160%;min-width:520px';
   const c=document.createElement('canvas');c.width=mapBase.width;c.height=mapBase.height;c.style.cssText='width:100%;display:block';c.getContext('2d').drawImage(mapBase,0,0);const g=c.getContext('2d');
-  g.font='bold 9px sans-serif';for(const z of ZONE_ORDER){const zi=ZONE_ORDER.indexOf(z);let sx=0,sy=0,n=0;for(let i=0;i<WORLD.zone.length;i+=7)if(WORLD.zone[i]===zi){sx+=i%WORLD.w;sy+=Math.floor(i/WORLD.w);n++}if(!n)continue;const x=sx/n*8,y=sy/n*8;g.fillStyle='rgba(14,22,38,.7)';const tw=g.measureText(ZONES[z].short).width;g.fillRect(x-tw/2-3,y-7,tw+6,11);g.fillStyle=ZONES[z].need>boatTier()?'#ff9f8a':'#bff8e8';g.fillText(ZONES[z].short,x-tw/2,y+1)}
+  g.font='bold 9px sans-serif';for(const z of ZONE_ORDER){if(z==='lake'&&!lakeOpen())continue;const zi=ZONE_ORDER.indexOf(z);let sx=0,sy=0,n=0;for(let i=0;i<WORLD.zone.length;i+=7)if(WORLD.zone[i]===zi){sx+=i%WORLD.w;sy+=Math.floor(i/WORLD.w);n++}if(!n)continue;const x=sx/n*8,y=sy/n*8;g.fillStyle='rgba(14,22,38,.7)';const tw=g.measureText(ZONES[z].short).width;g.fillRect(x-tw/2-3,y-7,tw+6,11);g.fillStyle=ZONES[z].need>boatTier()?'#ff9f8a':'#bff8e8';g.fillText(ZONES[z].short,x-tw/2,y+1)}
   w.append(c);scr.append(w);const pct=(x,y)=>[x/(WORLD.w*16)*100+'%',y/(WORLD.h*16)*100+'%'];
   const pin=(name,x,y,col,fn)=>{const p=el('button','');p.style.cssText=`position:absolute;transform:translate(-50%,-100%);padding:1px 4px;font-size:10px;background:rgba(14,22,38,.9);border:2px solid var(--ink);color:${col};white-space:nowrap`;p.textContent=name;[p.style.left,p.style.top]=pct(x,y);if(fn)p.onclick=fn;w.append(p);return p};
   for(const[n,k,cls]of POIS){const s=WORLD.spots[k];if(!s)continue;pin(n,s.x,s.y-6,cls==='shop'?'#7fdcc0':cls==='home'?'#ff9fc0':'#ffd24d',()=>{if(scene!==WORLD){toast('Head outside first.');return}if(player.boat){toast('Tie up first, then walk there.');return}closePanel();walkTo({x:s.x,y:s.y,face:'up'})})}
@@ -3254,7 +3585,7 @@ function panelMap(body,H){head('Sea chart','Tap a place to walk or sail there',u
   for(const p of S.pots)pin('Pot',p.x,p.y,'#ffd24d',null);const me=player.boat||player;pin('YOU',me.x,me.y,'#ff7a6b',null);
   c.onclick=ev=>{if(scene!==WORLD)return;const r=c.getBoundingClientRect();const wx=(ev.clientX-r.left)/r.width*WORLD.w*16,wy=(ev.clientY-r.top)/r.height*WORLD.h*16;if(player.boat){if(isWaterPx(wx,wy)){closePanel();sailTo(wx,wy)}}else{const tg=tapTarget(wx,wy);if(tg){closePanel();walkTo(tg)}}};
   for(const I of WORLD.islands||[])pin(I.n,I.bounty.x,I.bounty.y,'#ff9fc0',()=>{if(player.boat&&scene===WORLD){closePanel();sailTo(I.dock.x,I.dock.y)}else openPanel('island',I.id)});
-  body.append(scr);const islands=el('div','list');islands.style.marginTop='10px';for(const I of WORLD.islands||[])islands.append(itemRow(uiIcon('map'),I.n,(S.visitedIslands.includes(I.id)?'Discovered':'Unvisited')+' \u00b7 '+(I.id==='tideglass'?'Any boat':'Dinghy or better'),btn(player.boat?'Set course':'Bounty',()=>{if(player.boat&&scene===WORLD){closePanel();sailTo(I.dock.x,I.dock.y)}else openPanel('island',I.id)},'sm')));body.append(islands);H('p',player.boat?'Tap the water on the chart to set a course. Red names need a bigger boat.':'Tap a place to walk there. Board your boat to sail to the far grounds.');
+  body.append(scr);const islands=el('div','list');islands.style.marginTop='10px';for(const I of WORLD.islands||[])islands.append(itemRow(uiIcon('map'),I.n,(S.visitedIslands.includes(I.id)?'Discovered':'Unvisited')+' \u00b7 '+(I.id==='tideglass'?'Any boat':I.id==='mossbank'?'Rough for small boats':'A skiff or better is wise'),btn(player.boat?'Set course':'Bounty',()=>{if(player.boat&&scene===WORLD){closePanel();sailTo(I.dock.x,I.dock.y)}else openPanel('island',I.id)},'sm')));body.append(islands);H('p',player.boat?'Tap the water on the chart to set a course. Red names need a bigger boat.':'Tap a place to walk there. Board your boat to sail to the far grounds.');
   requestAnimationFrame(()=>{const me2=player.boat||player;scr.scrollLeft=me2.x/(WORLD.w*16)*w.offsetWidth-scr.clientWidth/2;scr.scrollTop=me2.y/(WORLD.h*16)*w.offsetHeight-scr.clientHeight/2})}
 function panelQuest(body,H){head('First season','Learn the harbour',uiIcon('book'));tabs(null);const q=curQuest();if(!q){H('p','You have finished the first season. The harbour is yours.');return}
   const d=el('div','say');d.textContent=q.d;body.append(d);H('p',`Step ${S.quest.i+1} of ${QUESTS.length}${q.goal>1?` \u00b7 ${Math.min(S.quest.prog,q.goal)}/${q.goal}`:''}`);const l=el('div','list');QUESTS.forEach((x,i)=>{const r=itemRow(null,(i<S.quest.i?'Done: ':i===S.quest.i?'Now: ':'')+x.n,null);if(i>S.quest.i)r.style.opacity='.5';l.append(r)});body.append(l)}
@@ -3461,7 +3792,7 @@ function panelHold(body,H){const cap=holdCapTotal();head('Hold',`${S.hold.length
     for(const k of BAIT_ORDER){const B=BAIT[k];const n=baitCount(k);if(k!=='dough'&&!n)continue;const r=itemRow(baitIcon(k),B.n+(k===S.baitSel?' (on the hook)':''),`${n===Infinity?'Endless':n+(B.lure?' owned':' left')} \u00b7 ${B.d}`,k===S.baitSel?el('b',null,'ON'):btn('Use',()=>{S.baitSel=k;markDirty();upd2Button();renderPanel()},'sm'));if(k===S.baitSel)r.classList.add('me');l.append(r)}
     body.append(l);H('p','Buy more at the Tackle Shop or the bait stall on the promenade.');return}
   const l=el('div','list');for(const k of['rod','reel','line','hook','engine','tank','ice','sonar','lamp']){const tier=S.gear[k];const G=GEAR[k][tier];l.append(itemRow(gearIcon(k+'_'+Math.max(0,tier)),GEAR_NAME[k],G?G.n:'None yet'))}
-  if(S.boat){const b=BOATI[S.boat];l.append(itemRow(boatIcon(S.boat),(S.boatName?'"'+S.boatName+'" \u00b7 ':'')+b.n,`Hold ${b.hold} \u00b7 reaches ${ZONE_ORDER.filter(z=>ZONES[z].need<=b.tier).map(z=>ZONES[z].short).join(', ')}`))}
+  if(S.boat){const b=BOATI[S.boat];l.append(itemRow(boatIcon(S.boat),(S.boatName?'"'+S.boatName+'" \u00b7 ':'')+b.n,`Hold ${b.hold} \u00b7 fishes ${ZONE_ORDER.filter(z=>z!=='lake'&&ZONES[z].need<=b.tier).map(z=>ZONES[z].short).join(', ')}`))}
   if(S.gear.engine>0)l.append(itemRow(uiIcon('fuel'),'Fuel',`${Math.round(S.fuel)}/${fuelCap()} L`));body.append(l)}
 /* ---------- shops: market, prices, tackle, bait, boatyard, paint ---------- */
 const SHOP_GROUPS={market:[['market','Sell'],['prices','Prices']],prices:[['market','Sell'],['prices','Prices']],tackle:[['tackle','Tackle'],['bait','Bait']],boatyard:[['boatyard','Boats'],['gearb','Engines & gear'],['paint','Paint & name']],paint:[['boatyard','Boats'],['gearb','Engines & gear'],['paint','Paint & name']]};
@@ -3481,8 +3812,8 @@ function panelShop(body,H){if(!panelCtx||!panelCtx.grp){const inT=scene&&scene.i
   if(t==='bait'){head(grp==='stall'?'Bait stall':'Bait fridge','Fresh every morning',uiIcon('bait_prawn'));const l=el('div','list');
     for(const k of BAIT_ORDER){if(k==='dough')continue;const B=BAIT[k];const n=baitCount(k);const right=el('div','row');right.style.cssText='gap:6px;flex-wrap:nowrap';right.append(btn(`${fmt(B.price)}${B.pack>1?' \u00d7'+B.pack:''}`,()=>{if(!payShells(B.price))return;S.bait[k]=(S.bait[k]||0)+B.pack;if(B.lure&&S.baitSel==='dough')S.baitSel=k;toast(`${B.n}: ${S.bait[k]} ${B.lure?'owned':'in the box'}.`);markDirty();renderPanel()},'sm gold'));
       if(n>0&&S.baitSel!==k)right.append(btn('Use',()=>{S.baitSel=k;markDirty();renderPanel()},'sm alt'));const r=itemRow(baitIcon(k),B.n+(n?` (${n})`:''),B.d,right);if(S.baitSel===k)r.classList.add('me');l.append(r)}body.append(l);return}
-  if(t==='boatyard'){head('Boatyard','Every hull in Gullhaven came out of this shed',uiIcon('boat'));H('p','A boat carries a bigger hold and reaches further grounds. You keep every boat you buy and can switch between them here.');const l=el('div','list');
-    for(const b of BOATS){const own=S.boats.includes(b.k);const cur=S.boat===b.k;const reach=ZONE_ORDER.filter(z=>ZONES[z].need===b.tier).map(z=>ZONES[z].short).join(', ');
+  if(t==='boatyard'){head('Boatyard','Every hull in Gullhaven came out of this shed',uiIcon('boat'));body.append(hullRow());H('p','A boat carries a bigger hold and reaches further grounds. You keep every boat you buy and can switch between them here.');const l=el('div','list');
+    for(const b of BOATS){const own=S.boats.includes(b.k);const cur=S.boat===b.k;const reach=ZONE_ORDER.filter(z=>z!=='lake'&&ZONES[z].need===b.tier).map(z=>ZONES[z].short).join(', ');
       const right=cur?el('b',null,'Yours'):own?btn('Use',()=>{S.boat=b.k;S.boatPos=null;markDirty();toast(`The ${b.n.toLowerCase()} is at your berth.`);renderPanel()},'sm'):btn(fmt(b.price),()=>{if(!payShells(b.price))return;S.boats.push(b.k);S.boat=b.k;S.boatPos=null;if(S.gear.engine>0&&S.fuel<5)S.fuel=Math.min(fuelCap(),20);sfx('horn');toast(`Your new ${b.n.toLowerCase()} is tied up at the jetty. Tap it to board.`,'lvl');bumpQuest('boat');markDirty();renderPanel()},'sm gold');
       const r=itemRow(boatIcon(b.k),b.n,`Hold ${b.hold} \u00b7 ${b.storm?'handles storms '+b.storm+'/4':'harbour weather only'}${reach?' \u00b7 opens '+reach:''}`,right);if(cur)r.classList.add('me');l.append(r)}body.append(l);return}
   if(t==='paint'){head('Paint & names','Make the boat yours',uiIcon('boat'));if(!S.boat){H('p','You need a boat first.');return}const C=CFG.COSMETIC;
@@ -3690,7 +4021,7 @@ function visitHome(profile){const key=cleanHomeKey(profile.ht);if(!key)return;if
   const back={scene,x:player.x,y:player.y,dir:player.dir};const room=makeHomeInterior(homeProfile(profile.home),key,cleanName(profile.n),false);
   setExit(room,()=>{let target=back.scene;if(target.homeOwner===publicHomeKey()&&!target.homeGuest){target=SCENES['in:home']||genInterior('home');SCENES['in:home']=target}const safe=blocked(target,back.x,back.y)?target.spots.spawn:back;setScene(target,safe.x,safe.y,back.dir);sfx('door')});closePanel();setScene(room,room.spots.spawn.x,room.spots.spawn.y,'up');sfx('door');toast(profile.n+"'s cottage. Enjoy your visit!")}
 function panelBoatDecor(body,H){head('Boat details','Small touches for your own boat',uiIcon('boat'));tabs(null);if(!S.boat){H('p','Buy your first boat at the Boatyard to decorate its deck.');body.append(btn('See boats',()=>openPanel('shop','boatyard'),'gold'));return}
-  H('p','Deck details use the original town artwork. Buy each once with Shells, then switch freely. Your paint and name are set at the Boatyard.');
+  body.append(hullRow());H('p','Deck details use the original town artwork. Buy each once with Shells, then switch freely. Your paint and name are set at the Boatyard.');
   const boat=S.boat;S.boatDecor=S.boatDecor||{};let v=S.boatDecor[boat];if(!v||typeof v!=='object')v=S.boatDecor[boat]={selected:boatDetail(boat),owned:[]};v.owned=[...new Set(['none',...(Array.isArray(v.owned)?v.owned:[]),v.selected])].filter(k=>hasRpg(BOAT_DECOR,k));const list=el('div','list');
   for(const[k,d]of Object.entries(BOAT_DECOR)){const own=v.owned.includes(k),cur=v.selected===k;list.append(itemRow(d.art?d.art():boatIcon(boat),d.n,own?'Owned':fmt(d.price)+' Shells',cur?el('b',null,'Fitted'):btn(own?'Fit':'Buy & fit',()=>{if(!own){if(!payShells(d.price))return;v.owned.push(k)}v.selected=k;markDirty();bumpQuest('boatDecor');sendPresence(true);renderPanel()},'sm gold')))}body.append(list);body.append(btn('Paint, name & upgrades',()=>openPanel('shop','paint'),'alt'))}
 

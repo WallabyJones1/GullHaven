@@ -1,0 +1,15 @@
+{
+ "name": "Founding Fishers",
+ "symbol": "FISHER",
+ "description": "The 500 Founding Fishers of Gullhaven. Released in five drops of 100 from the vending machine on the town square.",
+ "image": "collection.png",
+ "properties": {
+  "files": [
+   {
+    "uri": "collection.png",
+    "type": "image/png"
+   }
+  ],
+  "category": "image"
+ }
+}

@@ -12,7 +12,7 @@ const crewIsNft=c=>c.id.startsWith('nft:');
 const crewAv=c=>crewIsNft(c)?+c.id.slice(4):9000+(+c.id.slice(5))*37;
 const crewName=c=>crewIsNft(c)?nftName(+c.id.slice(4)):HAND_NAMES[(+c.id.slice(5))%HAND_NAMES.length];
 function hireHand(){const n=S.hired||0;if(n>=CFG.CREW.maxHired){toast('Your crew bunkhouse is full.');return}const cost=CFG.CREW.hireShells[n];if(!payShells(cost))return;S.hired=n+1;S.crew.push({id:'hand:'+n,lvl:1,xp:0,trip:null});markDirty();toast(`${HAND_NAMES[n]} signs on. Send them out from the Crew panel.`,'lvl');renderPanel()}
-function crewZones(){return ZONE_ORDER.filter(z=>ZONES[z].need<=Math.max(1,boatTier()))}
+function crewZones(){return ZONE_ORDER.filter(z=>z!=='lake'&&ZONES[z].need<=Math.max(1,boatTier()))}
 async function sendTrip(c,zone,ti){const T=CFG.CREW.trips[ti];if(c.trip){toast('Already out.');return}if(!S.licence){toast('Crew fish under your licence. Get one at the Harbourmaster.','warn');return}
   if(CHAIN.live){const r=await NET.req({t:'crew',crew:c.id,zone,trip:ti,lvl:c.lvl});if(!r.ok){toast(r.err,'warn');return}applyAcct(r.acct);c.trip={zone,trip:ti,start:r.start,end:r.end,server:1}}
   else{if(!payShells(T.fee))return;feeLog('crew',T.fee);S.mpool=S.mpool||{put:0,paid:0};S.mpool.cput=(S.mpool.cput||0)+Math.round(T.fee*CFG.CREW.split.pool);const now=Date.now();c.trip={zone,trip:ti,start:now,end:now+T.min*60000,seed:Math.floor(Math.random()*1e9)}}

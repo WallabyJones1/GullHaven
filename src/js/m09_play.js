@@ -38,6 +38,7 @@ function boatAct(){const b=player.boat;if(!b)return null;const z=zoneAtPx(b.x,b.
   for(const s of WORLD.salvage)if(!s.dead&&Math.hypot(s.x-b.x,s.y-b.y)<30)return{label:'Grapple',icon:'grapple',act:()=>startSalvage(s)};
   if(Math.hypot(WORLD.spots.fuel.x-b.x,WORLD.spots.fuel.y-b.y)<56&&S.gear.engine>0&&S.fuel<fuelCap()-1)return{label:'Refuel',icon:'fuel',act:refuel};
   if(Math.abs(b.v)>14)return null;const tie=canTieUp();if(tie&&Math.abs(b.v)<6&&(tileT(WORLD,Math.floor(tie.x/16),Math.floor(tie.y/16))==='pr'||!z||z==='harbour'))return{label:'Tie up',icon:'anchor',act:tieUp};
+  if(z&&ZONES[z].need>boatTier()){const need=BOATS.find(x=>x.tier>=ZONES[z].need);return{label:'Too rough',icon:'storm',act:()=>toast(`Too rough to fish ${ZONES[z].n} from a ${BOATI[b.k].n.toLowerCase()}. You need a ${need?need.n.toLowerCase():'bigger boat'}.`)}}
   return z?{label:'Cast',icon:'rod_'+S.gear.rod,act:()=>startFishing({x:b.x+Math.cos(b.h)*40,y:b.y+Math.sin(b.h)*40,zone:z,boat:true})}:null}
 // the second button: pots from the boat, bait choice on foot
 function secondAct(){if(player.boat){const z=zoneAtPx(player.boat.x,player.boat.y);if(z&&!['blue'].includes(z))return{label:S.pots.length>=potCap()?'Pots out':'Drop pot',icon:'pot',act:dropPot};return null}return{label:'Bait',icon:'bait_'+S.baitSel,act:()=>openPanel('hold','bait')}}
@@ -52,7 +53,7 @@ function setupWorldActs(){const Sc=WORLD,s=Sc.spots;
   for(const a of Sc.islandActs||[])act(Sc,a.x,a.y,20,a.label,a.icon||'talk',()=>a.kind==='shop'?openPanel(a.shopKind==='home'?'home':'shop',a.shopKind==='home'?null:a.shopKind):openPanel('island',a.id));
   act(Sc,s.tide.x,s.tide.y,18,'Tide board','tide',()=>openPanel('weather'));act(Sc,s.notice.x,s.notice.y,18,'Notice board','talk',()=>openPanel('notice'));
   act(Sc,s.bait.x,s.bait.y,20,'Bait stall','bait_prawn',()=>openPanel('shop','bait'));act(Sc,s.fuel.x,s.fuel.y,18,'Fuel pump','fuel',refuel);
-  for(const h of(Sc.houses||[]))act(Sc,h.x,h.y,14,'Knock','door',()=>knock(h))}
+  for(const h of(Sc.houses||[]))act(Sc,h.x,h.y,14,'Knock','door',()=>knock(h));wildsActs()}
 function knock(h){const lines=['Nobody home. A gull watches you from the gutter.','"Out on the water, love. Try the tavern later."','A dog barks. Nobody answers.','"If you\'re selling bait, I\'ve got plenty!"','A note on the door: Gone fishing.'];toast(lines[(Math.abs(hashStr(h.x+','+h.y))+envAt().tday)%lines.length])}
 function refuel(){if(S.gear.engine===0){toast('Oars don\'t need fuel. Buy an outboard at the Boatyard.');return}const need=Math.ceil(fuelCap()-S.fuel);if(need<=0){toast('Your tank is full.');return}const cost=need*2;if(S.shells<cost){const can=Math.floor(S.shells/2);if(can<=0){toast('Fuel is 2 Shells a litre.','warn');return}S.fuel+=can;S.shells-=can*2}else{S.fuel+=need;S.shells-=cost}markDirty();updHUD();sfx('buy');toast(`Tank ${Math.round(S.fuel)}/${fuelCap()} L.`)}
 /* ---------- catches ---------- */

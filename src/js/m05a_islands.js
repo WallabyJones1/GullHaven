@@ -1,18 +1,17 @@
 /* Small additions to the original world, painted with Gullhaven's existing pixel art. */
 const ISLAND_TOWNS=[
   {id:'tideglass',n:'Tideglass Cay',x:128,y:125,r:12,shore:'sand',zone:'shallows',shopKind:'bait',shopLabel:'BAIT & TEA',roof:'#3f7a8a',wall:'#f4e4c8',desc:'A quiet sandy cay with a bait shop, beachcombing and harbour errands. Follow the southern shallows in any boat.'},
-  {id:'mossbank',n:'Mossbank',x:169,y:49,r:13,shore:'sand',zone:'reef',shopKind:'home',shopLabel:'HOME GOODS',roof:'#3f7a5a',wall:'#e8f0d8',desc:'A little garden village on the coral shelf. Browse home decorations and take on local fishing bounties. Bring a dinghy or better.'},
-  {id:'lantern',n:'Lantern Key',x:197,y:118,r:14,shore:'rock',zone:'kelp',shopKind:'boatyard',shopLabel:'BOATWORKS',roof:'#5a4a7a',wall:'#d8e8f4',desc:'A rocky fishing outpost among the kelp, with a boat workshop and deep-water stories. The eastern reef passage is safe for a dinghy or better.'}
+  {id:'mossbank',n:'Mossbank',x:169,y:49,r:13,shore:'sand',zone:'reef',shopKind:'home',shopLabel:'HOME GOODS',roof:'#3f7a5a',wall:'#e8f0d8',desc:'A little garden village on the coral shelf. Browse home decorations and take on local fishing bounties. Open water out here is rough on small boats.'},
+  {id:'lantern',n:'Lantern Key',x:197,y:118,r:14,shore:'rock',zone:'kelp',shopKind:'boatyard',shopLabel:'BOATWORKS',roof:'#5a4a7a',wall:'#d8e8f4',desc:'A rocky fishing outpost among the kelp, with a boat workshop and deep-water stories. Far out past the deep: a skiff or bigger makes the trip safely.'}
 ];
 function islandShoreAt(x,y){if(x<110)return null;for(const I of ISLAND_TOWNS){const dx=x-I.x,dy=(y-I.y)*1.2;if(dx*dx+dy*dy<(I.r+3)*(I.r+3))return I}return null}
 function islandSeaZone(x,y){
   // Broad, visible shelves leave the old fishing grounds available and give every dock a safe approach.
   if(x>=74.5&&x<83.5&&y>56&&y<91)return'shallows';
-  if(x>94&&x<148&&y>98&&y<145&&x<y+18)return'shallows';
+  const wb=(NZ.at(x*.6+11,y*.6+5)-.5)*9;
+  if(x>94&&x<148&&y>98&&y<145&&x<y+18+wb)return'shallows';
   if(x<110)return null;
   for(const I of ISLAND_TOWNS){const dx=x-I.x,dy=(y-I.y)*1.2;if(dx*dx+dy*dy<(I.r+6)*(I.r+6))return I.zone}
-  if(x>128&&y>35&&y<128&&Math.abs(x+y*.55-196)<9)return'reef';
-  if(x>166&&y>45&&y<137&&Math.abs(x-y*.4-150)<11)return'reef';
   return null}
 function addIslandSettlements(S,set,pier){
   S.islands=[];S.islandActs=[];const idx=(x,y)=>y*S.w+x;

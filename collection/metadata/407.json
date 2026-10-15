@@ -1,0 +1,53 @@
+{
+ "name": "Founding Fisher #407",
+ "symbol": "FISHER",
+ "description": "Founding Fisher #407, one of the 500 original fishers of Gullhaven, a pixel fishing town. Wear their look in game and send them out on crew trips; Founding Fishers bring back 20% more than hired hands.",
+ "image": "407.png",
+ "attributes": [
+  {
+   "trait_type": "Rarity",
+   "value": "Rare"
+  },
+  {
+   "trait_type": "Skin",
+   "value": "Deep"
+  },
+  {
+   "trait_type": "Hair",
+   "value": "Spiky Seafoam"
+  },
+  {
+   "trait_type": "Eyes",
+   "value": "Dot"
+  },
+  {
+   "trait_type": "Mouth",
+   "value": "Smile"
+  },
+  {
+   "trait_type": "Top",
+   "value": "Blue Stripes"
+  },
+  {
+   "trait_type": "Trousers",
+   "value": "Khaki"
+  },
+  {
+   "trait_type": "Accessory",
+   "value": "Headphones"
+  },
+  {
+   "trait_type": "Personality",
+   "value": "Tidy"
+  }
+ ],
+ "properties": {
+  "files": [
+   {
+    "uri": "407.png",
+    "type": "image/png"
+   }
+  ],
+  "category": "image"
+ }
+}
