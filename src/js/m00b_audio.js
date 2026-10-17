@@ -60,7 +60,7 @@ const PROGS={day:{bpm:92,ch:[[60,64,67],[57,60,64],[53,57,60],[55,59,62]],sc:[72
   sea:{bpm:100,ch:[[62,66,69],[57,61,64],[59,62,66],[55,59,62]],sc:[74,76,78,81,83,86]},deep:{bpm:64,soft:1,ch:[[57,60,64],[53,57,60],[55,59,62],[52,55,59]],sc:[69,71,72,76,77,81]},
   island:{bpm:112,ch:[[65,69,72],[70,74,77],[72,76,79],[65,69,72]],sc:[77,79,81,84,86,89]},lake:{bpm:74,soft:1,ch:[[60,64,71],[57,64,67],[65,69,76],[62,65,72]],sc:[72,74,76,79,83,84]},
   storm:{bpm:124,ch:[[57,60,64],[58,62,65],[57,60,64],[56,59,64]],sc:[69,70,72,74,76]},inside:{bpm:84,ch:[[60,64,67],[65,69,72],[62,65,69],[67,71,74]],sc:[72,74,76,77,79,81]},home:{bpm:72,soft:1,ch:[[65,69,72],[62,65,69],[58,62,65],[60,64,67]],sc:[72,74,77,79,81,84]}};
-PROGS.night.soft=1;
+PROGS.night.soft=1;PROGS.dive={bpm:58,soft:1,ch:[[50,57,62],[48,55,60],[46,53,58],[48,55,60]],sc:[74,76,77,81,82,86]};
 const mtof=m=>440*Math.pow(2,(m-69)/12);
 function mnote(f,dur,type,vol,at){const A=SFX.ctx;const o=A.createOscillator(),g=A.createGain();o.type=type;o.frequency.setValueAtTime(f,at);g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(vol,at+.01);g.gain.exponentialRampToValueAtTime(.0005,at+dur);o.connect(g);g.connect(MUS.gain);o.start(at);o.stop(at+dur+.03)}
 function mhat(at){const A=SFX.ctx;if(!SFX.noiseBuf)return;const s=A.createBufferSource();s.buffer=SFX.noiseBuf;const f=A.createBiquadFilter();f.type='highpass';f.frequency.value=7000;const g=A.createGain();g.gain.setValueAtTime(.025,at);g.gain.exponentialRampToValueAtTime(.0005,at+.04);s.connect(f);f.connect(g);g.connect(MUS.gain);s.start(at);s.stop(at+.06)}

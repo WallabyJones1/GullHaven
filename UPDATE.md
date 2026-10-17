@@ -1,3 +1,9 @@
+# Diving update
+
+- **Diving:** buy a dive kit (2,000 Shells) at the Boatyard or Lantern Key. Red-and-white dive flags mark the wrecks and island reefs. Stop your boat by a flag and tap **Dive**.
+- Each site is its own sea floor: coral garden, sandy flats, kelp forest, shipwreck, drop-off or the trench. Open chests for Shells and treasure, collect a few pieces of coral, and dodge the jellyfish (a sting costs 8 seconds of air).
+- You get 45 seconds of air (75 with Twin tanks, 3,500 Shells). Get back to the rope and tap **Surface**, or you'll be pulled up when the air runs out. Chests refill after 30 minutes. No diving in storms.
+
 # Big merged update
 
 - **Open sea:** the reef paths between islands are gone. Any boat can cross open water, but water beyond your boat's rating and storms wear the hull down. A swamped boat is towed home (150 Shells, some fish lost). Repair at the Boatyard or from Boat details. You can only fish grounds your boat is rated for.

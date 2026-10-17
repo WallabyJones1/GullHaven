@@ -17,7 +17,7 @@ function wreckBoat(){const b=player.boat;if(!b)return;const k=b.k;closeMG();play
   setTimeout(()=>{f.hidden=true;const sp=WORLD.spots.spawn;setScene(WORLD,sp.x,sp.y,'up');updHUD();toast(`Your ${BOATI[k].n.toLowerCase()} was swamped! The harbour tug towed you home${fee?' for '+fee+' Shells':''}${lost?' and '+lost+' fish went overboard':''}. Repairs at the Boatyard.`,'warn')},1500)}
 function repairCost(k){return Math.ceil((100-hullOf(k))*HULL.repairPerHp)}
 function hullRow(){if(!S.boat)return el('div');const k=S.boat,h=hullOf(k),c=repairCost(k);return itemRow(boatIcon(k),'Hull '+Math.round(h)+'%',h>=100?'Shipshape. Storms and rough water wear it down.':'Repairs cost '+fmt(c)+' Shells',h>=100?el('b',null,'OK'):btn('Repair',()=>{if(!payShells(c))return;setHull(k,100);hullStep=4;sfx('buy');toast('Good as new.');renderPanel()},'sm gold'))}
-function updHullChip(){const c=$('hullChip');if(!c)return;const b=player.boat;const E=envAt();const show=b&&(hullOf(b.k)<100||E.sky==='storm');c.hidden=!show;if(!show)return;const h=hullOf(b.k);$('hullTxt').textContent='Hull '+Math.round(h)+'%';$('hullSub').textContent=E.sky==='storm'?'Storm! Small boats suffer':roughZone?'Rough water':'Repair at the Boatyard';paintIcon($('hullIc'),uiIcon(E.sky==='storm'?'storm':'boat'))}
+function updHullChip(){if(diveChip())return;const c=$('hullChip');if(!c)return;const b=player.boat;const E=envAt();const show=b&&(hullOf(b.k)<100||E.sky==='storm');c.hidden=!show;if(!show)return;const h=hullOf(b.k);$('hullTxt').textContent='Hull '+Math.round(h)+'%';$('hullSub').textContent=E.sky==='storm'?'Storm! Small boats suffer':roughZone?'Rough water':'Repair at the Boatyard';paintIcon($('hullIc'),uiIcon(E.sky==='storm'?'storm':'boat'))}
 /* ---------- Mirrorlake: four riddles, one gate ---------- */
 function storyInit(){S.story=S.story||{};S.story.clues=S.story.clues||{};S.story.dials=Array.isArray(S.story.dials)&&S.story.dials.length===4?S.story.dials:[4,5,6,7];S.catLove=S.catLove||{};S.hull=S.hull||{}}
 function applyGate(){if(WORLD&&WORLD.lakeGate)for(const i of WORLD.lakeGate.tiles)WORLD.sol[i]=lakeOpen()?0:1}
@@ -62,10 +62,10 @@ function panelCafe(body,H){head('Cat Café','Tea, cake and the harbour cats',uiI
   const l=el('div','list');for(const c of COATS){const love=S.catLove[c.k]||0,mine=S.pet===c.k;
     l.append(itemRow(catFace(c.k),c.name+' · '+c.n,love?'♥'.repeat(love)+'♡'.repeat(5-love):'Not met yet. Look around town.',mine?btn('Send home',()=>{S.pet=null;petF=null;markDirty();renderPanel()},'sm alt'):love>=5?btn('Adopt',()=>{S.pet=c.k;petF=null;markDirty();sfx('purr');toast(c.name+' is your companion now.','lvl');renderPanel()},'sm gold'):null))}
   body.append(l)}
-function worldTick(dt){catsTick(dt);hullTick(dt);worldTick.t=(worldTick.t||0)+dt;if(worldTick.t>.5){worldTick.t=0;updHullChip()}}
+function worldTick(dt){catsTick(dt);hullTick(dt);diveTick(dt);worldTick.t=(worldTick.t||0)+dt;if(worldTick.t>.5){worldTick.t=0;updHullChip()}}
 const EXTRA_PANELS={gate:panelGate,cafe:panelCafe};
 // background music follows where you are
-function musMode(){if(typeof gachaOpen!=='undefined'&&gachaOpen)return'arcade';const h=ghour(),night=h<6||h>=20.5;if(!scene||!WORLD)return night?'night':'day';
+function musMode(){if(typeof gachaOpen!=='undefined'&&gachaOpen)return'arcade';if(scene&&scene.dive)return'dive';const h=ghour(),night=h<6||h>=20.5;if(!scene||!WORLD)return night?'night':'day';
   if(scene!==WORLD)return scene.homeOwner?'home':'inside';const E=envAt();if(E.sky==='storm')return'storm';const px=player.x/16,py=player.y/16;
   if(Math.hypot(px-LAKE.x,(py-LAKE.y)*1.3)<LAKE.RX)return'lake';if((WORLD.islands||[]).some(I=>Math.hypot(px-I.x,py-I.y)<I.r+6))return'island';
   if(player.boat){const z=player.boat.zone;if(z==='blue'||z==='deep')return'deep';if(z&&z!=='harbour')return'sea'}return night?'night':'day'}

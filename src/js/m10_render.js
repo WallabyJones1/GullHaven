@@ -59,13 +59,13 @@ function render(t){const Sc=scene;const ww=Sc.w*16,wh=Sc.h*16;const fx0=player.b
     if(player.boat){const b=player.boat;boatDraw(list,b.k,b.x,b.y,b.h,S.paint[b.k],S.coop,{id:ACTIVE(),f:MG&&MG.type==='fish'?(Math.floor(t*6)%2?1:2):0},t,{name:S.boatName||null,col:'#bfe8f4',decor:boatDetail(b.k)})}
     for(const f of FOLK){if(!inView(f.x-10,f.y-30,20,34))continue;list.push({sy:f.y,draw:()=>{drawChar(ctx,f.id,f.x-camX,f.y-camY,f.dir,f.moving?WALK[f.f]:0);if(f.bubble)bubble(ctx,f.bubble.text,f.x-camX,f.y-camY-26)}})}
     for(const c of CRABS){if(!inView(c.x-6,c.y-6,12,12))continue;list.push({sy:c.y,draw:()=>ctx.drawImage(artCrabBeach(Math.floor(t*8)%2),Math.round(c.x-camX)-6,Math.round(c.y-camY)-5)})}}
-  drawCats(list,t,Sc);
+  drawCats(list,t,Sc);if(Sc===WORLD)drawDiveFlags(list,t);
   for(const kp of(Sc.keepers||[]))list.push({sy:kp.y,draw:()=>drawChar(ctx,kp.id,kp.x-camX,kp.y-camY,kp.dir||'down',Math.floor(t*1.5+kp.x)%7===0?1:0)});
   for(const[k,pe]of NET.peers){if(pe.sc!==Sc.name)continue;const col=pe.co?COOPI[pe.co].lt==='#ffffff'?'#bfe8f4':COOPI[pe.co].lt:'#7fdcc0';
     if(pe.b&&Sc===WORLD){boatDraw(list,pe.b.k,pe.x,pe.y,pe.b.h,pe.b.p,pe.co,{id:pe.id,f:pe.fish?(Math.floor(t*6)%2?1:2):0},t,{name:pe.b.n||pe.n,col,decor:pe.b.de,fishing:pe.fish});continue}
     list.push({sy:pe.y,draw:()=>{drawChar(ctx,pe.id,pe.x-camX,pe.y-camY,pe.dir,pe.moving?WALK[pe.f]:0);if(pe.co)drawBands(ctx,pe.x-camX,pe.y-camY,pe.dir,COOPI[pe.co].col,false);nameTag(ctx,pe.n,pe.x-camX,pe.y-camY+4,col);if(pe.bubble)bubble(ctx,pe.bubble.text,pe.x-camX,pe.y-camY-26);if(pe.emote)drawEmote(pe.emote.k,pe.x-camX,pe.y-camY-32,t)}})}
   if(!player.boat)list.push({sy:player.y,draw:()=>drawPlayer(t)});
-  list.sort((a,b)=>a.sy-b.sy);for(const d of list)d.draw();
+  list.sort((a,b)=>a.sy-b.sy);for(const d of list)d.draw();if(Sc.dive)drawDive(t,Sc);
   if(player.boat){const b=player.boat;if(player.bubble)bubble(ctx,player.bubble.text,b.x-camX,b.y-camY-22);if(player.emote)drawEmote(player.emote.k,b.x-camX,b.y-camY-28,t)}
   if(Sc===WORLD){for(const g of GULLS){if(!inView(g.x-6,g.y-30,12,40))continue;const x=Math.round(g.x-camX),y=Math.round(g.y-camY-24);const up=Math.floor(t*5+g.ph)%2;ctx.fillStyle='rgba(18,48,74,.25)';ctx.fillRect(x-2,y+24,5,1);ctx.fillStyle='#fbfbff';ctx.fillRect(x-1,y,3,1);ctx.fillStyle=OL;if(up){P(ctx,x-3,y-2,OL);P(ctx,x-2,y-1,OL);P(ctx,x+2,y-1,OL);P(ctx,x+3,y-2,OL)}else{P(ctx,x-3,y+1,OL);P(ctx,x-2,y,OL);P(ctx,x+2,y,OL);P(ctx,x+3,y+1,OL)}}
     drawWeather(t);drawTimeOfDay(t)}

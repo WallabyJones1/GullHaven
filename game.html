@@ -465,7 +465,7 @@ const PROGS={day:{bpm:92,ch:[[60,64,67],[57,60,64],[53,57,60],[55,59,62]],sc:[72
   sea:{bpm:100,ch:[[62,66,69],[57,61,64],[59,62,66],[55,59,62]],sc:[74,76,78,81,83,86]},deep:{bpm:64,soft:1,ch:[[57,60,64],[53,57,60],[55,59,62],[52,55,59]],sc:[69,71,72,76,77,81]},
   island:{bpm:112,ch:[[65,69,72],[70,74,77],[72,76,79],[65,69,72]],sc:[77,79,81,84,86,89]},lake:{bpm:74,soft:1,ch:[[60,64,71],[57,64,67],[65,69,76],[62,65,72]],sc:[72,74,76,79,83,84]},
   storm:{bpm:124,ch:[[57,60,64],[58,62,65],[57,60,64],[56,59,64]],sc:[69,70,72,74,76]},inside:{bpm:84,ch:[[60,64,67],[65,69,72],[62,65,69],[67,71,74]],sc:[72,74,76,77,79,81]},home:{bpm:72,soft:1,ch:[[65,69,72],[62,65,69],[58,62,65],[60,64,67]],sc:[72,74,77,79,81,84]}};
-PROGS.night.soft=1;
+PROGS.night.soft=1;PROGS.dive={bpm:58,soft:1,ch:[[50,57,62],[48,55,60],[46,53,58],[48,55,60]],sc:[74,76,77,81,82,86]};
 const mtof=m=>440*Math.pow(2,(m-69)/12);
 function mnote(f,dur,type,vol,at){const A=SFX.ctx;const o=A.createOscillator(),g=A.createGain();o.type=type;o.frequency.setValueAtTime(f,at);g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(vol,at+.01);g.gain.exponentialRampToValueAtTime(.0005,at+dur);o.connect(g);g.connect(MUS.gain);o.start(at);o.stop(at+dur+.03)}
 function mhat(at){const A=SFX.ctx;if(!SFX.noiseBuf)return;const s=A.createBufferSource();s.buffer=SFX.noiseBuf;const f=A.createBiquadFilter();f.type='highpass';f.frequency.value=7000;const g=A.createGain();g.gain.setValueAtTime(.025,at);g.gain.exponentialRampToValueAtTime(.0005,at+.04);s.connect(f);f.connect(g);g.connect(MUS.gain);s.start(at);s.stop(at+.06)}
@@ -2782,6 +2782,8 @@ function addWilds(W,set,pier){const idx=(x,y)=>y*W.w+x;const r=rng(9091);const L
     if(I.id==='mossbank'){for(let k=0;k<10;k++){const p=pickT(grass);if(p)flat(artFlowers(k%4),p[0],p[1])}for(let k=0;k<3;k++){const p=pickT(grass);if(p&&freeG(W,p[0],p[1]))treeAt(W,p[0],p[1],1)}for(let k=0;k<2;k++){const p=pickT(grass);if(p)solidDeco(artFlowerBox(k),p[0],p[1])}}
     if(I.id==='lantern'){for(let k=0;k<5;k++){const p=pickT(grass)||pickT(sand);if(p)solidDeco(artRock(false,3),p[0],p[1])}for(let k=0;k<3;k++){const p=pickT(grass);if(p&&freeG(W,p[0],p[1]))treeAt(W,p[0],p[1],3)}}
     const n=NPC[I.id];if(n){const nx=(x-3)*16+8,ny=(y+2)*16+12;W.keepers.push({id:n[1],x:nx,y:ny,dir:'down'});W.npcs.push({island:I.id,n:n[0],x:nx,y:ny})}}
+  // a dive flag off each island's reef
+  W.diveSites=[];for(const I of W.islands||[]){let got=null;for(let rr=I.r+3;rr<=I.r+7&&!got;rr++)for(let a=0;a<16&&!got;a++){const an=2.4+a/16*6.283;const tx=Math.round(I.x+Math.cos(an)*rr),ty=Math.round(I.y+Math.sin(an)*rr/1.2);const i=idx(tx,ty);if(W.g[i]!=='o'||!W.nav[i])continue;const z=ZONE_ORDER[W.zone[i]];if(['shallows','reef','kelp'].includes(z))got={key:'i'+I.id,x:tx*16+8,y:ty*16+8,zone:z}}if(got)W.diveSites.push(got)}
   W.lakeCenter={x:L.x*16,y:L.y*16}}
 function lakeOpen(){return!!(typeof S!=='undefined'&&S&&S.story&&S.story.lake)}
 
@@ -2963,7 +2965,7 @@ function boatAct(){const b=player.boat;if(!b)return null;const z=zoneAtPx(b.x,b.
   if(z&&ZONES[z].need>boatTier()){const need=BOATS.find(x=>x.tier>=ZONES[z].need);return{label:'Too rough',icon:'storm',act:()=>toast(`Too rough to fish ${ZONES[z].n} from a ${BOATI[b.k].n.toLowerCase()}. You need a ${need?need.n.toLowerCase():'bigger boat'}.`)}}
   return z?{label:'Cast',icon:'rod_'+S.gear.rod,act:()=>startFishing({x:b.x+Math.cos(b.h)*40,y:b.y+Math.sin(b.h)*40,zone:z,boat:true})}:null}
 // the second button: pots from the boat, bait choice on foot
-function secondAct(){if(player.boat){const z=zoneAtPx(player.boat.x,player.boat.y);if(z&&!['blue'].includes(z))return{label:S.pots.length>=potCap()?'Pots out':'Drop pot',icon:'pot',act:dropPot};return null}return{label:'Bait',icon:'bait_'+S.baitSel,act:()=>openPanel('hold','bait')}}
+function secondAct(){if(player.boat){const ds=diveSiteNear();if(ds)return{label:'Dive',icon:'dive',act:()=>startDive(ds)};const z=zoneAtPx(player.boat.x,player.boat.y);if(z&&!['blue'].includes(z))return{label:S.pots.length>=potCap()?'Pots out':'Drop pot',icon:'pot',act:dropPot};return null}return{label:'Bait',icon:'bait_'+S.baitSel,act:()=>openPanel('hold','bait')}}
 /* ---------- the town's fixed interactions ---------- */
 function setupWorldActs(){const Sc=WORLD,s=Sc.spots;
   const door=(k,label,fn)=>act(Sc,s[k].x,s[k].y,16,label,'door',fn);
@@ -3232,7 +3234,7 @@ function wreckBoat(){const b=player.boat;if(!b)return;const k=b.k;closeMG();play
   setTimeout(()=>{f.hidden=true;const sp=WORLD.spots.spawn;setScene(WORLD,sp.x,sp.y,'up');updHUD();toast(`Your ${BOATI[k].n.toLowerCase()} was swamped! The harbour tug towed you home${fee?' for '+fee+' Shells':''}${lost?' and '+lost+' fish went overboard':''}. Repairs at the Boatyard.`,'warn')},1500)}
 function repairCost(k){return Math.ceil((100-hullOf(k))*HULL.repairPerHp)}
 function hullRow(){if(!S.boat)return el('div');const k=S.boat,h=hullOf(k),c=repairCost(k);return itemRow(boatIcon(k),'Hull '+Math.round(h)+'%',h>=100?'Shipshape. Storms and rough water wear it down.':'Repairs cost '+fmt(c)+' Shells',h>=100?el('b',null,'OK'):btn('Repair',()=>{if(!payShells(c))return;setHull(k,100);hullStep=4;sfx('buy');toast('Good as new.');renderPanel()},'sm gold'))}
-function updHullChip(){const c=$('hullChip');if(!c)return;const b=player.boat;const E=envAt();const show=b&&(hullOf(b.k)<100||E.sky==='storm');c.hidden=!show;if(!show)return;const h=hullOf(b.k);$('hullTxt').textContent='Hull '+Math.round(h)+'%';$('hullSub').textContent=E.sky==='storm'?'Storm! Small boats suffer':roughZone?'Rough water':'Repair at the Boatyard';paintIcon($('hullIc'),uiIcon(E.sky==='storm'?'storm':'boat'))}
+function updHullChip(){if(diveChip())return;const c=$('hullChip');if(!c)return;const b=player.boat;const E=envAt();const show=b&&(hullOf(b.k)<100||E.sky==='storm');c.hidden=!show;if(!show)return;const h=hullOf(b.k);$('hullTxt').textContent='Hull '+Math.round(h)+'%';$('hullSub').textContent=E.sky==='storm'?'Storm! Small boats suffer':roughZone?'Rough water':'Repair at the Boatyard';paintIcon($('hullIc'),uiIcon(E.sky==='storm'?'storm':'boat'))}
 /* ---------- Mirrorlake: four riddles, one gate ---------- */
 function storyInit(){S.story=S.story||{};S.story.clues=S.story.clues||{};S.story.dials=Array.isArray(S.story.dials)&&S.story.dials.length===4?S.story.dials:[4,5,6,7];S.catLove=S.catLove||{};S.hull=S.hull||{}}
 function applyGate(){if(WORLD&&WORLD.lakeGate)for(const i of WORLD.lakeGate.tiles)WORLD.sol[i]=lakeOpen()?0:1}
@@ -3277,13 +3279,96 @@ function panelCafe(body,H){head('Cat Caf\u00e9','Tea, cake and the harbour cats'
   const l=el('div','list');for(const c of COATS){const love=S.catLove[c.k]||0,mine=S.pet===c.k;
     l.append(itemRow(catFace(c.k),c.name+' \u00b7 '+c.n,love?'\u2665'.repeat(love)+'\u2661'.repeat(5-love):'Not met yet. Look around town.',mine?btn('Send home',()=>{S.pet=null;petF=null;markDirty();renderPanel()},'sm alt'):love>=5?btn('Adopt',()=>{S.pet=c.k;petF=null;markDirty();sfx('purr');toast(c.name+' is your companion now.','lvl');renderPanel()},'sm gold'):null))}
   body.append(l)}
-function worldTick(dt){catsTick(dt);hullTick(dt);worldTick.t=(worldTick.t||0)+dt;if(worldTick.t>.5){worldTick.t=0;updHullChip()}}
+function worldTick(dt){catsTick(dt);hullTick(dt);diveTick(dt);worldTick.t=(worldTick.t||0)+dt;if(worldTick.t>.5){worldTick.t=0;updHullChip()}}
 const EXTRA_PANELS={gate:panelGate,cafe:panelCafe};
 // background music follows where you are
-function musMode(){if(typeof gachaOpen!=='undefined'&&gachaOpen)return'arcade';const h=ghour(),night=h<6||h>=20.5;if(!scene||!WORLD)return night?'night':'day';
+function musMode(){if(typeof gachaOpen!=='undefined'&&gachaOpen)return'arcade';if(scene&&scene.dive)return'dive';const h=ghour(),night=h<6||h>=20.5;if(!scene||!WORLD)return night?'night':'day';
   if(scene!==WORLD)return scene.homeOwner?'home':'inside';const E=envAt();if(E.sky==='storm')return'storm';const px=player.x/16,py=player.y/16;
   if(Math.hypot(px-LAKE.x,(py-LAKE.y)*1.3)<LAKE.RX)return'lake';if((WORLD.islands||[]).some(I=>Math.hypot(px-I.x,py-I.y)<I.r+6))return'island';
   if(player.boat){const z=player.boat.zone;if(z==='blue'||z==='deep')return'deep';if(z&&z!=='harbour')return'sea'}return night?'night':'day'}
+
+/* ================= diving: drop over the side at a dive site and explore the sea floor on one breath of tank air =================
+   Buy a dive kit at a boatyard. Every wreck and reef site has its own little underwater scene: chests to open, coral and
+   shells to collect, fish all around and jellyfish to dodge. Chests refill after a while. */
+const DIVECFG={kit:2000,tank:3500,air:[45,75],refillMs:30*60*1000};
+const DIVE_THEME={
+  reef:{n:'Coral garden',sand:['#efe0b0','#e2cf98','#d4bc84'],tint:'#3fb0c8',k:.18,rocks:5,kelp:4,coral:16,chests:3,jelly:1,wreck:0},
+  shallows:{n:'Sandy flats',sand:['#f2e6c0','#e8d8a8','#dcc898'],tint:'#58c8d8',k:.14,rocks:4,kelp:3,coral:6,chests:2,jelly:1,wreck:0},
+  kelp:{n:'Kelp forest',sand:['#c8bc98','#b8aa84','#a89870'],tint:'#2f7a78',k:.3,rocks:7,kelp:22,coral:5,chests:3,jelly:2,wreck:0},
+  wreck:{n:'Shipwreck',sand:['#a89c80','#988c70','#887c62'],tint:'#24587a',k:.38,rocks:6,kelp:6,coral:6,chests:4,jelly:2,wreck:1},
+  blue:{n:'Drop-off',sand:['#8a8a96','#7a7a88','#6a6a7a'],tint:'#1c3f7a',k:.45,rocks:8,kelp:2,coral:4,chests:3,jelly:4,wreck:1},
+  deep:{n:'The trench',sand:['#5a5a6a','#4e4e5e','#424252'],tint:'#0c1838',k:.55,rocks:9,kelp:0,coral:5,chests:4,jelly:5,wreck:1}};
+let DIVE=null;
+function diveSites(){const out=[];for(let i=0;i<WORLD.salvage.length;i++){const s=WORLD.salvage[i];if(s.dead||!DIVE_THEME[s.zone])continue;out.push({key:'s'+i,x:s.x,y:s.y,zone:s.zone})}
+  for(const d of WORLD.diveSites||[])out.push(d);return out}
+function diveSiteNear(){const b=player.boat;if(!b)return null;for(const d of diveSites())if(Math.hypot(d.x-b.x,d.y-b.y)<34)return d;return null}
+function diveAir(){return DIVECFG.air[S.diveTank?1:0]}
+function startDive(site){if(!S.diveKit){toast('You need a dive kit. The Boatyard and Lantern Key sell them.','warn');return}if(MG)return;const b=player.boat;if(Math.abs(b.v)>6){toast('Stop the boat before you dive.');return}
+  if(envAt().sky==='storm'){toast('Too rough to dive in a storm. Wait it out.','warn');return}
+  const sc=genDive(site);DIVE={site,air:diveAir(),max:diveAir(),boat:b,sc,warned:0,bub:[],t:0};player.boat=null;b.v=0;
+  const f=$('fade');f.hidden=false;f.textContent='Splash!';sfx('splash');setTimeout(()=>{f.hidden=true;setScene(sc,sc.spots.spawn.x,sc.spots.spawn.y,'down');S.stats.dives=(S.stats.dives||0)+1;markDirty();toast(`${DIVE_THEME[site.zone].n}. ${DIVE.max} seconds of air. Open the chests and get back to the rope!`)},500)}
+function surface(out){if(!DIVE)return;const b=DIVE.boat;DIVE=null;player.boat=b;setScene(WORLD,b.x,b.y,'down');splash(b.x,b.y+6,8);sfx('splash');updHullChip();if(out)toast('Out of air! You kicked for the surface just in time.','warn');else toast('Back aboard.')}
+function diveRec(key){S.dives=S.dives||{};let r=S.dives[key];if(!r||Date.now()-r.t>DIVECFG.refillMs){r=S.dives[key]={t:Date.now(),open:[],took:[]}}return r}
+/* ---------- the sea floor ---------- */
+function genDive(site){const T=DIVE_THEME[site.zone];const W=22,H=32;const S2=newScene('dive:'+site.key,W,H);S2.kind='dive';S2.in='dive';S2.dive=site;S2.theme=T;const r=rng(hashStr(site.key)>>>0);const rec=diveRec(site.key);
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x;S2.g[i]='sb';if(x===0||x===W-1||y===0||y===H-1)S2.sol[i]=1}
+  // the floor: rippled sand with darker patches, fading into the depth tint further from the boat
+  const B=mkBuf(W*16,H*16);for(let py=0;py<H*16;py++)for(let px=0;px<W*16;px++){const rip=Math.sin(px*.38+Math.sin(py*.27)*1.6+py*.55);const n=NZ.at(px*.9+40,py*.9);let col=n>.66?T.sand[2]:rip>.7?T.sand[0]:T.sand[1];
+    if(NZ.at(px*2.2+7,py*2.2)>.8)col=mix(col,'#5a6a5a',.3);if(hash2(px,py,91)<.006)col='#ffffff';if(px<8||px>=W*16-8||py>=H*16-8)col=mix(col,'#1a2a3a',.5);B.set(px,py,mix(col,T.tint,T.k+py/(H*16)*.25))}B.flush();S2.ground=B.c;S2.gx=B.x;
+  const free=(x,y)=>x>1&&y>3&&x<W-2&&y<H-2&&!S2.sol[y*W+x]&&!S2.res[y*W+x];const spot=()=>{for(let k=0;k<80;k++){const x=1+Math.floor(r()*(W-2)),y=4+Math.floor(r()*(H-6));if(free(x,y))return[x,y]}return null};
+  const put=(im,x,y,o={})=>addProp(S2,im,x*16+8-im.width/2,(y+1)*16-im.height,Object.assign({sy:(y+1)*16-1},o));
+  // the rope down from your boat
+  S2.spots.spawn={x:Math.floor(W/2)*16+8,y:3*16};S2.spots.rope={x:Math.floor(W/2)*16+8,y:2*16+8};S2.res[2*W+Math.floor(W/2)]=1;S2.res[3*W+Math.floor(W/2)]=1;
+  act(S2,S2.spots.rope.x,S2.spots.rope.y+6,20,'Surface','dive',()=>surface(false));
+  if(T.wreck){const im=artWreckHull();const wx=Math.floor(W/2)-4,wy=Math.floor(H*.55);addProp(S2,im,wx*16-12,wy*16-10,{sy:(wy+3)*16});solidRect(S2,wx-0,wy+1,wx+6,wy+2);reserve(S2,wx-1,wy-1,wx+7,wy+3);
+    S2.wreckSpot={x:(wx+3)*16,y:(wy+4)*16}}
+  for(let i=0;i<T.rocks;i++){const p=spot();if(!p)break;put(artSeaRock(i%2),p[0],p[1]);S2.sol[p[1]*W+p[0]]=1;S2.res[p[1]*W+p[0]]=1}
+  for(let i=0;i<T.kelp;i++){const p=spot();if(!p)break;put(artKelp(i%2),p[0],p[1],{sway:1});S2.res[p[1]*W+p[0]]=1}
+  // coral: decoration, and a few pieces worth taking home
+  const corals=CAT.filter(e=>e.cat==='coral'&&(e.z===site.zone||(site.zone==='shallows'&&e.z==='reef')||(site.zone==='blue'&&e.z==='deep'))&&!e.cp.flags.includes('spawn')&&!e.cp.time);
+  const pool=corals.length?corals:CAT.filter(e=>e.cat==='coral'&&e.r<=1);S2.corals=[];
+  for(let i=0;i<T.coral;i++){const p=spot();if(!p)break;const e=pool[Math.floor(r()*pool.length)];const im=catArt(e.id);if(!im)continue;const k=Math.min(1,22/Math.max(im.width,im.height));const[c,x]=mk(Math.round(im.width*k),Math.round(im.height*k));x.imageSmoothingEnabled=false;x.drawImage(im,0,0,c.width,c.height);
+    put(c,p[0],p[1]);S2.res[p[1]*W+p[0]]=1;if(i<3)S2.corals.push({i,id:e.id,x:p[0]*16+8,y:p[1]*16+12})}
+  for(const c of S2.corals)act(S2,c.x,c.y,16,'Collect '+CATI[c.id].n,'hand',()=>{const rec2=diveRec(site.key);if(rec2.took.includes(c.i)){toast('You already took a piece from here.');return}rec2.took.push(c.i);markDirty();sfx('pin');onCatch({id:c.id,cm:0},'salvage')});
+  // chests
+  S2.chests=[];for(let i=0;i<T.chests;i++){let p=i===0&&S2.wreckSpot?[Math.floor(S2.wreckSpot.x/16),Math.floor(S2.wreckSpot.y/16)]:spot();if(!p||!free(p[0],p[1]))p=spot();if(!p)break;const ch={i,x:p[0]*16+8,y:p[1]*16+12};S2.chests.push(ch);
+    put(artSeaChest(false),p[0],p[1],{anim:()=>artSeaChest(diveRec(site.key).open.includes(i))});S2.sol[p[1]*W+p[0]]=1;S2.res[p[1]*W+p[0]]=1;
+    act(S2,ch.x,ch.y+4,20,'Open the chest','grapple',()=>openDiveChest(site,ch))}
+  // sea life drifting about (drawn by the dive overlay)
+  const fish=CAT.filter(e=>e.cat==='fish'&&(e.z===site.zone||(site.zone==='shallows'&&e.z==='reef'))&&e.r<=2&&!e.release);S2.swim=[];
+  for(let i=0;i<9&&fish.length;i++){const e=fish[Math.floor(r()*fish.length)];S2.swim.push({id:e.id,x:r()*W*16,y:60+r()*(H*16-90),v:(8+r()*16)*(r()<.5?-1:1),ph:r()*6})}
+  S2.jelly=[];for(let i=0;i<T.jelly;i++)S2.jelly.push({x:40+r()*(W*16-80),y:120+r()*(H*16-180),vx:(r()-.5)*10,vy:(r()-.5)*6,ph:r()*6,hit:0});
+  return S2}
+function openDiveChest(site,ch){const rec=diveRec(site.key);if(rec.open.includes(ch.i)){toast('Empty. It will have washed full again in a while.');return}rec.open.push(ch.i);markDirty();sfx('clang');
+  const sh=Math.round([40,60,90,130,160,220][Object.keys(DIVE_THEME).indexOf(site.zone)]*(.7+Math.random()*.8));addShells(sh);floats.push({x:ch.x,y:ch.y-14,text:'+'+sh,col:'#ffd24d',t:1.4});
+  let got=null;for(let k=0;k<6&&(!got||CATI[got.id].cat==='junk');k++)got=rollSalvage(site.zone,envAt());if(!got||CATI[got.id].cat==='junk'){const pool=CAT.filter(e=>e.how==='salvage'&&e.cat!=='junk'&&e.r<=2);got=pool.length?{id:pool[Math.floor(Math.random()*pool.length)].id}:null}
+  if(got)setTimeout(()=>onCatch({id:got.id,cm:0},'salvage'),350);
+  if(Math.random()<.18){const p=catOf('pearl').filter(e=>e.r<=2&&e.id!=='moon_pearl');setTimeout(()=>onCatch({id:p[Math.floor(Math.random()*p.length)].id,cm:0},'salvage'),900)}
+  for(let i=0;i<10;i++)fx.push({x:ch.x,y:ch.y-6,vx:(Math.random()-.5)*40,vy:-30-Math.random()*30,t:.8,c:['#ffd24d','#fff6c0','#bfe8f4'][i%3]})}
+/* ---------- air, jellyfish and the underwater look ---------- */
+function diveTick(dt){if(!DIVE||scene!==DIVE.sc)return;const Sc=scene;DIVE.t+=dt;if(!MG&&$('panel').hidden)DIVE.air-=dt;
+  if(DIVE.air<10&&!DIVE.warned){DIVE.warned=1;toast('Ten seconds of air left! Back to the rope.','warn');sfx('error')}if(DIVE.air<=0){surface(true);return}
+  for(const f of Sc.swim){f.x+=f.v*dt;f.y+=Math.sin(DIVE.t*.9+f.ph)*dt*4;if(f.x<-30)f.x=Sc.w*16+20;if(f.x>Sc.w*16+30)f.x=-20;if(Math.hypot(f.x-player.x,f.y-player.y)<26&&Math.random()<dt*3)f.v=Math.sign(f.x-player.x||1)*Math.max(30,Math.abs(f.v))}
+  for(const j of Sc.jelly){j.ph+=dt;j.x+=j.vx*dt;j.y+=(j.vy+Math.sin(j.ph*1.5)*6)*dt;if(j.x<20||j.x>Sc.w*16-20)j.vx*=-1;if(j.y<70||j.y>Sc.h*16-30)j.vy*=-1;j.hit=Math.max(0,j.hit-dt);
+    if(!j.hit&&Math.hypot(j.x-player.x,j.y-(player.y-10))<12){j.hit=2;DIVE.air-=8;sfx('crack2');toast('Zap! A jellyfish stung you. -8 seconds of air.','warn');for(let i=0;i<8;i++)fx.push({x:player.x,y:player.y-12,vx:(Math.random()-.5)*50,vy:-20-Math.random()*30,t:.5,c:'#e8a0ff'})}}
+  if(Math.random()<dt*2.5)DIVE.bub.push({x:player.x+(player.dir==='left'?-4:4),y:player.y-20,v:22+Math.random()*12,t:0});for(let i=DIVE.bub.length-1;i>=0;i--){const b=DIVE.bub[i];b.t+=dt;b.y-=b.v*dt;b.x+=Math.sin(b.t*6)*.3;if(b.t>3)DIVE.bub.splice(i,1)}}
+function artJelly(f){return cc('jelly'+f,()=>{const N=PN(14,18);N.ell(7,5,5.5,4.5,(nx,ny,l)=>ny>.55?null:l>.2?'#f8d0ff':'#d898f0',2);N.px(5,3,'#ffffff',3);for(let i=0;i<4;i++){const x=3+i*2.6;for(let y=8;y<17;y++)N.px(x+Math.round(Math.sin(y*.7+f*1.6+i)*1),y,y%3?'#c890e8':'#e8b8ff',1)}return N.canvas()})}
+function drawDive(t,Sc){if(!Sc.dive)return;const T=Sc.theme;
+  for(const f of Sc.swim){const im=swimArt(f.id);if(!im||!inView(f.x-20,f.y-20,40,40))continue;ctx.save();ctx.globalAlpha=.9;const x=Math.round(f.x-camX),y=Math.round(f.y-camY);if(f.v>0){ctx.translate(x+im.width/2,y-im.height/2);ctx.scale(-1,1);ctx.drawImage(im,0,0)}else ctx.drawImage(im,x-im.width/2,y-im.height/2);ctx.restore()}
+  for(const j of Sc.jelly){const im=artJelly(Math.floor(t*4)%4);ctx.globalAlpha=j.hit?.5:.85;ctx.drawImage(im,Math.round(j.x-camX)-7,Math.round(j.y-camY)-9);ctx.globalAlpha=1}
+  // the rope up to the boat
+  const rx=Sc.spots.rope.x-camX;ctx.fillStyle='#d8c8a0';ctx.fillRect(Math.round(rx),Math.round(-camY),1,Math.round(Sc.spots.rope.y-camY+4));ctx.fillStyle='#8a6a40';ctx.fillRect(Math.round(rx)-2,Math.round(Sc.spots.rope.y-camY+3),5,3);
+  if(DIVE)for(const b of DIVE.bub){ctx.fillStyle='#d6f2f8';ctx.fillRect(Math.round(b.x-camX),Math.round(b.y-camY),1,1);if(b.t>.6)ctx.fillRect(Math.round(b.x-camX)+1,Math.round(b.y-camY)-1,1,1)}
+  // light from above, a blue cast and drifting specks
+  ctx.globalCompositeOperation='lighter';for(let i=0;i<4;i++){const x0=((i*97+t*7)%(VW+80))-40;ctx.globalAlpha=.05+.03*Math.sin(t+i);ctx.fillStyle='#8fe0ff';ctx.beginPath();ctx.moveTo(x0,0);ctx.lineTo(x0+14,0);ctx.lineTo(x0+60,VH);ctx.lineTo(x0+30,VH);ctx.fill()}ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
+  ctx.fillStyle=T.tint;ctx.globalAlpha=.16+T.k*.2;ctx.fillRect(0,0,VW,VH);ctx.globalAlpha=1;
+  ctx.fillStyle='rgba(220,240,255,.35)';for(let i=0;i<30;i++){const x=(i*53+t*4*(1+i%3))%VW,y=(i*37+t*9)%VH;ctx.fillRect(x|0,y|0,1,1)}}
+function diveChip(){const c=$('hullChip');if(!c||!DIVE||scene!==DIVE.sc)return false;c.hidden=false;$('hullTxt').textContent='Air '+Math.max(0,Math.ceil(DIVE.air))+'s';$('hullSub').textContent=DIVE.air<10?'Back to the rope!':'Tap Surface at the rope';paintIcon($('hullIc'),uiIcon('dive'));return true}
+function diveShopRows(){const l=el('div','list');
+  l.append(itemRow(uiIcon('dive'),'Dive kit',S.diveKit?'Mask, fins and a 45-second tank. Dive at wreck flags from your boat.':'Mask, fins and a 45-second tank. Dive at the flags by wrecks and reefs.',S.diveKit?el('b',null,'Owned'):btn(fmt(DIVECFG.kit),()=>{if(!payShells(DIVECFG.kit))return;S.diveKit=1;markDirty();sfx('buy');toast('Dive kit ready. Stop your boat by a dive flag and tap Dive.','lvl');renderPanel()},'sm gold')));
+  if(S.diveKit)l.append(itemRow(uiIcon('dive'),'Twin tanks',S.diveTank?'75 seconds of air on every dive.':'75 seconds of air instead of 45.',S.diveTank?el('b',null,'Owned'):btn(fmt(DIVECFG.tank),()=>{if(!payShells(DIVECFG.tank))return;S.diveTank=1;markDirty();sfx('buy');renderPanel()},'sm gold')));return l}
+function artDiveFlag(f){return cc('dflag'+f,()=>{const N=PN(12,16);N.rect(5,8,2,7,'#e8e2d0',1);N.ell(6,15,4,1.5,'#c8443a',0);for(let y=1;y<8;y++)for(let x=6;x<12;x++){const w=Math.round(Math.sin(y*.8+f*1.5)*.6);N.px(x,y+w,Math.abs((x-6)-(y-1))<1.2?'#ffffff':'#e83a2a',2)}N.rect(5,1,1,8,'#e8e2d0',2);N.outline();return N.canvas()})}
+function drawDiveFlags(list,t){for(const d of diveSites()){if(!inView(d.x-20,d.y-30,40,40))continue;const im=artDiveFlag(Math.floor(t*3)%3);const x=Math.round(d.x+12-camX),y=Math.round(d.y-14-camY+Math.sin(t*2+d.x)*1);list.push({sy:d.y,draw:()=>ctx.drawImage(im,x-6,y)})}}
 
 /* ================= rendering: the coast, the sea, boats, people, weather and light ================= */
 const cv=$('cv');const ctx=cv.getContext('2d');let VW=320,VH=240,SCALE=2,camX=0,camY=0;
@@ -3346,13 +3431,13 @@ function render(t){const Sc=scene;const ww=Sc.w*16,wh=Sc.h*16;const fx0=player.b
     if(player.boat){const b=player.boat;boatDraw(list,b.k,b.x,b.y,b.h,S.paint[b.k],S.coop,{id:ACTIVE(),f:MG&&MG.type==='fish'?(Math.floor(t*6)%2?1:2):0},t,{name:S.boatName||null,col:'#bfe8f4',decor:boatDetail(b.k)})}
     for(const f of FOLK){if(!inView(f.x-10,f.y-30,20,34))continue;list.push({sy:f.y,draw:()=>{drawChar(ctx,f.id,f.x-camX,f.y-camY,f.dir,f.moving?WALK[f.f]:0);if(f.bubble)bubble(ctx,f.bubble.text,f.x-camX,f.y-camY-26)}})}
     for(const c of CRABS){if(!inView(c.x-6,c.y-6,12,12))continue;list.push({sy:c.y,draw:()=>ctx.drawImage(artCrabBeach(Math.floor(t*8)%2),Math.round(c.x-camX)-6,Math.round(c.y-camY)-5)})}}
-  drawCats(list,t,Sc);
+  drawCats(list,t,Sc);if(Sc===WORLD)drawDiveFlags(list,t);
   for(const kp of(Sc.keepers||[]))list.push({sy:kp.y,draw:()=>drawChar(ctx,kp.id,kp.x-camX,kp.y-camY,kp.dir||'down',Math.floor(t*1.5+kp.x)%7===0?1:0)});
   for(const[k,pe]of NET.peers){if(pe.sc!==Sc.name)continue;const col=pe.co?COOPI[pe.co].lt==='#ffffff'?'#bfe8f4':COOPI[pe.co].lt:'#7fdcc0';
     if(pe.b&&Sc===WORLD){boatDraw(list,pe.b.k,pe.x,pe.y,pe.b.h,pe.b.p,pe.co,{id:pe.id,f:pe.fish?(Math.floor(t*6)%2?1:2):0},t,{name:pe.b.n||pe.n,col,decor:pe.b.de,fishing:pe.fish});continue}
     list.push({sy:pe.y,draw:()=>{drawChar(ctx,pe.id,pe.x-camX,pe.y-camY,pe.dir,pe.moving?WALK[pe.f]:0);if(pe.co)drawBands(ctx,pe.x-camX,pe.y-camY,pe.dir,COOPI[pe.co].col,false);nameTag(ctx,pe.n,pe.x-camX,pe.y-camY+4,col);if(pe.bubble)bubble(ctx,pe.bubble.text,pe.x-camX,pe.y-camY-26);if(pe.emote)drawEmote(pe.emote.k,pe.x-camX,pe.y-camY-32,t)}})}
   if(!player.boat)list.push({sy:player.y,draw:()=>drawPlayer(t)});
-  list.sort((a,b)=>a.sy-b.sy);for(const d of list)d.draw();
+  list.sort((a,b)=>a.sy-b.sy);for(const d of list)d.draw();if(Sc.dive)drawDive(t,Sc);
   if(player.boat){const b=player.boat;if(player.bubble)bubble(ctx,player.bubble.text,b.x-camX,b.y-camY-22);if(player.emote)drawEmote(player.emote.k,b.x-camX,b.y-camY-28,t)}
   if(Sc===WORLD){for(const g of GULLS){if(!inView(g.x-6,g.y-30,12,40))continue;const x=Math.round(g.x-camX),y=Math.round(g.y-camY-24);const up=Math.floor(t*5+g.ph)%2;ctx.fillStyle='rgba(18,48,74,.25)';ctx.fillRect(x-2,y+24,5,1);ctx.fillStyle='#fbfbff';ctx.fillRect(x-1,y,3,1);ctx.fillStyle=OL;if(up){P(ctx,x-3,y-2,OL);P(ctx,x-2,y-1,OL);P(ctx,x+2,y-1,OL);P(ctx,x+3,y-2,OL)}else{P(ctx,x-3,y+1,OL);P(ctx,x-2,y,OL);P(ctx,x+2,y,OL);P(ctx,x+3,y+1,OL)}}
     drawWeather(t);drawTimeOfDay(t)}
@@ -3453,7 +3538,7 @@ function update(dt){gameT+=dt;
   const p=player;
   if(p.boat){boatUpdate(dt,MG?0:mx,MG?0:my)}
   else{let pathD=0;if(!mx&&!my&&p.path){const f=followPath(dt);mx=f[0];my=f[1];pathD=f[2]}if(MG)mx=my=0;const len=Math.hypot(mx,my);if(len>1){mx/=len;my/=len}
-    if(mx||my){const sp=pathD?Math.min(78*dt,pathD):78*dt;const moved=moveEnt(p,mx*sp,my*sp,scene);if(!moved&&my<-.5&&!p.path)doorBump();p.dir=faceFrom(mx,my,p.dir);p.moving=moved;if(p.path){if(!moved){p.stuck=(p.stuck||0)+dt;if(p.stuck>.35){const g=p.goal;cancelPath();if(g&&!p.retried){p.retried=1;walkTo(g,true)}else p.retried=0}}else p.stuck=0}p.ft+=dt;if(p.ft>.11){p.ft=0;p.f=(p.f+1)%4}}else{p.moving=false;p.f=0}
+    if(mx||my){const spd=scene.dive?52:78;const sp=pathD?Math.min(spd*dt,pathD):spd*dt;const moved=moveEnt(p,mx*sp,my*sp,scene);if(!moved&&my<-.5&&!p.path)doorBump();p.dir=faceFrom(mx,my,p.dir);p.moving=moved;if(p.path){if(!moved){p.stuck=(p.stuck||0)+dt;if(p.stuck>.35){const g=p.goal;cancelPath();if(g&&!p.retried){p.retried=1;walkTo(g,true)}else p.retried=0}}else p.stuck=0}p.ft+=dt;if(p.ft>.11){p.ft=0;p.f=(p.f+1)%4}}else{p.moving=false;p.f=0}
     if(scene&&scene.exitFn&&p.y>(scene.h-1)*16+2&&!MG){const f=scene.exitFn;cancelPath();f();return}}
   if(tapFx){tapFx.t-=dt;if(tapFx.t<=0)tapFx=null}
   if(MG){MG.update(dt);if(MG){mgTick(dt);drawMG()}}
@@ -3530,7 +3615,7 @@ function setActButton(a){const b=$('btnAct');paintIcon($('actIcon'),uiIcon(a?a.i
 function upd2Button(){const a=secondAct();const b=$('btn2');b.hidden=!a||!!MG;if(a){$('btn2Label').textContent=a.label;paintIcon($('btn2Ic'),uiIcon(a.icon))}}
 function setLocation(){let n='';if(scene===WORLD){const px=player.boat?player.boat.x:player.x,py=player.boat?player.boat.y:player.y;const z=zoneAtPx(px,py);const tx=px/16,ty=py/16;
     const island=(WORLD.islands||[]).find(I=>Math.hypot(tx-I.x,(ty-I.y)*1.2)<I.r+3);if(island)n=island.n;else if(z)n=ZONES[z].n;else if(ty<34&&tx<66)n='Riverbank';else if(ty<44&&tx>50)n='Lighthouse Point';else if(ty>88)n='Long Beach';else if(tx>=34&&tx<=45&&ty>=50&&ty<=64)n='Town Square';else if(tx>=46)n='The Quay';else n='Gullhaven'}
-  else if(scene.homeGuest)n=scene.homeName+"'s cottage";else n={market:'Fish Market',tackle:'Tackle Shop',boatyard:'Boatyard',exchange:'Island Guild',aquarium:'Aquarium',tavern:'The Salty Gull',harbourmaster:'Harbourmaster',lighthouse:'Lighthouse',home:'Your cottage'}[scene.in]||(scene.in&&scene.in.startsWith('hall_')?COOPI[scene.in.slice(5)].s+' hall':'Inside');$('loc').textContent=n}
+  else if(scene.homeGuest)n=scene.homeName+"'s cottage";else n={market:'Fish Market',tackle:'Tackle Shop',boatyard:'Boatyard',exchange:'Island Guild',aquarium:'Aquarium',tavern:'The Salty Gull',harbourmaster:'Harbourmaster',lighthouse:'Lighthouse',home:'Your cottage',dive:scene.theme?scene.theme.n:'Under the sea'}[scene.in]||(scene.in&&scene.in.startsWith('hall_')?COOPI[scene.in.slice(5)].s+' hall':'Inside');$('loc').textContent=n}
 let panelName=null,panelTab=null,panelCtx=null,selId=null;
 function updDock(){document.querySelectorAll('#dock button').forEach(b=>b.classList.toggle('on',(b.dataset.p===panelName&&!$('panel').hidden)||(b.dataset.p==='book'&&!$('book').hidden)))}
 function paintDock(){document.querySelectorAll('#dock canvas[data-i]').forEach(c=>paintIcon(c,uiIcon(c.dataset.i)));paintIcon($('icShell'),uiIcon('shell'));paintIcon($('icReel'),uiIcon('reel'));paintIcon($('gIc'),uiIcon('reel'));paintIcon($('chatBtn').querySelector('canvas'),uiIcon('chat'))}
@@ -3812,7 +3897,7 @@ function panelShop(body,H){if(!panelCtx||!panelCtx.grp){const inT=scene&&scene.i
   if(t==='bait'){head(grp==='stall'?'Bait stall':'Bait fridge','Fresh every morning',uiIcon('bait_prawn'));const l=el('div','list');
     for(const k of BAIT_ORDER){if(k==='dough')continue;const B=BAIT[k];const n=baitCount(k);const right=el('div','row');right.style.cssText='gap:6px;flex-wrap:nowrap';right.append(btn(`${fmt(B.price)}${B.pack>1?' \u00d7'+B.pack:''}`,()=>{if(!payShells(B.price))return;S.bait[k]=(S.bait[k]||0)+B.pack;if(B.lure&&S.baitSel==='dough')S.baitSel=k;toast(`${B.n}: ${S.bait[k]} ${B.lure?'owned':'in the box'}.`);markDirty();renderPanel()},'sm gold'));
       if(n>0&&S.baitSel!==k)right.append(btn('Use',()=>{S.baitSel=k;markDirty();renderPanel()},'sm alt'));const r=itemRow(baitIcon(k),B.n+(n?` (${n})`:''),B.d,right);if(S.baitSel===k)r.classList.add('me');l.append(r)}body.append(l);return}
-  if(t==='boatyard'){head('Boatyard','Every hull in Gullhaven came out of this shed',uiIcon('boat'));body.append(hullRow());H('p','A boat carries a bigger hold and reaches further grounds. You keep every boat you buy and can switch between them here.');const l=el('div','list');
+  if(t==='boatyard'){head('Boatyard','Every hull in Gullhaven came out of this shed',uiIcon('boat'));body.append(hullRow(),diveShopRows());H('p','A boat carries a bigger hold and reaches further grounds. You keep every boat you buy and can switch between them here.');const l=el('div','list');
     for(const b of BOATS){const own=S.boats.includes(b.k);const cur=S.boat===b.k;const reach=ZONE_ORDER.filter(z=>z!=='lake'&&ZONES[z].need===b.tier).map(z=>ZONES[z].short).join(', ');
       const right=cur?el('b',null,'Yours'):own?btn('Use',()=>{S.boat=b.k;S.boatPos=null;markDirty();toast(`The ${b.n.toLowerCase()} is at your berth.`);renderPanel()},'sm'):btn(fmt(b.price),()=>{if(!payShells(b.price))return;S.boats.push(b.k);S.boat=b.k;S.boatPos=null;if(S.gear.engine>0&&S.fuel<5)S.fuel=Math.min(fuelCap(),20);sfx('horn');toast(`Your new ${b.n.toLowerCase()} is tied up at the jetty. Tap it to board.`,'lvl');bumpQuest('boat');markDirty();renderPanel()},'sm gold');
       const r=itemRow(boatIcon(b.k),b.n,`Hold ${b.hold} \u00b7 ${b.storm?'handles storms '+b.storm+'/4':'harbour weather only'}${reach?' \u00b7 opens '+reach:''}`,right);if(cur)r.classList.add('me');l.append(r)}body.append(l);return}

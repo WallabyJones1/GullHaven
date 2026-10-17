@@ -70,5 +70,7 @@ function addWilds(W,set,pier){const idx=(x,y)=>y*W.w+x;const r=rng(9091);const L
     if(I.id==='mossbank'){for(let k=0;k<10;k++){const p=pickT(grass);if(p)flat(artFlowers(k%4),p[0],p[1])}for(let k=0;k<3;k++){const p=pickT(grass);if(p&&freeG(W,p[0],p[1]))treeAt(W,p[0],p[1],1)}for(let k=0;k<2;k++){const p=pickT(grass);if(p)solidDeco(artFlowerBox(k),p[0],p[1])}}
     if(I.id==='lantern'){for(let k=0;k<5;k++){const p=pickT(grass)||pickT(sand);if(p)solidDeco(artRock(false,3),p[0],p[1])}for(let k=0;k<3;k++){const p=pickT(grass);if(p&&freeG(W,p[0],p[1]))treeAt(W,p[0],p[1],3)}}
     const n=NPC[I.id];if(n){const nx=(x-3)*16+8,ny=(y+2)*16+12;W.keepers.push({id:n[1],x:nx,y:ny,dir:'down'});W.npcs.push({island:I.id,n:n[0],x:nx,y:ny})}}
+  // a dive flag off each island's reef
+  W.diveSites=[];for(const I of W.islands||[]){let got=null;for(let rr=I.r+3;rr<=I.r+7&&!got;rr++)for(let a=0;a<16&&!got;a++){const an=2.4+a/16*6.283;const tx=Math.round(I.x+Math.cos(an)*rr),ty=Math.round(I.y+Math.sin(an)*rr/1.2);const i=idx(tx,ty);if(W.g[i]!=='o'||!W.nav[i])continue;const z=ZONE_ORDER[W.zone[i]];if(['shallows','reef','kelp'].includes(z))got={key:'i'+I.id,x:tx*16+8,y:ty*16+8,zone:z}}if(got)W.diveSites.push(got)}
   W.lakeCenter={x:L.x*16,y:L.y*16}}
 function lakeOpen(){return!!(typeof S!=='undefined'&&S&&S.story&&S.story.lake)}

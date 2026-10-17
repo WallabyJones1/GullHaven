@@ -33,7 +33,7 @@ function update(dt){gameT+=dt;
   const p=player;
   if(p.boat){boatUpdate(dt,MG?0:mx,MG?0:my)}
   else{let pathD=0;if(!mx&&!my&&p.path){const f=followPath(dt);mx=f[0];my=f[1];pathD=f[2]}if(MG)mx=my=0;const len=Math.hypot(mx,my);if(len>1){mx/=len;my/=len}
-    if(mx||my){const sp=pathD?Math.min(78*dt,pathD):78*dt;const moved=moveEnt(p,mx*sp,my*sp,scene);if(!moved&&my<-.5&&!p.path)doorBump();p.dir=faceFrom(mx,my,p.dir);p.moving=moved;if(p.path){if(!moved){p.stuck=(p.stuck||0)+dt;if(p.stuck>.35){const g=p.goal;cancelPath();if(g&&!p.retried){p.retried=1;walkTo(g,true)}else p.retried=0}}else p.stuck=0}p.ft+=dt;if(p.ft>.11){p.ft=0;p.f=(p.f+1)%4}}else{p.moving=false;p.f=0}
+    if(mx||my){const spd=scene.dive?52:78;const sp=pathD?Math.min(spd*dt,pathD):spd*dt;const moved=moveEnt(p,mx*sp,my*sp,scene);if(!moved&&my<-.5&&!p.path)doorBump();p.dir=faceFrom(mx,my,p.dir);p.moving=moved;if(p.path){if(!moved){p.stuck=(p.stuck||0)+dt;if(p.stuck>.35){const g=p.goal;cancelPath();if(g&&!p.retried){p.retried=1;walkTo(g,true)}else p.retried=0}}else p.stuck=0}p.ft+=dt;if(p.ft>.11){p.ft=0;p.f=(p.f+1)%4}}else{p.moving=false;p.f=0}
     if(scene&&scene.exitFn&&p.y>(scene.h-1)*16+2&&!MG){const f=scene.exitFn;cancelPath();f();return}}
   if(tapFx){tapFx.t-=dt;if(tapFx.t<=0)tapFx=null}
   if(MG){MG.update(dt);if(MG){mgTick(dt);drawMG()}}
