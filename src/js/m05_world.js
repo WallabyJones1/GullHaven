@@ -3,7 +3,7 @@
    a long sandy bay curves along the south, and the sea gets deeper (and stranger) the further east you go.
    Land and sea come from one continuous field (tile units, positive = land) so the shoreline is smooth at the
    pixel level and the gameplay tiles agree with what you see. */
-const WORLD_W=224,WORLD_H=152;
+const WORLD_W=320,WORLD_H=224;
 let WORLD=null,scene=null;const SCENES={};
 function newScene(name,w,h){return{name,w,h,g:new Array(w*h).fill('g'),sol:new Uint8Array(w*h),res:new Uint8Array(w*h),props:[],acts:[],water:[],spots:{},keepers:[],lights:[]}}
 function addProp(S,img,x,y,o={}){const p=Object.assign({img,x,y,sy:y+img.height},o);if(o.sy!==undefined)p.sy=o.sy;S.props.push(p);return p}
@@ -27,80 +27,118 @@ function buildCoast(){const W=WORLD_W,H=WORLD_H,P=16;
   for(let i=0;i<H*P;i++){const y=i/P;let c=cat(y);const flat=y>=43.6&&y<84.5;
     if(!flat)c+=(vnoise(0,y,5,601)-.5)*2.2+(vnoise(0,y,13,602)-.5)*3*smooth(0,6,Math.min(Math.abs(y-44),Math.abs(y-84)));cx[i]=c}
   // southern shore: the long beach, then a rocky point, then open water
-  for(let i=0;i<W*P;i++){const x=i/P;let s;if(x<40)s=100;else if(x<100)s=108+Math.sin(x*.09)*1.5-smooth(40,52,x)*3+smooth(52,60,x)*3;else if(x<107)s=108-smooth(99,103,x)*8+smooth(104,108,x)*8;else s=200;
+  for(let i=0;i<W*P;i++){const x=i/P;let s;if(x<40)s=100;else if(x<100)s=108+Math.sin(x*.09)*1.5-smooth(40,52,x)*3+smooth(52,60,x)*3;else if(x<107)s=108-smooth(99,103,x)*8+smooth(104,108,x)*8;else s=9999;
     s+=(vnoise(x,0,6,611)-.5)*1.6;sy[i]=s;
     // the river: meanders east from the hills into the estuary bay
     rv[i]=17+Math.sin(x*.11)*2.5+(vnoise(x,0,9,621)-.5)*3;rw[i]=x<10?1.6:1.8+smooth(10,60,x)*2.6+(vnoise(x,0,5,622)-.5)*.8}
-  COAST.cx=cx;COAST.sy=sy;COAST.rv=rv;COAST.rw=rw;
+  // the mainland ends in a south coast, and its east side curves away to the south-west, leaving open sea below
+  const sc=new Float32Array(W*P),ex=new Float32Array(H*P);for(let i=0;i<W*P;i++){const x=i/P;sc[i]=x<118?150+Math.sin(x*.07)*3+(vnoise(x,0,7,631)-.5)*4:9999}
+  for(let i=0;i<H*P;i++){const y=i/P;ex[i]=y<110?9999:107-smooth(110,152,y)*26+(vnoise(0,y,6,641)-.5)*3}
+  COAST.cx=cx;COAST.sy=sy;COAST.rv=rv;COAST.rw=rw;COAST.sc=sc;COAST.ex=ex;
   COAST.islands=[{x:90,y:52,r:3.2},{x:118,y:30,r:1.6,rock:1},{x:124,y:62,r:1.3,rock:1},{x:113,y:74,r:1.4,rock:1},...ISLAND_TOWNS]}
 // signed land field (tile units): > 0 land, < 0 water
 function landF(x,y){const P=16;const yi=clamp(Math.floor(y*P),0,WORLD_H*P-1),xi=clamp(Math.floor(x*P),0,WORLD_W*P-1);
-  let L=Math.max(COAST.cx[yi]-x,y-COAST.sy[xi]);
+  let L=Math.max(COAST.cx[yi]-x,y-COAST.sy[xi]);L=Math.min(L,COAST.sc[xi]-y,COAST.ex[yi]-x);
+  if(Math.abs(x-ATOLL.x)<ATOLL.R+3&&Math.abs(y-ATOLL.y)<ATOLL.R+3){const d=Math.hypot(x-ATOLL.x,y-ATOLL.y),a=Math.atan2(y-ATOLL.y,x-ATOLL.x);if(Math.abs(a-1.57)>.42)L=Math.max(L,1.15-Math.abs(d-ATOLL.R)+(NZ.at(x*6,y*6)-.5)*.5)}
   for(const I of COAST.islands){const dx=x-I.x,dy=(y-I.y)*1.2,reach=I.r+.4-L;if(reach<=0||dx*dx+dy*dy>=reach*reach)continue;const d=Math.sqrt(dx*dx+dy*dy);L=Math.max(L,I.r-d+(I.rock?0:(NZ.at(x*9,y*9)-.5)*.8))}
-  if(y<36){const r=Math.abs(y-COAST.rv[xi])-COAST.rw[xi]*(1+smooth(50,64,x)*1.6);L=Math.min(L,r)}
+  if(y<36&&x<110){const r=Math.abs(y-COAST.rv[xi])-COAST.rw[xi]*(1+smooth(50,64,x)*1.6);L=Math.min(L,r)}
   if(inLakeBox(x,y))L=Math.min(L,lakeD(x,y));
   return L}
 // what lines this stretch of coast
-function shoreKind(x,y){if(inLakeBox(x,y))return'wall';const island=islandShoreAt(x,y);if(island)return island.shore;const n=(NZ.at(x*3,y*3)-.5)*4;if(x>98&&x<108&&y>96)return'rock';for(const I of COAST.islands)if(I.rock&&Math.hypot(x-I.x,y-I.y)<I.r+2)return'rock';
+const ATOLL={x:62,y:188,R:8};const nearAtoll=(x,y)=>Math.hypot(x-ATOLL.x,y-ATOLL.y)<ATOLL.R+3;
+function shoreKind(x,y){if(inLakeBox(x,y))return'wall';if(nearAtoll(x,y))return'sand';const island=islandShoreAt(x,y);if(island)return island.shore;const n=(NZ.at(x*3,y*3)-.5)*4;if(x>98&&x<108&&y>96)return'rock';for(const I of COAST.islands)if(I.rock&&Math.hypot(x-I.x,y-I.y)<I.r+2)return'rock';
   if(y<31+n)return x<66+n?'mud':'sand';if(y<43.5&&x>48)return'rock';if(y>=43.5&&y<84.6&&x<58)return'wall';return'sand'}
-function sandWidth(x,y){if(inLakeBox(x,y))return .4;if(islandShoreAt(x,y))return 2.2;if(y>=30&&y<44&&x>48)return 6.5+NZ.at(x*4,y*4)*2.5;if(x>98&&x<108&&y>96)return 3;if(y<34)return x<64?1.8:1.4;if(y>96)return 4.5+NZ.at(x*3,7)*1.5;if(y>84)return 2.6;return 1.6}
+function sandWidth(x,y){if(inLakeBox(x,y))return .4;if(nearAtoll(x,y))return 3;if(islandShoreAt(x,y))return 2.2;if(y>=30&&y<44&&x>48)return 6.5+NZ.at(x*4,y*4)*2.5;if(x>98&&x<108&&y>96)return 3;if(y<34)return x<64?1.8:1.4;if(y>96)return 4.5+NZ.at(x*3,7)*1.5;if(y>84)return 2.6;return 1.6}
 function zoneOfXY(x,y){
   if(inLakeBox(x,y))return'lake';
   if(x>=57&&x<74.5&&y>=43.5&&y<85)return'harbour';
   const islandZone=islandSeaZone(x,y);if(islandZone)return islandZone;
   const n=(NZ.at(x*2.3,y*2.3)-.5)*8,m=(NZ.at(x*1.1+40,y*1.1)-.5)*10;
-  if(x>=147+n*.4)return'deep';if(x>=133+n*.7)return'blue';
+  const mm=(NZ.at(x*.35+77,y*.35+31)-.5)*2;
+  if(Math.hypot(x-ATOLL.x,y-ATOLL.y)<ATOLL.R+4)return'lagoon';
+  if(y>146+m*.3){if(x<COAST.ex[Math.min(COAST.ex.length-1,Math.floor(y*16))]+14&&y<COAST.sc[clamp(Math.floor(x*16),0,COAST.sc.length-1)]+13+m*.6)return'seagrass';if(y>204+m*2.5+mm*6)return x>=186+mm*10?'deep':'blue';
+    if(x<150+mm*8+m*1.5){const q=NZ.at(x*.5+5,y*.5+3);return q>.64?'kelp':q<.32?'wreck':'reef'}}
+  if(x>=188+n*1.5+mm*12)return'deep';if(x>=152+n*1.5+mm*9)return'blue';
   if(Math.hypot(x-62,(y-15)*1.25)<27+m||(y<30&&x<56))return'estuary';
   if(Math.hypot(x-120,(y-106)*1.1)<24+m&&x>98)return'kelp';
   if(y>=86+n*.6&&x<102+m)return'shallows';
-  if(x>=107+n)return y>94+m?'kelp':'wreck';
+  if(x>=107+n)return y>94+m&&y<132+m?'kelp':y>=132+m?'reef':'wreck';
   return'reef'}
 function depthAt(x,y,L,z){const d=-L;switch(z){case'harbour':return 2+Math.min(3,d*.35);case'estuary':return .8+Math.min(3,d*.3);case'shallows':return .6+Math.min(5,d*.35);
-  case'reef':return 3+Math.min(6,d*.12)-(NZ.at(x*4,y*4)>.62?2.5:0);case'kelp':return 6+Math.min(6,d*.15);case'wreck':return 10+Math.min(10,d*.1);case'lake':return 1+Math.min(5,d*.5);case'blue':return 30+(x-132)*2;default:return 80+(x-146)*6}}
+  case'reef':return 3+Math.min(6,d*.12)-(NZ.at(x*4,y*4)>.62?2.5:0);case'kelp':return 6+Math.min(6,d*.15);case'wreck':return 10+Math.min(10,d*.1);case'lake':return 1+Math.min(5,d*.5);case'seagrass':return 1+Math.min(4,d*.3);case'lagoon':return 1.5+Math.min(3,d*.2);case'blue':return 30+(x-150)*1.4;default:return 80+(x-186)*4}}
 /* ---------- painting the ground ---------- */
 const SEA={harbour:['#7ad0d4','#4ab0c8','#3a96c0','#3284b0'],estuary:['#8ab49a','#6a9e8e','#548a80','#467a74'],shallows:['#9ae4dc','#6ad0d4','#48b6cc','#3a9cc2'],reef:['#7adcd8','#4ac4d0','#36aac8','#2c94bc'],
-  kelp:['#5aa49c','#3e8c8c','#307682','#286474'],wreck:['#3a86ac','#2f72a0','#2a6292','#245484'],blue:['#2a62a8','#24529a','#20468a','#1c3a7a'],deep:['#1c2c66','#18245a','#141c4c','#10163e'],lake:['#8ad4bc','#5cb8a8','#43a09c','#33868e']};
+  kelp:['#5aa49c','#3e8c8c','#307682','#286474'],wreck:['#3a86ac','#2f72a0','#2a6292','#245484'],blue:['#2a62a8','#24529a','#20468a','#1c3a7a'],deep:['#1c2c66','#18245a','#141c4c','#10163e'],lake:['#8ad4bc','#5cb8a8','#43a09c','#33868e'],seagrass:['#8ac8a8','#5aa890','#4a9484','#3a8078'],lagoon:['#b0f2ea','#80e2dc','#5cccd4','#48b4c8']};
 function seaPx(wx,wy,x,y,L,z){// colour zone sampled with a jitter so neighbouring grounds dither into each other
   let jz=zoneOfXY(x+(hash2(wx,wy,31)-.5)*3,y+(hash2(wx,wy,32)-.5)*3);if(jz==='harbour'||z==='harbour')jz=z;const P=SEA[jz]||SEA.reef;const n=NZ.at(wx*.7,wy*.7)*.6+NZ.at(wx*2.1+50,wy*2.1)*.4;const sh=-L;
   let k=sh<1.2?0:sh<3?1:sh<7?2:3;if(jz==='deep'||jz==='blue'||jz==='wreck'){k=n>.72?1:n<.28?3:2}else if(k>=2)k=n>.7?1:n<.3?3:2;
   if(jz==='reef'&&sh>2&&NZ.at(wx*.9+17,wy*.9)>.66)k=Math.max(0,k-1);
   let col=P[k];if(n>.8&&k<3&&k>0)col=P[k-1];
-  if(x>146&&x<147.6&&(jz==='blue'||jz==='deep'))col=mix(col,'#0c1030',.3);
-  if(jz==='kelp'&&NZ.at(wx*1.6+9,wy*1.6)>.66)col=mix(col,'#4a5a2a',.45);
-  if(jz==='reef'&&sh>3&&NZ.at(wx*1.3+33,wy*1.3)>.74)col=hash2(wx>>2,wy>>2,9)<.5?mix(col,'#e88a8a',.35):mix(col,'#f0c880',.3);
-  if(jz==='wreck'&&NZ.at(wx*1.8+71,wy*1.8)>.78)col=mix(col,'#3a4a5a',.45);
+  const big=NZ.at(wx*.23+3,wy*.27+11);
+  if(jz==='kelp'&&NZ.at(wx*1.6+9,wy*1.6)*.55+big*.45>.62)col=mix(col,'#4a5a2a',.45);
+  if(jz==='reef'&&sh>3&&NZ.at(wx*1.3+33,wy*1.3)*.6+big*.4>.7)col=hash2(wx>>2,wy>>2,9)<.5?mix(col,'#e88a8a',.35):mix(col,'#f0c880',.3);
+  if(jz==='wreck'&&NZ.at(wx*1.8+71,wy*1.8)*.6+big*.4>.72)col=mix(col,'#3a4a5a',.45);
+  if((jz==='blue'||jz==='deep')&&big>.7)col=mix(col,'#0a1430',.18);
   if(jz==='lake'&&NZ.at(wx*1.2+5,wy*1.2)>.7)col=mix(col,'#cfeee4',.25);
+  if(jz==='seagrass'&&sh>1.5&&NZ.at(wx*1.4+21,wy*1.4)*.6+big*.4>.56)col=mix(col,(wx+wy*3)%5<2?'#2f5a3a':'#3a6a48',.42);
+  if(jz==='lagoon'&&sh>1&&NZ.at(wx*1.1+51,wy*1.1)>.72)col=mix(col,'#f8fff8',.22);
   return col}
-function paintWorldGround(S){const W=S.w,H=S.h;const B=mkBuf(W*16,H*16);const foam=mkBuf(W*16,H*16),tide=mkBuf(W*16,H*16);
-  // land tiles first, with the usual tile painters
-  for(let ty=0;ty<H;ty++)for(let tx=0;tx<W;tx++){const t=S.g[ty*W+tx];if(t==='o'||t==='pr'||t==='bw'||t==='sk')continue;if(t==='sa'||t==='mud'||t==='rk')continue;drawTile(B,S,t,tx,ty)}
-  grassEdges(B,S);
-  // then every coastal and sea pixel from the field
-  for(let ty=0;ty<H;ty++)for(let tx=0;tx<W;tx++){const t=S.g[ty*W+tx];if(!(t==='o'||t==='pr'||t==='bw'||t==='sk'||t==='sa'||t==='mud'||t==='rk'||t==='g'||t==='gb'))continue;
-    for(let j=0;j<16;j++)for(let i=0;i<16;i++){const wx=tx*16+i,wy=ty*16+j,x=wx/16,y=wy/16;const L=landF(x,y);const kind=shoreKind(x,y);const sw=sandWidth(x,y);
-      const isG=t==='g'||t==='gb';if(L>=0&&!isG&&t!=='sa'&&t!=='mud'&&t!=='rk')continue;if(L>=0&&isG&&L>sw+.5&&kind!=='rock')continue;
+// the ground is painted lazily in 512px chunks (only where you look), so a big ocean stays inside phone canvas limits
+// the ground is painted in 512px chunks, a few rows at a time, only where you look (so a big ocean stays inside phone limits)
+function chunkJob(S,cx,cy){const W=S.w,H=S.h;const ox=cx*CH,oy=cy*CH;const Y0=Math.max(0,Math.floor(oy/16)-1);
+  return{S,cx,cy,ox,oy,B:mkRBuf(ox,oy,CH,CH),foam:mkRBuf(ox,oy,CH,CH),tide:mkRBuf(ox,oy,CH,CH),X0:Math.max(0,Math.floor(ox/16)-1),Y0,X1:Math.min(W-1,Math.floor((ox+CH)/16)),Y1:Math.min(H-1,Math.floor((oy+CH)/16)),stage:0,ty:Y0}}
+function chunkStep(J,budget){const S=J.S,W=S.w,ox=J.ox,oy=J.oy,B=J.B,foam=J.foam,tide=J.tide,X0=J.X0,Y0=J.Y0,X1=J.X1,Y1=J.Y1;const t0=performance.now();
+  while(J.stage<3){
+    if(J.stage===0){// land tiles first, with the usual tile painters
+      const ty=J.ty;for(let tx=X0;tx<=X1;tx++){const t=S.g[ty*W+tx];if(t==='o'||t==='pr'||t==='bw'||t==='sk')continue;if(t==='sa'||t==='mud'||t==='rk')continue;drawTile(B,S,t,tx,ty)}
+      if(++J.ty>Y1){grassEdges(B,S,X0,Y0,X1,Y1);J.stage=1;J.ty=Y0}}
+    else if(J.stage===1){// then every coastal and sea pixel from the field
+      {const ty=J.ty;for(let tx=X0;tx<=X1;tx++){const t=S.g[ty*W+tx];if(!(t==='o'||t==='pr'||t==='bw'||t==='sk'||t==='sa'||t==='mud'||t==='rk'||t==='g'||t==='gb'))continue;
+    const Lc=t==='o'?landF(tx+.5,ty+.5):0,far=Lc<-9;
+    for(let j=0;j<16;j++)for(let i=0;i<16;i++){const wx=tx*16+i,wy=ty*16+j;if(wx<ox||wy<oy||wx>=ox+CH||wy>=oy+CH)continue;const x=wx/16,y=wy/16;const L=far?Lc:landF(x,y);const kind=far?'sea':shoreKind(x,y);const sw=far?0:sandWidth(x,y);
+      const isG=t==='g'||t==='gb',fill=isG||t==='o';if(L>=0&&!fill&&t!=='sa'&&t!=='mud'&&t!=='rk')continue;if(L>=0&&isG&&L>sw+.5&&kind!=='rock')continue;
       let col;
       if(L<0){const z=zoneOfXY(x,y);col=seaPx(wx,wy,x,y,L,z);const e=-L*16;
         if(kind!=='wall'){if(e<1.6)col=hash2(wx,wy,77)<.7?'#f4fbfb':'#d8f2f4';else if(e<3.5)col=mix(col,'#ffffff',.3);if(e<9)tide.set(wx,wy,'#5ab8cc')}
         else if(e<2)col=mix(col,'#123a5a',.35);
         if(kind!=='wall'&&e>=1.6&&e<5&&hash2(wx,wy,78)<.5)foam.set(wx,wy,'#ffffff')}
       else{const e=L*16;
-        if(e>=sw*16&&kind!=='rock'){if(!isG)continue;const ge=e-sw*16;const GP=grassPal(wx,wy);col=ge<1?GP.lip:ge<2?GP.dk:grassAt(wx,wy)}
+        if(e>=sw*16&&kind!=='rock'){if(!fill)continue;const ge=e-sw*16;const GP=grassPal(wx,wy);col=ge<1?GP.lip:ge<2?GP.dk:grassAt(wx,wy)}
         else if(kind==='mud'){col=NZ.at(wx*2,wy*2)>.6?'#7a6a50':e<5?'#5e5240':'#6e604a';if(NZ.at(wx*3+5,wy*3)>.72)col='#86a0a0'}
-        else if(kind==='rock'){if(e>=sw*16){if(!isG)continue;const GP=grassPal(wx,wy);const ge=e-sw*16;col=ge<1?'#5a566a':ge<2?GP.dk:grassAt(wx,wy);B.set(wx,wy,col);continue}const v=NZ.at(wx*1.5,wy*1.5)*.6+hash2(wx>>1,wy>>1,5)*.4;col=e<1.5?'#3e3a4c':v>.66?'#b8b4c4':v>.45?'#9a96aa':v>.25?'#827e94':'#6a6680';if(e<3)col=mix(col,'#4a5a6a',.3);if(NZ.at(wx*2.2+40,wy*2.2)>.78&&e>6)col=mix('#3f9ac0','#8ad8d8',NZ.at(wx*5,wy*5))}
-        else if(kind==='wall'){if(!isG)continue;col=grassAt(wx,wy)}
+        else if(kind==='rock'){if(e>=sw*16){if(!fill)continue;const GP=grassPal(wx,wy);const ge=e-sw*16;col=ge<1?'#5a566a':ge<2?GP.dk:grassAt(wx,wy);B.set(wx,wy,col);continue}const v=NZ.at(wx*1.5,wy*1.5)*.6+hash2(wx>>1,wy>>1,5)*.4;col=e<1.5?'#3e3a4c':v>.66?'#b8b4c4':v>.45?'#9a96aa':v>.25?'#827e94':'#6a6680';if(e<3)col=mix(col,'#4a5a6a',.3);if(NZ.at(wx*2.2+40,wy*2.2)>.78&&e>6)col=mix('#3f9ac0','#8ad8d8',NZ.at(wx*5,wy*5))}
+        else if(kind==='wall'){if(!fill)continue;col=grassAt(wx,wy)}
         else{const rip=Math.sin(wx*.35+Math.sin(wy*.5)*1.5+wy*.9);col=e<4?'#c8ac78':e<9?'#d8bc88':rip>.86?'#f8ebc4':rip<-.92?'#dcc48e':'#eedcaa';if(e>=4&&hash2(wx,wy,467)<.012)col='#fff8ea';if(e>=4&&hash2(wx,wy,468)<.005)col='#f2a6a0';if(e<9)tide.set(wx,wy,'#7ac8cc');
           if(e>(sw-.3)*16){const GP=grassPal(wx,wy);col=GP.lip}}
         if(!col)continue}
-      B.set(wx,wy,col)}}
+      B.set(wx,wy,col)}}}
+      if(++J.ty>Y1)J.stage=2}
+    else{
   // sea wall along the harbour promenade
-  for(let ty=43;ty<85;ty++){const tx=55;for(let j=0;j<16;j++)for(let i=8;i<16;i++){const wx=tx*16+i,wy=ty*16+j;const st=PAL.stone;const bx=(i+(Math.floor(wy/6)%2)*4)%8,by=wy%6;B.set(wx,wy,i>=14?'#3e3a52':by===5||bx===7?st[2]:by===0?st[5]:st[4])}}
+  if(ox<=56*16&&ox+CH>=55*16&&oy<85*16&&oy+CH>43*16)for(let ty=43;ty<85;ty++){const tx=55;for(let j=0;j<16;j++)for(let i=8;i<16;i++){const wx=tx*16+i,wy=ty*16+j;const st=PAL.stone;const bx=(i+(Math.floor(wy/6)%2)*4)%8,by=wy%6;B.set(wx,wy,i>=14?'#3e3a52':by===5||bx===7?st[2]:by===0?st[5]:st[4])}}
   // piers and breakwalls over the water
-  for(let ty=0;ty<H;ty++)for(let tx=0;tx<W;tx++){const t=S.g[ty*W+tx];if(t==='pr')pierTile(B,S,tx,ty);else if(t==='bw')wallTile(B,S,tx,ty)}
+  for(let ty=Y0;ty<=Y1;ty++)for(let tx=X0;tx<=X1;tx++){const t=S.g[ty*W+tx];if(t==='pr')pierTile(B,S,tx,ty);else if(t==='bw')wallTile(B,S,tx,ty)}
   B.flush();foam.flush();tide.flush();
   // Shore foam and the tide wash stay beneath the island jetties.
-  for(let ty=0;ty<H;ty++)for(let tx=0;tx<W;tx++)if(S.g[ty*W+tx]==='pr'||S.g[ty*W+tx]==='bw'){foam.x.clearRect(tx*16,ty*16,16,16);tide.x.clearRect(tx*16,ty*16,16,16)}
-  S.ground=B.c;S.foam=foam.c;S.tideC=tide.c}
+  for(let ty=Y0;ty<=Y1;ty++)for(let tx=X0;tx<=X1;tx++)if(S.g[ty*W+tx]==='pr'||S.g[ty*W+tx]==='bw'){foam.x.clearRect(tx*16-ox,ty*16-oy,16,16);tide.x.clearRect(tx*16-ox,ty*16-oy,16,16)}
+  J.out={g:B.c,f:foam.n?foam.c:null,t:tide.n?tide.c:null};
+      J.stage=3}
+    if(budget&&performance.now()-t0>budget)return J.stage===3}
+  return true}
+function paintGroundChunk(S,cx,cy){const J=chunkJob(S,cx,cy);chunkStep(J,0);return J.out}
+const CH=512;
+function mkRBuf(ox,oy,w,h){const[c,x]=mk(w,h);const id=x.createImageData(w,h);const u=new Uint32Array(id.data.buffer);return{c,x,w,h,id,u,n:0,
+  set(px,py,hex){px-=ox;py-=oy;if(px<0||py<0||px>=w||py>=h)return;u[py*w+px]=c32(hex);this.n++},get(px,py){px-=ox;py-=oy;if(px<0||py<0||px>=w||py>=h)return 0;return u[py*w+px]},
+  put(px,py,v){px-=ox;py-=oy;if(px<0||py<0||px>=w||py>=h)return;u[py*w+px]=v},flush(){x.putImageData(id,0,0)}}}
+const GCH={map:new Map(),max:28};
+function groundChunk(S,cx,cy){const k=cy*1000+cx;let c=GCH.map.get(k);if(c){GCH.map.delete(k);GCH.map.set(k,c);return c}if(GCH.job&&GCH.job.cx===cx&&GCH.job.cy===cy&&GCH.job.S===S){chunkStep(GCH.job,0);c=GCH.job.out;GCH.job=null}else c=paintGroundChunk(S,cx,cy);GCH.map.set(k,c);
+  while(GCH.map.size>GCH.max){GCH.map.delete(GCH.map.keys().next().value)}return c}
+function drawGround(S,layer,dx,dy){const cx0=Math.max(0,Math.floor(camX/CH)),cy0=Math.max(0,Math.floor(camY/CH)),cx1=Math.min(Math.ceil(S.w*16/CH)-1,Math.floor((camX+VW)/CH)),cy1=Math.min(Math.ceil(S.h*16/CH)-1,Math.floor((camY+VH)/CH));
+  for(let cy=cy0;cy<=cy1;cy++)for(let cx=cx0;cx<=cx1;cx++){const im=groundChunk(S,cx,cy)[layer];if(im)ctx.drawImage(im,Math.round(cx*CH-camX+dx),Math.round(cy*CH-camY+dy))}}
+// paint one nearby chunk ahead of time, so sailing into new water rarely stutters
+function prefetchGround(){if(!WORLD||scene!==WORLD)return;const J=GCH.job;if(J){if(J.S!==WORLD){GCH.job=null;return}if(chunkStep(J,4)){GCH.map.set(J.cy*1000+J.cx,J.out);GCH.job=null;while(GCH.map.size>GCH.max)GCH.map.delete(GCH.map.keys().next().value)}return}const px=(player.boat?player.boat.x:player.x),py=(player.boat?player.boat.y:player.y);const b=player.boat;const ax=px+(b?Math.cos(b.h)*Math.min(400,Math.abs(b.v)*6):0),ay=py+(b?Math.sin(b.h)*Math.min(400,Math.abs(b.v)*6):0);
+  const ncx=Math.ceil(WORLD.w*16/CH),ncy=Math.ceil(WORLD.h*16/CH);let best=null,bd=1e9;for(let cy=Math.floor((ay-VH)/CH);cy<=Math.floor((ay+VH)/CH);cy++)for(let cx=Math.floor((ax-VW)/CH);cx<=Math.floor((ax+VW)/CH);cx++){if(cx<0||cy<0||cx>=ncx||cy>=ncy||GCH.map.has(cy*1000+cx))continue;const d=Math.hypot(cx*CH+CH/2-ax,cy*CH+CH/2-ay);if(d<bd){bd=d;best=[cx,cy]}}
+  if(best)GCH.job=chunkJob(WORLD,best[0],best[1])}
+
 function pierTile(B,S,tx,ty){const Wd=PAL.wood;const at=(x,y)=>tileT(S,x,y);const horiz=at(tx-1,ty)==='pr'||at(tx+1,ty)==='pr';
   for(let j=0;j<16;j++)for(let i=0;i<16;i++){const a=horiz?i:j,b=horiz?j:i;const p=(horiz?ty*16+j:tx*16+i)%4;let col=p===0?Wd[1]:p===3?Wd[2]:Wd[4];if(((horiz?tx*16+i:ty*16+j)+(horiz?(ty*16+j)>>2:(tx*16+i)>>2)*5)%16===0)col=Wd[1];B.set(tx*16+i,ty*16+j,col)}
   const edge=(dx,dy)=>{const t=at(tx+dx,ty+dy);return t!=='pr'&&t!=='k'&&t!=='w'&&t!=='p'};
@@ -190,11 +228,11 @@ function genWorld(){buildCoast();
   for(let i=0;i<60;i++){const x=Math.floor(tr()*60),y=Math.floor(tr()*120);const i2=idx(x,y);if(S.g[i2]!=='g'||S.res[i2]||S.sol[i2])continue;addProp(S,artBush(['#ff7a6b','#fbf1dc','#f08bbf',null][i%4]),x*16-2,y*16,{sy:y*16+14});S.sol[i2]=1}
   addIslandSettlements(S,set,pier);addWilds(S,set,pier);
   // fixed salvage sites (bubbles over wrecks, a lockbox in the mangroves, a coffer and an altar further out)
-  S.salvage=[{tx:114,ty:30,zone:'wreck'},{tx:118,ty:56,zone:'wreck'},{tx:111,ty:72,zone:'wreck'},{tx:124,ty:24,zone:'wreck'},{tx:72,ty:20,zone:'estuary'},{tx:138,ty:46,zone:'blue'},{tx:152,ty:60,zone:'deep'},{tx:150,ty:28,zone:'deep'}];
+  S.salvage=[{tx:114,ty:30,zone:'wreck'},{tx:118,ty:56,zone:'wreck'},{tx:111,ty:72,zone:'wreck'},{tx:124,ty:24,zone:'wreck'},{tx:72,ty:20,zone:'estuary'},{tx:138,ty:46,zone:'wreck'},{tx:160,ty:62,zone:'blue'},{tx:166,ty:28,zone:'blue'},{tx:205,ty:100,zone:'deep'},{tx:245,ty:72,zone:'deep'},{tx:272,ty:178,zone:'deep'},{tx:168,ty:168,zone:'blue'},{tx:232,ty:128,zone:'deep'},{tx:96,ty:170,zone:'wreck'},{tx:132,ty:190,zone:'wreck'},{tx:150,ty:214,zone:'blue'}];
   for(const s of S.salvage){s.x=s.tx*16+8;s.y=s.ty*16+8;if(S.g[idx(s.tx,s.ty)]!=='o'){s.dead=1;continue}const v=s.tx%2;const im=artWreckMast(v);if(s.zone==='wreck')addProp(S,im,s.x-15+20,s.y-34+6,{sy:s.y+6})}
   // beach and rock-pool combing ground
   S.combTiles={beach:[],rocks:[]};for(let y=0;y<H;y++)for(let x=0;x<W;x++){const t=S.g[idx(x,y)];if(S.sol[idx(x,y)])continue;const L=landF(x+.5,y+.5);if(t==='sa'&&L<2.2&&y>84)S.combTiles.beach.push([x,y]);if(t==='rk')S.combTiles.rocks.push([x,y])}
-  paintWorldGround(S);
+  GCH.map.clear();GCH.job=null;
   // where things are
   const d=k=>SP[k].door;S.spots.spawn={x:50*16+8,y:56*16+8};S.spots.home=d('home');S.spots.market=d('market');S.spots.tackle=d('tackle');S.spots.boatyard=d('boatyard');S.spots.exchange=d('exchange');S.spots.aquarium=d('aquarium');S.spots.tavern=d('tavern');S.spots.harbourmaster=d('harbourmaster');S.spots.lighthouse=d('lighthouse');
   for(const C of COOPS)S.spots['hall_'+C.id]=SP['hall_'+C.id].door;S.SP=SP;

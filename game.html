@@ -748,7 +748,7 @@ function cardArt(id){if(cardCache.has(id))return cardCache.get(id);const t=trait
 /* ---------- ground (pixel buffer, world-space noise, grass edge transitions) ---------- */
 const GR={base:'#6cad5b',lt:'#79b962',dk:'#5f9f53',lip:'#477f49',hl:'#94cd70',blade:'#4f8f4c',bladeL:'#9ad375'};
 const colCache=new Map();function c32(hex){let v=colCache.get(hex);if(v===undefined){const n=parseInt(hex.slice(1),16);v=(255<<24)|((n&255)<<16)|(n&0xff00)|(n>>16&255);colCache.set(hex,v)}return v}
-function mkBuf(w,h){const[c,x]=mk(w,h);const id=x.createImageData(w,h);return{c,x,w,h,id,u:new Uint32Array(id.data.buffer),set(px,py,hex){if(px<0||py<0||px>=w||py>=h)return;this.u[py*w+px]=c32(hex)},get(px,py){return this.u[py*w+px]},flush(){x.putImageData(id,0,0)}}}
+function mkBuf(w,h){const[c,x]=mk(w,h);const id=x.createImageData(w,h);return{c,x,w,h,id,u:new Uint32Array(id.data.buffer),set(px,py,hex){if(px<0||py<0||px>=w||py>=h)return;this.u[py*w+px]=c32(hex)},get(px,py){return this.u[py*w+px]},put(px,py,v){if(px<0||py<0||px>=w||py>=h)return;this.u[py*w+px]=v},flush(){x.putImageData(id,0,0)}}}
 const GRF={base:'#5c9a52',lt:'#6aa85a',dk:'#4f8a4b',lip:'#3a6a40',hl:'#7cb862',blade:'#3f7a45',bladeL:'#86c06a'};
 let GZONE=null; // world gen sets this: (wx,wy)=>forestness 0..1
 function grassPal(wx,wy){if(!GZONE)return GR;return GZONE(wx,wy)>.5+(hash2(wx,wy,41)-.5)*.18?GRF:GR}
@@ -791,10 +791,10 @@ function drawTile(B,S,type,tx,ty){
   if(type==='hd'){for(let j=0;j<16;j++)for(let i=0;i<16;i++){let col='#a8744a';if(j>=3&&j<=13){col=((i+j)%4<2)?'#5fb79c':'#4f9a86';if(j===3||j===13)col='#3f7a6a'}set(i,j,col)}return}
 }
 // grass lips over neighbouring tiles
-function grassEdges(B,S){const W=S.w;for(let ty=0;ty<S.h;ty++)for(let tx=0;tx<W;tx++){const t=S.g[ty*W+tx];if(t==='g'||t[0]==='h'||NOLIP.has(t))continue;const x0=tx*16,y0=ty*16;const lip=(i,j,col)=>B.set(x0+i,y0+j,col);
+function grassEdges(B,S,X0=0,Y0=0,X1=S.w-1,Y1=S.h-1){const W=S.w;for(let ty=Y0;ty<=Y1;ty++)for(let tx=X0;tx<=X1;tx++){const t=S.g[ty*W+tx];if(t==='g'||t[0]==='h'||NOLIP.has(t))continue;const x0=tx*16,y0=ty*16;const lip=(i,j,col)=>B.set(x0+i,y0+j,col);
   const N=isGrassT(tileAt(S,tx,ty-1)),Sd=isGrassT(tileAt(S,tx,ty+1)),E=isGrassT(tileAt(S,tx+1,ty)),Wt=isGrassT(tileAt(S,tx-1,ty));
   const dep=(k,s)=>2+(vnoise(k,s,5,31)>.55?1:0)+(vnoise(k,s,3,33)>.8?1:0);
-  const shade=(i,j)=>{const v=B.get(x0+i,y0+j);const r=v&255,g=v>>8&255,b=v>>16&255;B.u[(y0+j)*B.w+x0+i]=(255<<24)|((b*.78|0)<<16)|((g*.76|0)<<8)|(r*.8|0)};
+  const shade=(i,j)=>{const v=B.get(x0+i,y0+j);const r=v&255,g=v>>8&255,b=v>>16&255;B.put(x0+i,y0+j,(255<<24)|((b*.78|0)<<16)|((g*.76|0)<<8)|(r*.8|0))};
   if(N)for(let i=0;i<16;i++){const d=dep(x0+i,y0);for(let j=0;j<d;j++)lip(i,j,grassAt(x0+i,y0+j));lip(i,d-1,grassPal(x0+i,y0).lip);if(t!=='a'&&t!=='A')shade(i,d);}
   if(Sd)for(let i=0;i<16;i++){const d=dep(x0+i,y0+16);for(let j=0;j<d;j++)lip(i,15-j,grassAt(x0+i,y0+15-j));lip(i,16-d,grassPal(x0+i,y0+15).hl)}
   if(Wt)for(let j=0;j<16;j++){const d=dep(x0,y0+j);for(let i=0;i<d;i++)lip(i,j,grassAt(x0+i,y0+j));lip(d-1,j,grassPal(x0,y0+j).lip);if(t!=='a'&&t!=='A')shade(d,j)}
@@ -1976,6 +1976,14 @@ function artWreckHull(){return cc('whull',()=>{const W=120,H=58;const N=PN(W,H);
 function artBubble(){return cc('bubble',()=>{const N=PN(5,5);N.ell(2.5,2.5,2.2,2.2,(nx,ny)=>Math.hypot(nx,ny)>.6?'#d6f2f8':ny<-.1&&nx<0?'#ffffff':null,1);return N.canvas()})}
 // a small heart for petting
 function artHeart(){return cc('heart',()=>{const[c,x]=mk(7,6);stamp(x,['.kk.kk.','kRWkRRk','kRRRRRk','.kRRRk.','..kRk..','...k...'],{k:'#6a1a2a',R:'#ff7a8a',W:'#ffd0d8'},0,0);return c})}
+// Ember Isle: a small smoking volcano and a hot spring
+function artVolcano(f){return cc('volc'+f,()=>{const W=64,H=60;const N=PN(W,H);const R5=ramp5('#5a4a4a');
+  N.poly([[2,58],[24,16],[40,16],[62,58]],(x,y)=>{const rib=((x*3+y)%11===0);return rib?R5[0]:rampPick(R5,.5-x/W*.9+(hash2(x>>1,y>>1,4)-.5)*.3)},1);
+  N.ell(32,17,8,3,(nx,ny)=>Math.hypot(nx,ny)>.6?'#3a2a2a':(f%2?'#ff9a3a':'#ffc85a'),2);
+  for(let i=0;i<4;i++){const x=28+i*3,len=6+((i*7+f)%5);N.line(x,19,x+(i%2?3:-3),19+len,i%2?'#e8602a':'#ff9a3a',1,3)}
+  for(let i=0;i<5;i++){const y=12-i*3-(f%3),x=30+Math.sin(i+f*.7)*3;N.ell(x,y,3+i*.8,2+i*.5,i%2?'#8a8a96':'#a8a8b4',4)}
+  N.outline();return N.canvas()})}
+function artHotSpring(f){return cc('spring'+f,()=>{const N=PN(30,18);N.ell(15,10,14,7,(nx,ny)=>Math.hypot(nx,ny)>.78?'#7c7894':((Math.round(nx*6+f)+Math.round(ny*4))%3?'#7fd8d0':'#bff0e8'),1);for(let i=0;i<3;i++){const x=8+i*7,y=4-(f+i)%3;N.px(x,y,'#ffffff',3);N.px(x+1,y-1,'#e8f4f4',3)}N.outline();return N.canvas()})}
 
 /* ================= gear, bait and boats (shared with the server) ================= */
 const GEAR={
@@ -2076,8 +2084,10 @@ const ZONES={
   blue:{n:'Open Blue',short:'Open Blue',depth:30,need:4,col:'#2f5fb0'},
   deep:{n:'The Deep',short:'The Deep',depth:80,need:5,col:'#26265a'},
   lake:{n:'Mirrorlake',short:'Mirrorlake',depth:3,need:0,col:'#5cb8a8',fresh:1},
+  seagrass:{n:'Seagrass Meadows',short:'Seagrass',depth:2,need:1,col:'#6aa87a'},
+  lagoon:{n:'Turquoise Lagoon',short:'Lagoon',depth:2,need:2,col:'#5ad8d0'},
   beach:{n:'Beach',short:'Beach'},rocks:{n:'Rock platform',short:'Rocks'},any:{n:'Anywhere',short:'Anywhere'},unknown:{n:'Unknown',short:'?'}};
-const ZONE_ORDER=['harbour','shallows','estuary','reef','kelp','wreck','blue','deep','lake'];
+const ZONE_ORDER=['harbour','shallows','estuary','reef','kelp','wreck','blue','deep','lake','seagrass','lagoon'];
 /* fish: [name, zone, rarity, conditions, minCm, maxCm, art] ; art = shape|back|side|belly|pattern|patCol|fin(|extra) */
 const FISH_RAW=[
  ['Yellowtail Scad','harbour',0,'any',14,30,'torp|#5f8fa0|#b9cdd6|#eef3f4|lat|#e8c84a|#e8c84a'],
@@ -2245,6 +2255,26 @@ const LAKE_RAW=[
  ['Murray Cod','lake',2,'any',60,130,'grouper|#4a5a3a|#7a8a5a|#e0e0c0|spots|#2a3a20|#4a5a3a|big'],
  ['Saratoga','lake',3,'day summer calm',50,90,'torp|#6a6a40|#c8b878|#f0e8c8|scales|#c84a3a|#8a8a50|big']];
 for(const[n,z,r,c,a,b,art]of LAKE_RAW)addEntry({id:slug(n),n,cat:'fish',z,r,how:'fish',c,sz:[a,b],price:FISH_PRICE[r],art});
+/* the southern sea: seagrass meadows along the south coast and a turquoise lagoon inside a coral atoll */
+const SOUTH_RAW=[
+ ['King George Whiting','seagrass',0,'day',20,45,'torp|#c8b890|#e8dcc0|#f6f0e4|spots|#a07850|#d8c8a0|slim'],
+ ['Six-spined Leatherjacket','seagrass',0,'any',15,40,'jacket|#5a7a8a|#c8b060|#e8dca0|lines|#2a5a8a|#e8c040'],
+ ['Rock Flathead','seagrass',0,'day low',25,50,'flathead|#6a6a48|#8a8a60|#d8d0b0|spots|#3a3a2a|#7a7a5a'],
+ ['Snook','seagrass',1,'dawn/dusk',40,90,'torp|#6a7a5a|#b8c0a0|#eef0e4|none|#000|#8a9a70|slim'],
+ ['Sea Sweep','seagrass',1,'day',20,40,'deep|#5a6a7a|#9aa8b4|#dfe6ec|bars|#3a4a5a|#6a7a8a'],
+ ['Globefish','seagrass',1,'night',20,50,'puffer|#9a9a6a|#c8c890|#f4f4e0|spots|#3a3a2a|#9a9a6a'],
+ ['Southern Eagle Ray','seagrass',2,'day calm',80,180,'ray|#6a5a4a|#8a7a64|#e8e0d0|spots|#d8c8a0|#6a5a4a'],
+ ['Blue Groper','seagrass',2,'any crabbait',60,120,'grouper|#2a5aa8|#4a7ac8|#a8c4e8|none|#000|#2a5aa8'],
+ ['Leafy Seadragon','seagrass',3,'calm release',20,35,'dragon|#a8a040|#c8c060|#f0e8a8|bars|#6a7a2a|#8a9a3a'],
+ ['Milkfish','lagoon',0,'any',40,100,'torp|#8aa0b0|#d0dce4|#f2f6f8|none|#000|#a0b4c4'],
+ ['Bonefish','lagoon',1,'day rising',40,80,'torp|#a8b8c8|#d8e4ec|#f4f8fa|lines|#8a9aa8|#b8c8d4|slim'],
+ ['Bluefin Trevally','lagoon',1,'day',30,80,'deep|#3a6aa8|#9ab8d8|#e4eef6|spots|#2a4a8a|#4a8ad8'],
+ ['Picasso Triggerfish','lagoon',1,'day calm',15,30,'trigger|#e8dcc0|#f0e8d0|#fbf6ea|stripes|#2a6ad0|#e8a030'],
+ ['Rainbow Runner','lagoon',1,'birds',60,110,'torp|#2a6aa8|#7ac8e8|#f0f8fc|stripes|#ffd24d|#4aa8d8'],
+ ['Spotted Eagle Ray','lagoon',2,'day',100,220,'ray|#2a2a3a|#3a3a4a|#e8e8f0|spots|#ffffff|#2a2a3a'],
+ ['Bumphead Parrotfish','lagoon',2,'dawn',70,130,'parrot|#4a7a6a|#7aa890|#c8e0d0|none|#000|#4a7a6a|big'],
+ ['Lemon Shark','lagoon',3,'dusk',150,280,'shark|#c8b878|#d8c890|#f4ecd8|none|#000|#c8b878']];
+for(const[n,z,r,c,a,b,art]of SOUTH_RAW)addEntry({id:slug(n),n,cat:'fish',z,r,how:'fish',c,sz:[a,b],price:FISH_PRICE[r],art});
 addEntry({id:'the_mirror_cod',n:'The Mirror Cod',cat:'legend',z:'lake',r:4,how:'fish',c:'night fullmoon',sz:[150,185],price:FISH_PRICE[4],art:'grouper|#3a4a5a|#8aa0b8|#e8f0f8|spots|#ffffff|#3a4a5a|legend',what:'A Murray cod so old its scales hold the moon'});
 const SETS={bottles:{n:'Messages in Bottles',reward:'The bottle story and the lighthouse key room',shells:1500},coins:{n:'Old Gullhaven Coins',reward:'First Harbour Coin',shells:1000},lures:{n:'Vintage Lures',reward:'A trophy lure case and 1,000 Shells',shells:1000}};
 /* ---------- conditions ---------- */
@@ -2403,7 +2433,7 @@ function machPickNft(rnd){rnd=rnd||Math.random;const ids=dropIds(MACH.drop).filt
    a long sandy bay curves along the south, and the sea gets deeper (and stranger) the further east you go.
    Land and sea come from one continuous field (tile units, positive = land) so the shoreline is smooth at the
    pixel level and the gameplay tiles agree with what you see. */
-const WORLD_W=224,WORLD_H=152;
+const WORLD_W=320,WORLD_H=224;
 let WORLD=null,scene=null;const SCENES={};
 function newScene(name,w,h){return{name,w,h,g:new Array(w*h).fill('g'),sol:new Uint8Array(w*h),res:new Uint8Array(w*h),props:[],acts:[],water:[],spots:{},keepers:[],lights:[]}}
 function addProp(S,img,x,y,o={}){const p=Object.assign({img,x,y,sy:y+img.height},o);if(o.sy!==undefined)p.sy=o.sy;S.props.push(p);return p}
@@ -2427,80 +2457,118 @@ function buildCoast(){const W=WORLD_W,H=WORLD_H,P=16;
   for(let i=0;i<H*P;i++){const y=i/P;let c=cat(y);const flat=y>=43.6&&y<84.5;
     if(!flat)c+=(vnoise(0,y,5,601)-.5)*2.2+(vnoise(0,y,13,602)-.5)*3*smooth(0,6,Math.min(Math.abs(y-44),Math.abs(y-84)));cx[i]=c}
   // southern shore: the long beach, then a rocky point, then open water
-  for(let i=0;i<W*P;i++){const x=i/P;let s;if(x<40)s=100;else if(x<100)s=108+Math.sin(x*.09)*1.5-smooth(40,52,x)*3+smooth(52,60,x)*3;else if(x<107)s=108-smooth(99,103,x)*8+smooth(104,108,x)*8;else s=200;
+  for(let i=0;i<W*P;i++){const x=i/P;let s;if(x<40)s=100;else if(x<100)s=108+Math.sin(x*.09)*1.5-smooth(40,52,x)*3+smooth(52,60,x)*3;else if(x<107)s=108-smooth(99,103,x)*8+smooth(104,108,x)*8;else s=9999;
     s+=(vnoise(x,0,6,611)-.5)*1.6;sy[i]=s;
     // the river: meanders east from the hills into the estuary bay
     rv[i]=17+Math.sin(x*.11)*2.5+(vnoise(x,0,9,621)-.5)*3;rw[i]=x<10?1.6:1.8+smooth(10,60,x)*2.6+(vnoise(x,0,5,622)-.5)*.8}
-  COAST.cx=cx;COAST.sy=sy;COAST.rv=rv;COAST.rw=rw;
+  // the mainland ends in a south coast, and its east side curves away to the south-west, leaving open sea below
+  const sc=new Float32Array(W*P),ex=new Float32Array(H*P);for(let i=0;i<W*P;i++){const x=i/P;sc[i]=x<118?150+Math.sin(x*.07)*3+(vnoise(x,0,7,631)-.5)*4:9999}
+  for(let i=0;i<H*P;i++){const y=i/P;ex[i]=y<110?9999:107-smooth(110,152,y)*26+(vnoise(0,y,6,641)-.5)*3}
+  COAST.cx=cx;COAST.sy=sy;COAST.rv=rv;COAST.rw=rw;COAST.sc=sc;COAST.ex=ex;
   COAST.islands=[{x:90,y:52,r:3.2},{x:118,y:30,r:1.6,rock:1},{x:124,y:62,r:1.3,rock:1},{x:113,y:74,r:1.4,rock:1},...ISLAND_TOWNS]}
 // signed land field (tile units): > 0 land, < 0 water
 function landF(x,y){const P=16;const yi=clamp(Math.floor(y*P),0,WORLD_H*P-1),xi=clamp(Math.floor(x*P),0,WORLD_W*P-1);
-  let L=Math.max(COAST.cx[yi]-x,y-COAST.sy[xi]);
+  let L=Math.max(COAST.cx[yi]-x,y-COAST.sy[xi]);L=Math.min(L,COAST.sc[xi]-y,COAST.ex[yi]-x);
+  if(Math.abs(x-ATOLL.x)<ATOLL.R+3&&Math.abs(y-ATOLL.y)<ATOLL.R+3){const d=Math.hypot(x-ATOLL.x,y-ATOLL.y),a=Math.atan2(y-ATOLL.y,x-ATOLL.x);if(Math.abs(a-1.57)>.42)L=Math.max(L,1.15-Math.abs(d-ATOLL.R)+(NZ.at(x*6,y*6)-.5)*.5)}
   for(const I of COAST.islands){const dx=x-I.x,dy=(y-I.y)*1.2,reach=I.r+.4-L;if(reach<=0||dx*dx+dy*dy>=reach*reach)continue;const d=Math.sqrt(dx*dx+dy*dy);L=Math.max(L,I.r-d+(I.rock?0:(NZ.at(x*9,y*9)-.5)*.8))}
-  if(y<36){const r=Math.abs(y-COAST.rv[xi])-COAST.rw[xi]*(1+smooth(50,64,x)*1.6);L=Math.min(L,r)}
+  if(y<36&&x<110){const r=Math.abs(y-COAST.rv[xi])-COAST.rw[xi]*(1+smooth(50,64,x)*1.6);L=Math.min(L,r)}
   if(inLakeBox(x,y))L=Math.min(L,lakeD(x,y));
   return L}
 // what lines this stretch of coast
-function shoreKind(x,y){if(inLakeBox(x,y))return'wall';const island=islandShoreAt(x,y);if(island)return island.shore;const n=(NZ.at(x*3,y*3)-.5)*4;if(x>98&&x<108&&y>96)return'rock';for(const I of COAST.islands)if(I.rock&&Math.hypot(x-I.x,y-I.y)<I.r+2)return'rock';
+const ATOLL={x:62,y:188,R:8};const nearAtoll=(x,y)=>Math.hypot(x-ATOLL.x,y-ATOLL.y)<ATOLL.R+3;
+function shoreKind(x,y){if(inLakeBox(x,y))return'wall';if(nearAtoll(x,y))return'sand';const island=islandShoreAt(x,y);if(island)return island.shore;const n=(NZ.at(x*3,y*3)-.5)*4;if(x>98&&x<108&&y>96)return'rock';for(const I of COAST.islands)if(I.rock&&Math.hypot(x-I.x,y-I.y)<I.r+2)return'rock';
   if(y<31+n)return x<66+n?'mud':'sand';if(y<43.5&&x>48)return'rock';if(y>=43.5&&y<84.6&&x<58)return'wall';return'sand'}
-function sandWidth(x,y){if(inLakeBox(x,y))return .4;if(islandShoreAt(x,y))return 2.2;if(y>=30&&y<44&&x>48)return 6.5+NZ.at(x*4,y*4)*2.5;if(x>98&&x<108&&y>96)return 3;if(y<34)return x<64?1.8:1.4;if(y>96)return 4.5+NZ.at(x*3,7)*1.5;if(y>84)return 2.6;return 1.6}
+function sandWidth(x,y){if(inLakeBox(x,y))return .4;if(nearAtoll(x,y))return 3;if(islandShoreAt(x,y))return 2.2;if(y>=30&&y<44&&x>48)return 6.5+NZ.at(x*4,y*4)*2.5;if(x>98&&x<108&&y>96)return 3;if(y<34)return x<64?1.8:1.4;if(y>96)return 4.5+NZ.at(x*3,7)*1.5;if(y>84)return 2.6;return 1.6}
 function zoneOfXY(x,y){
   if(inLakeBox(x,y))return'lake';
   if(x>=57&&x<74.5&&y>=43.5&&y<85)return'harbour';
   const islandZone=islandSeaZone(x,y);if(islandZone)return islandZone;
   const n=(NZ.at(x*2.3,y*2.3)-.5)*8,m=(NZ.at(x*1.1+40,y*1.1)-.5)*10;
-  if(x>=147+n*.4)return'deep';if(x>=133+n*.7)return'blue';
+  const mm=(NZ.at(x*.35+77,y*.35+31)-.5)*2;
+  if(Math.hypot(x-ATOLL.x,y-ATOLL.y)<ATOLL.R+4)return'lagoon';
+  if(y>146+m*.3){if(x<COAST.ex[Math.min(COAST.ex.length-1,Math.floor(y*16))]+14&&y<COAST.sc[clamp(Math.floor(x*16),0,COAST.sc.length-1)]+13+m*.6)return'seagrass';if(y>204+m*2.5+mm*6)return x>=186+mm*10?'deep':'blue';
+    if(x<150+mm*8+m*1.5){const q=NZ.at(x*.5+5,y*.5+3);return q>.64?'kelp':q<.32?'wreck':'reef'}}
+  if(x>=188+n*1.5+mm*12)return'deep';if(x>=152+n*1.5+mm*9)return'blue';
   if(Math.hypot(x-62,(y-15)*1.25)<27+m||(y<30&&x<56))return'estuary';
   if(Math.hypot(x-120,(y-106)*1.1)<24+m&&x>98)return'kelp';
   if(y>=86+n*.6&&x<102+m)return'shallows';
-  if(x>=107+n)return y>94+m?'kelp':'wreck';
+  if(x>=107+n)return y>94+m&&y<132+m?'kelp':y>=132+m?'reef':'wreck';
   return'reef'}
 function depthAt(x,y,L,z){const d=-L;switch(z){case'harbour':return 2+Math.min(3,d*.35);case'estuary':return .8+Math.min(3,d*.3);case'shallows':return .6+Math.min(5,d*.35);
-  case'reef':return 3+Math.min(6,d*.12)-(NZ.at(x*4,y*4)>.62?2.5:0);case'kelp':return 6+Math.min(6,d*.15);case'wreck':return 10+Math.min(10,d*.1);case'lake':return 1+Math.min(5,d*.5);case'blue':return 30+(x-132)*2;default:return 80+(x-146)*6}}
+  case'reef':return 3+Math.min(6,d*.12)-(NZ.at(x*4,y*4)>.62?2.5:0);case'kelp':return 6+Math.min(6,d*.15);case'wreck':return 10+Math.min(10,d*.1);case'lake':return 1+Math.min(5,d*.5);case'seagrass':return 1+Math.min(4,d*.3);case'lagoon':return 1.5+Math.min(3,d*.2);case'blue':return 30+(x-150)*1.4;default:return 80+(x-186)*4}}
 /* ---------- painting the ground ---------- */
 const SEA={harbour:['#7ad0d4','#4ab0c8','#3a96c0','#3284b0'],estuary:['#8ab49a','#6a9e8e','#548a80','#467a74'],shallows:['#9ae4dc','#6ad0d4','#48b6cc','#3a9cc2'],reef:['#7adcd8','#4ac4d0','#36aac8','#2c94bc'],
-  kelp:['#5aa49c','#3e8c8c','#307682','#286474'],wreck:['#3a86ac','#2f72a0','#2a6292','#245484'],blue:['#2a62a8','#24529a','#20468a','#1c3a7a'],deep:['#1c2c66','#18245a','#141c4c','#10163e'],lake:['#8ad4bc','#5cb8a8','#43a09c','#33868e']};
+  kelp:['#5aa49c','#3e8c8c','#307682','#286474'],wreck:['#3a86ac','#2f72a0','#2a6292','#245484'],blue:['#2a62a8','#24529a','#20468a','#1c3a7a'],deep:['#1c2c66','#18245a','#141c4c','#10163e'],lake:['#8ad4bc','#5cb8a8','#43a09c','#33868e'],seagrass:['#8ac8a8','#5aa890','#4a9484','#3a8078'],lagoon:['#b0f2ea','#80e2dc','#5cccd4','#48b4c8']};
 function seaPx(wx,wy,x,y,L,z){// colour zone sampled with a jitter so neighbouring grounds dither into each other
   let jz=zoneOfXY(x+(hash2(wx,wy,31)-.5)*3,y+(hash2(wx,wy,32)-.5)*3);if(jz==='harbour'||z==='harbour')jz=z;const P=SEA[jz]||SEA.reef;const n=NZ.at(wx*.7,wy*.7)*.6+NZ.at(wx*2.1+50,wy*2.1)*.4;const sh=-L;
   let k=sh<1.2?0:sh<3?1:sh<7?2:3;if(jz==='deep'||jz==='blue'||jz==='wreck'){k=n>.72?1:n<.28?3:2}else if(k>=2)k=n>.7?1:n<.3?3:2;
   if(jz==='reef'&&sh>2&&NZ.at(wx*.9+17,wy*.9)>.66)k=Math.max(0,k-1);
   let col=P[k];if(n>.8&&k<3&&k>0)col=P[k-1];
-  if(x>146&&x<147.6&&(jz==='blue'||jz==='deep'))col=mix(col,'#0c1030',.3);
-  if(jz==='kelp'&&NZ.at(wx*1.6+9,wy*1.6)>.66)col=mix(col,'#4a5a2a',.45);
-  if(jz==='reef'&&sh>3&&NZ.at(wx*1.3+33,wy*1.3)>.74)col=hash2(wx>>2,wy>>2,9)<.5?mix(col,'#e88a8a',.35):mix(col,'#f0c880',.3);
-  if(jz==='wreck'&&NZ.at(wx*1.8+71,wy*1.8)>.78)col=mix(col,'#3a4a5a',.45);
+  const big=NZ.at(wx*.23+3,wy*.27+11);
+  if(jz==='kelp'&&NZ.at(wx*1.6+9,wy*1.6)*.55+big*.45>.62)col=mix(col,'#4a5a2a',.45);
+  if(jz==='reef'&&sh>3&&NZ.at(wx*1.3+33,wy*1.3)*.6+big*.4>.7)col=hash2(wx>>2,wy>>2,9)<.5?mix(col,'#e88a8a',.35):mix(col,'#f0c880',.3);
+  if(jz==='wreck'&&NZ.at(wx*1.8+71,wy*1.8)*.6+big*.4>.72)col=mix(col,'#3a4a5a',.45);
+  if((jz==='blue'||jz==='deep')&&big>.7)col=mix(col,'#0a1430',.18);
   if(jz==='lake'&&NZ.at(wx*1.2+5,wy*1.2)>.7)col=mix(col,'#cfeee4',.25);
+  if(jz==='seagrass'&&sh>1.5&&NZ.at(wx*1.4+21,wy*1.4)*.6+big*.4>.56)col=mix(col,(wx+wy*3)%5<2?'#2f5a3a':'#3a6a48',.42);
+  if(jz==='lagoon'&&sh>1&&NZ.at(wx*1.1+51,wy*1.1)>.72)col=mix(col,'#f8fff8',.22);
   return col}
-function paintWorldGround(S){const W=S.w,H=S.h;const B=mkBuf(W*16,H*16);const foam=mkBuf(W*16,H*16),tide=mkBuf(W*16,H*16);
-  // land tiles first, with the usual tile painters
-  for(let ty=0;ty<H;ty++)for(let tx=0;tx<W;tx++){const t=S.g[ty*W+tx];if(t==='o'||t==='pr'||t==='bw'||t==='sk')continue;if(t==='sa'||t==='mud'||t==='rk')continue;drawTile(B,S,t,tx,ty)}
-  grassEdges(B,S);
-  // then every coastal and sea pixel from the field
-  for(let ty=0;ty<H;ty++)for(let tx=0;tx<W;tx++){const t=S.g[ty*W+tx];if(!(t==='o'||t==='pr'||t==='bw'||t==='sk'||t==='sa'||t==='mud'||t==='rk'||t==='g'||t==='gb'))continue;
-    for(let j=0;j<16;j++)for(let i=0;i<16;i++){const wx=tx*16+i,wy=ty*16+j,x=wx/16,y=wy/16;const L=landF(x,y);const kind=shoreKind(x,y);const sw=sandWidth(x,y);
-      const isG=t==='g'||t==='gb';if(L>=0&&!isG&&t!=='sa'&&t!=='mud'&&t!=='rk')continue;if(L>=0&&isG&&L>sw+.5&&kind!=='rock')continue;
+// the ground is painted lazily in 512px chunks (only where you look), so a big ocean stays inside phone canvas limits
+// the ground is painted in 512px chunks, a few rows at a time, only where you look (so a big ocean stays inside phone limits)
+function chunkJob(S,cx,cy){const W=S.w,H=S.h;const ox=cx*CH,oy=cy*CH;const Y0=Math.max(0,Math.floor(oy/16)-1);
+  return{S,cx,cy,ox,oy,B:mkRBuf(ox,oy,CH,CH),foam:mkRBuf(ox,oy,CH,CH),tide:mkRBuf(ox,oy,CH,CH),X0:Math.max(0,Math.floor(ox/16)-1),Y0,X1:Math.min(W-1,Math.floor((ox+CH)/16)),Y1:Math.min(H-1,Math.floor((oy+CH)/16)),stage:0,ty:Y0}}
+function chunkStep(J,budget){const S=J.S,W=S.w,ox=J.ox,oy=J.oy,B=J.B,foam=J.foam,tide=J.tide,X0=J.X0,Y0=J.Y0,X1=J.X1,Y1=J.Y1;const t0=performance.now();
+  while(J.stage<3){
+    if(J.stage===0){// land tiles first, with the usual tile painters
+      const ty=J.ty;for(let tx=X0;tx<=X1;tx++){const t=S.g[ty*W+tx];if(t==='o'||t==='pr'||t==='bw'||t==='sk')continue;if(t==='sa'||t==='mud'||t==='rk')continue;drawTile(B,S,t,tx,ty)}
+      if(++J.ty>Y1){grassEdges(B,S,X0,Y0,X1,Y1);J.stage=1;J.ty=Y0}}
+    else if(J.stage===1){// then every coastal and sea pixel from the field
+      {const ty=J.ty;for(let tx=X0;tx<=X1;tx++){const t=S.g[ty*W+tx];if(!(t==='o'||t==='pr'||t==='bw'||t==='sk'||t==='sa'||t==='mud'||t==='rk'||t==='g'||t==='gb'))continue;
+    const Lc=t==='o'?landF(tx+.5,ty+.5):0,far=Lc<-9;
+    for(let j=0;j<16;j++)for(let i=0;i<16;i++){const wx=tx*16+i,wy=ty*16+j;if(wx<ox||wy<oy||wx>=ox+CH||wy>=oy+CH)continue;const x=wx/16,y=wy/16;const L=far?Lc:landF(x,y);const kind=far?'sea':shoreKind(x,y);const sw=far?0:sandWidth(x,y);
+      const isG=t==='g'||t==='gb',fill=isG||t==='o';if(L>=0&&!fill&&t!=='sa'&&t!=='mud'&&t!=='rk')continue;if(L>=0&&isG&&L>sw+.5&&kind!=='rock')continue;
       let col;
       if(L<0){const z=zoneOfXY(x,y);col=seaPx(wx,wy,x,y,L,z);const e=-L*16;
         if(kind!=='wall'){if(e<1.6)col=hash2(wx,wy,77)<.7?'#f4fbfb':'#d8f2f4';else if(e<3.5)col=mix(col,'#ffffff',.3);if(e<9)tide.set(wx,wy,'#5ab8cc')}
         else if(e<2)col=mix(col,'#123a5a',.35);
         if(kind!=='wall'&&e>=1.6&&e<5&&hash2(wx,wy,78)<.5)foam.set(wx,wy,'#ffffff')}
       else{const e=L*16;
-        if(e>=sw*16&&kind!=='rock'){if(!isG)continue;const ge=e-sw*16;const GP=grassPal(wx,wy);col=ge<1?GP.lip:ge<2?GP.dk:grassAt(wx,wy)}
+        if(e>=sw*16&&kind!=='rock'){if(!fill)continue;const ge=e-sw*16;const GP=grassPal(wx,wy);col=ge<1?GP.lip:ge<2?GP.dk:grassAt(wx,wy)}
         else if(kind==='mud'){col=NZ.at(wx*2,wy*2)>.6?'#7a6a50':e<5?'#5e5240':'#6e604a';if(NZ.at(wx*3+5,wy*3)>.72)col='#86a0a0'}
-        else if(kind==='rock'){if(e>=sw*16){if(!isG)continue;const GP=grassPal(wx,wy);const ge=e-sw*16;col=ge<1?'#5a566a':ge<2?GP.dk:grassAt(wx,wy);B.set(wx,wy,col);continue}const v=NZ.at(wx*1.5,wy*1.5)*.6+hash2(wx>>1,wy>>1,5)*.4;col=e<1.5?'#3e3a4c':v>.66?'#b8b4c4':v>.45?'#9a96aa':v>.25?'#827e94':'#6a6680';if(e<3)col=mix(col,'#4a5a6a',.3);if(NZ.at(wx*2.2+40,wy*2.2)>.78&&e>6)col=mix('#3f9ac0','#8ad8d8',NZ.at(wx*5,wy*5))}
-        else if(kind==='wall'){if(!isG)continue;col=grassAt(wx,wy)}
+        else if(kind==='rock'){if(e>=sw*16){if(!fill)continue;const GP=grassPal(wx,wy);const ge=e-sw*16;col=ge<1?'#5a566a':ge<2?GP.dk:grassAt(wx,wy);B.set(wx,wy,col);continue}const v=NZ.at(wx*1.5,wy*1.5)*.6+hash2(wx>>1,wy>>1,5)*.4;col=e<1.5?'#3e3a4c':v>.66?'#b8b4c4':v>.45?'#9a96aa':v>.25?'#827e94':'#6a6680';if(e<3)col=mix(col,'#4a5a6a',.3);if(NZ.at(wx*2.2+40,wy*2.2)>.78&&e>6)col=mix('#3f9ac0','#8ad8d8',NZ.at(wx*5,wy*5))}
+        else if(kind==='wall'){if(!fill)continue;col=grassAt(wx,wy)}
         else{const rip=Math.sin(wx*.35+Math.sin(wy*.5)*1.5+wy*.9);col=e<4?'#c8ac78':e<9?'#d8bc88':rip>.86?'#f8ebc4':rip<-.92?'#dcc48e':'#eedcaa';if(e>=4&&hash2(wx,wy,467)<.012)col='#fff8ea';if(e>=4&&hash2(wx,wy,468)<.005)col='#f2a6a0';if(e<9)tide.set(wx,wy,'#7ac8cc');
           if(e>(sw-.3)*16){const GP=grassPal(wx,wy);col=GP.lip}}
         if(!col)continue}
-      B.set(wx,wy,col)}}
+      B.set(wx,wy,col)}}}
+      if(++J.ty>Y1)J.stage=2}
+    else{
   // sea wall along the harbour promenade
-  for(let ty=43;ty<85;ty++){const tx=55;for(let j=0;j<16;j++)for(let i=8;i<16;i++){const wx=tx*16+i,wy=ty*16+j;const st=PAL.stone;const bx=(i+(Math.floor(wy/6)%2)*4)%8,by=wy%6;B.set(wx,wy,i>=14?'#3e3a52':by===5||bx===7?st[2]:by===0?st[5]:st[4])}}
+  if(ox<=56*16&&ox+CH>=55*16&&oy<85*16&&oy+CH>43*16)for(let ty=43;ty<85;ty++){const tx=55;for(let j=0;j<16;j++)for(let i=8;i<16;i++){const wx=tx*16+i,wy=ty*16+j;const st=PAL.stone;const bx=(i+(Math.floor(wy/6)%2)*4)%8,by=wy%6;B.set(wx,wy,i>=14?'#3e3a52':by===5||bx===7?st[2]:by===0?st[5]:st[4])}}
   // piers and breakwalls over the water
-  for(let ty=0;ty<H;ty++)for(let tx=0;tx<W;tx++){const t=S.g[ty*W+tx];if(t==='pr')pierTile(B,S,tx,ty);else if(t==='bw')wallTile(B,S,tx,ty)}
+  for(let ty=Y0;ty<=Y1;ty++)for(let tx=X0;tx<=X1;tx++){const t=S.g[ty*W+tx];if(t==='pr')pierTile(B,S,tx,ty);else if(t==='bw')wallTile(B,S,tx,ty)}
   B.flush();foam.flush();tide.flush();
   // Shore foam and the tide wash stay beneath the island jetties.
-  for(let ty=0;ty<H;ty++)for(let tx=0;tx<W;tx++)if(S.g[ty*W+tx]==='pr'||S.g[ty*W+tx]==='bw'){foam.x.clearRect(tx*16,ty*16,16,16);tide.x.clearRect(tx*16,ty*16,16,16)}
-  S.ground=B.c;S.foam=foam.c;S.tideC=tide.c}
+  for(let ty=Y0;ty<=Y1;ty++)for(let tx=X0;tx<=X1;tx++)if(S.g[ty*W+tx]==='pr'||S.g[ty*W+tx]==='bw'){foam.x.clearRect(tx*16-ox,ty*16-oy,16,16);tide.x.clearRect(tx*16-ox,ty*16-oy,16,16)}
+  J.out={g:B.c,f:foam.n?foam.c:null,t:tide.n?tide.c:null};
+      J.stage=3}
+    if(budget&&performance.now()-t0>budget)return J.stage===3}
+  return true}
+function paintGroundChunk(S,cx,cy){const J=chunkJob(S,cx,cy);chunkStep(J,0);return J.out}
+const CH=512;
+function mkRBuf(ox,oy,w,h){const[c,x]=mk(w,h);const id=x.createImageData(w,h);const u=new Uint32Array(id.data.buffer);return{c,x,w,h,id,u,n:0,
+  set(px,py,hex){px-=ox;py-=oy;if(px<0||py<0||px>=w||py>=h)return;u[py*w+px]=c32(hex);this.n++},get(px,py){px-=ox;py-=oy;if(px<0||py<0||px>=w||py>=h)return 0;return u[py*w+px]},
+  put(px,py,v){px-=ox;py-=oy;if(px<0||py<0||px>=w||py>=h)return;u[py*w+px]=v},flush(){x.putImageData(id,0,0)}}}
+const GCH={map:new Map(),max:28};
+function groundChunk(S,cx,cy){const k=cy*1000+cx;let c=GCH.map.get(k);if(c){GCH.map.delete(k);GCH.map.set(k,c);return c}if(GCH.job&&GCH.job.cx===cx&&GCH.job.cy===cy&&GCH.job.S===S){chunkStep(GCH.job,0);c=GCH.job.out;GCH.job=null}else c=paintGroundChunk(S,cx,cy);GCH.map.set(k,c);
+  while(GCH.map.size>GCH.max){GCH.map.delete(GCH.map.keys().next().value)}return c}
+function drawGround(S,layer,dx,dy){const cx0=Math.max(0,Math.floor(camX/CH)),cy0=Math.max(0,Math.floor(camY/CH)),cx1=Math.min(Math.ceil(S.w*16/CH)-1,Math.floor((camX+VW)/CH)),cy1=Math.min(Math.ceil(S.h*16/CH)-1,Math.floor((camY+VH)/CH));
+  for(let cy=cy0;cy<=cy1;cy++)for(let cx=cx0;cx<=cx1;cx++){const im=groundChunk(S,cx,cy)[layer];if(im)ctx.drawImage(im,Math.round(cx*CH-camX+dx),Math.round(cy*CH-camY+dy))}}
+// paint one nearby chunk ahead of time, so sailing into new water rarely stutters
+function prefetchGround(){if(!WORLD||scene!==WORLD)return;const J=GCH.job;if(J){if(J.S!==WORLD){GCH.job=null;return}if(chunkStep(J,4)){GCH.map.set(J.cy*1000+J.cx,J.out);GCH.job=null;while(GCH.map.size>GCH.max)GCH.map.delete(GCH.map.keys().next().value)}return}const px=(player.boat?player.boat.x:player.x),py=(player.boat?player.boat.y:player.y);const b=player.boat;const ax=px+(b?Math.cos(b.h)*Math.min(400,Math.abs(b.v)*6):0),ay=py+(b?Math.sin(b.h)*Math.min(400,Math.abs(b.v)*6):0);
+  const ncx=Math.ceil(WORLD.w*16/CH),ncy=Math.ceil(WORLD.h*16/CH);let best=null,bd=1e9;for(let cy=Math.floor((ay-VH)/CH);cy<=Math.floor((ay+VH)/CH);cy++)for(let cx=Math.floor((ax-VW)/CH);cx<=Math.floor((ax+VW)/CH);cx++){if(cx<0||cy<0||cx>=ncx||cy>=ncy||GCH.map.has(cy*1000+cx))continue;const d=Math.hypot(cx*CH+CH/2-ax,cy*CH+CH/2-ay);if(d<bd){bd=d;best=[cx,cy]}}
+  if(best)GCH.job=chunkJob(WORLD,best[0],best[1])}
+
 function pierTile(B,S,tx,ty){const Wd=PAL.wood;const at=(x,y)=>tileT(S,x,y);const horiz=at(tx-1,ty)==='pr'||at(tx+1,ty)==='pr';
   for(let j=0;j<16;j++)for(let i=0;i<16;i++){const a=horiz?i:j,b=horiz?j:i;const p=(horiz?ty*16+j:tx*16+i)%4;let col=p===0?Wd[1]:p===3?Wd[2]:Wd[4];if(((horiz?tx*16+i:ty*16+j)+(horiz?(ty*16+j)>>2:(tx*16+i)>>2)*5)%16===0)col=Wd[1];B.set(tx*16+i,ty*16+j,col)}
   const edge=(dx,dy)=>{const t=at(tx+dx,ty+dy);return t!=='pr'&&t!=='k'&&t!=='w'&&t!=='p'};
@@ -2590,11 +2658,11 @@ function genWorld(){buildCoast();
   for(let i=0;i<60;i++){const x=Math.floor(tr()*60),y=Math.floor(tr()*120);const i2=idx(x,y);if(S.g[i2]!=='g'||S.res[i2]||S.sol[i2])continue;addProp(S,artBush(['#ff7a6b','#fbf1dc','#f08bbf',null][i%4]),x*16-2,y*16,{sy:y*16+14});S.sol[i2]=1}
   addIslandSettlements(S,set,pier);addWilds(S,set,pier);
   // fixed salvage sites (bubbles over wrecks, a lockbox in the mangroves, a coffer and an altar further out)
-  S.salvage=[{tx:114,ty:30,zone:'wreck'},{tx:118,ty:56,zone:'wreck'},{tx:111,ty:72,zone:'wreck'},{tx:124,ty:24,zone:'wreck'},{tx:72,ty:20,zone:'estuary'},{tx:138,ty:46,zone:'blue'},{tx:152,ty:60,zone:'deep'},{tx:150,ty:28,zone:'deep'}];
+  S.salvage=[{tx:114,ty:30,zone:'wreck'},{tx:118,ty:56,zone:'wreck'},{tx:111,ty:72,zone:'wreck'},{tx:124,ty:24,zone:'wreck'},{tx:72,ty:20,zone:'estuary'},{tx:138,ty:46,zone:'wreck'},{tx:160,ty:62,zone:'blue'},{tx:166,ty:28,zone:'blue'},{tx:205,ty:100,zone:'deep'},{tx:245,ty:72,zone:'deep'},{tx:272,ty:178,zone:'deep'},{tx:168,ty:168,zone:'blue'},{tx:232,ty:128,zone:'deep'},{tx:96,ty:170,zone:'wreck'},{tx:132,ty:190,zone:'wreck'},{tx:150,ty:214,zone:'blue'}];
   for(const s of S.salvage){s.x=s.tx*16+8;s.y=s.ty*16+8;if(S.g[idx(s.tx,s.ty)]!=='o'){s.dead=1;continue}const v=s.tx%2;const im=artWreckMast(v);if(s.zone==='wreck')addProp(S,im,s.x-15+20,s.y-34+6,{sy:s.y+6})}
   // beach and rock-pool combing ground
   S.combTiles={beach:[],rocks:[]};for(let y=0;y<H;y++)for(let x=0;x<W;x++){const t=S.g[idx(x,y)];if(S.sol[idx(x,y)])continue;const L=landF(x+.5,y+.5);if(t==='sa'&&L<2.2&&y>84)S.combTiles.beach.push([x,y]);if(t==='rk')S.combTiles.rocks.push([x,y])}
-  paintWorldGround(S);
+  GCH.map.clear();GCH.job=null;
   // where things are
   const d=k=>SP[k].door;S.spots.spawn={x:50*16+8,y:56*16+8};S.spots.home=d('home');S.spots.market=d('market');S.spots.tackle=d('tackle');S.spots.boatyard=d('boatyard');S.spots.exchange=d('exchange');S.spots.aquarium=d('aquarium');S.spots.tavern=d('tavern');S.spots.harbourmaster=d('harbourmaster');S.spots.lighthouse=d('lighthouse');
   for(const C of COOPS)S.spots['hall_'+C.id]=SP['hall_'+C.id].door;S.SP=SP;
@@ -2603,15 +2671,18 @@ function genWorld(){buildCoast();
 /* Small additions to the original world, painted with Gullhaven's existing pixel art. */
 const ISLAND_TOWNS=[
   {id:'tideglass',n:'Tideglass Cay',x:128,y:125,r:12,shore:'sand',zone:'shallows',shopKind:'bait',shopLabel:'BAIT & TEA',roof:'#3f7a8a',wall:'#f4e4c8',desc:'A quiet sandy cay with a bait shop, beachcombing and harbour errands. Follow the southern shallows in any boat.'},
-  {id:'mossbank',n:'Mossbank',x:169,y:49,r:13,shore:'sand',zone:'reef',shopKind:'home',shopLabel:'HOME GOODS',roof:'#3f7a5a',wall:'#e8f0d8',desc:'A little garden village on the coral shelf. Browse home decorations and take on local fishing bounties. Open water out here is rough on small boats.'},
-  {id:'lantern',n:'Lantern Key',x:197,y:118,r:14,shore:'rock',zone:'kelp',shopKind:'boatyard',shopLabel:'BOATWORKS',roof:'#5a4a7a',wall:'#d8e8f4',desc:'A rocky fishing outpost among the kelp, with a boat workshop and deep-water stories. Far out past the deep: a skiff or bigger makes the trip safely.'}
+  {id:'mossbank',n:'Mossbank',x:190,y:58,r:13,shore:'sand',zone:'reef',shopKind:'home',shopLabel:'HOME GOODS',roof:'#3f7a5a',wall:'#e8f0d8',desc:'A little garden village on the coral shelf. Browse home decorations and take on local fishing bounties. Open water out here is rough on small boats.'},
+  {id:'lantern',n:'Lantern Key',x:250,y:150,r:14,shore:'rock',zone:'kelp',shopKind:'boatyard',shopLabel:'BOATWORKS',roof:'#5a4a7a',wall:'#d8e8f4',desc:'A rocky fishing outpost among the kelp, with a boat workshop and deep-water stories. Far out past the deep: a skiff or bigger makes the trip safely.'}
+  ,{id:'kelpwood',n:'Kelpwood',x:176,y:104,r:12,shore:'sand',zone:'kelp',shopKind:'bait',shopLabel:'KELP TEA',roof:'#2f6a5a',wall:'#d8e8d0',lock:'fog',desc:'A misty island of kelp gardens and tea houses, hidden in a fog bank. Quiet folk, strange bait.'},
+  {id:'cove',n:"Wrecker's Cove",x:285,y:30,r:12,shore:'rock',zone:'wreck',shopKind:'boatyard',shopLabel:'SALVAGER',roof:'#4a3a3a',wall:'#c8b090',lock:'breakers',desc:'A cliff-ringed cove of salvagers and old wreckers. Repairs, dive gear and stories of every storm.'},
+  {id:'ember',n:'Ember Isle',x:215,y:196,r:13,shore:'rock',zone:'blue',shopKind:'home',shopLabel:'EMBER GOODS',roof:'#8a3a2a',wall:'#e8d0b0',lock:'permit',desc:'A warm volcanic island with hot springs and a forge. Only permit holders may land.'}
 ];
 function islandShoreAt(x,y){if(x<110)return null;for(const I of ISLAND_TOWNS){const dx=x-I.x,dy=(y-I.y)*1.2;if(dx*dx+dy*dy<(I.r+3)*(I.r+3))return I}return null}
 function islandSeaZone(x,y){
   // Broad, visible shelves leave the old fishing grounds available and give every dock a safe approach.
   if(x>=74.5&&x<83.5&&y>56&&y<91)return'shallows';
   const wb=(NZ.at(x*.6+11,y*.6+5)-.5)*9;
-  if(x>94&&x<148&&y>98&&y<145&&x<y+18+wb)return'shallows';
+  if(x>94&&x<148+wb&&y>98&&y<145+wb&&x<y+18+wb)return'shallows';
   if(x<110)return null;
   for(const I of ISLAND_TOWNS){const dx=x-I.x,dy=(y-I.y)*1.2;if(dx*dx+dy*dy<(I.r+6)*(I.r+6))return I.zone}
   return null}
@@ -2756,7 +2827,7 @@ function addWilds(W,set,pier){const idx=(x,y)=>y*W.w+x;const r=rng(9091);const L
   /* ---- the south wood: trees, toadstools and wildflowers ---- */
   for(let ty=96;ty<W.h-1;ty++)for(let tx=0;tx<106;tx++){if(!freeG(W,tx,ty))continue;const e=ringE(tx+.5,ty+.5);if(e<1.26)continue;const Lf=landF(tx+.5,ty+.5);if(Lf<3)continue;
     let nearRoad=false;for(let dy=-1;dy<=1&&!nearRoad;dy++)for(let dx=-1;dx<=1;dx++)if(W.g[idx(tx+dx,ty+dy)]==='w'){nearRoad=true;break}if(nearRoad)continue;
-    const n=NZ.at(tx*5+3,ty*5+7);const dens=(e<1.5?.32:.04+.24*n)*(tx<60?1:.6);const k=r();
+    const n=NZ.at(tx*5+3,ty*5+7);const dens=(e<1.5?.3:.02+.2*n)*(tx<60?1:.5);const k=r();
     if(k<dens){const v=r();treeAt(W,tx,ty,v<.5?3:v<.88?0:v<.95?2:4)}else if(k<dens+.02)solidDeco(artToadstools(r()<.4?1:0),tx,ty);else if(k<dens+.05)flat(artFlowers(Math.floor(r()*4)),tx,ty)}
   /* ---- the carving at Lighthouse Point ---- */
   {let best=null;for(let rr=0;rr<5&&!best;rr++)for(let dy=-rr;dy<=rr&&!best;dy++)for(let dx=-rr;dx<=rr;dx++){const x=63+dx,y=40+dy,i=idx(x,y);if(x<0||y<0)continue;if(W.sol[i]||W.g[i]==='o'||W.g[i]==='pr'||W.g[i]==='bw')continue;if(Math.abs(x-60)<2&&y<41)continue;best=[x,y];break}
@@ -2782,10 +2853,32 @@ function addWilds(W,set,pier){const idx=(x,y)=>y*W.w+x;const r=rng(9091);const L
     if(I.id==='mossbank'){for(let k=0;k<10;k++){const p=pickT(grass);if(p)flat(artFlowers(k%4),p[0],p[1])}for(let k=0;k<3;k++){const p=pickT(grass);if(p&&freeG(W,p[0],p[1]))treeAt(W,p[0],p[1],1)}for(let k=0;k<2;k++){const p=pickT(grass);if(p)solidDeco(artFlowerBox(k),p[0],p[1])}}
     if(I.id==='lantern'){for(let k=0;k<5;k++){const p=pickT(grass)||pickT(sand);if(p)solidDeco(artRock(false,3),p[0],p[1])}for(let k=0;k<3;k++){const p=pickT(grass);if(p&&freeG(W,p[0],p[1]))treeAt(W,p[0],p[1],3)}}
     const n=NPC[I.id];if(n){const nx=(x-3)*16+8,ny=(y+2)*16+12;W.keepers.push({id:n[1],x:nx,y:ny,dir:'down'});W.npcs.push({island:I.id,n:n[0],x:nx,y:ny})}}
+  // the three locked islands: a ring of water boats cannot cross until the island is opened, plus a look of their own
+  W.locks={};for(const I of W.islands||[]){if(!I.lock)continue;const t=[];for(let ty=Math.floor(I.y-(I.r+11)/1.2);ty<=Math.ceil(I.y+(I.r+11)/1.2);ty++)for(let tx=I.x-I.r-11;tx<=I.x+I.r+11;tx++){if(tx<0||ty<0||tx>=W.w||ty>=W.h)continue;const d=Math.hypot(tx+.5-I.x,(ty+.5-I.y)*1.2);if(d<I.r+7.5||d>I.r+10)continue;const i=idx(tx,ty);if(W.g[i]==='o'&&W.nav[i])t.push(i)}W.locks[I.id]=t;
+    const fr=[],grass=[];for(let dy=-I.r;dy<=I.r;dy++)for(let dx=-I.r;dx<=I.r;dx++){const tx=I.x+dx,ty=I.y+dy,i=idx(tx,ty);if(W.sol[i]||W.res[i])continue;if(W.g[i]==='g')grass.push([tx,ty]);else if(W.g[i]==='sa'||W.g[i]==='rk')fr.push([tx,ty])}
+    const pk=a=>a.length?a.splice(Math.floor(r()*a.length),1)[0]:null;
+    if(I.id==='kelpwood'){for(let k=0;k<6;k++){const p=pk(grass);if(p&&freeG(W,p[0],p[1])){deco(artMangrove(k%3),p[0],p[1],{sway:1});W.sol[idx(p[0],p[1])]=1;W.res[idx(p[0],p[1])]=1}}for(let k=0;k<6;k++){const p=pk(fr)||pk(grass);if(p)deco(artReedsC(),p[0],p[1],{dy:2})}}
+    if(I.id==='cove'){let p=null;const cs=[];for(let oy=-I.r;oy<=I.r;oy++)for(let ox=-I.r;ox<=I.r;ox++)cs.push([ox,oy]);cs.sort((a1,a2)=>Math.hypot(a1[0]+6,a1[1]-5)-Math.hypot(a2[0]+6,a2[1]-5));for(const[ox,oy]of cs){if(p)break;const tx=I.x+ox,ty=I.y+oy;let ok=true;for(let x=tx-1;x<=tx+3;x++)for(let y=ty-1;y<=ty;y++){const i=idx(x,y);if(W.sol[i]||W.res[i]&&W.g[i]==='g'||W.g[i]==='o'||W.g[i]==='pr'||W.g[i]==='w'||W.g[i]==='p')ok=false}if(ok){p=[tx,ty];break}}if(p){const wh=cc('whs',()=>{const src=artWreckHull();const[c2,x2]=mk(78,38);x2.imageSmoothingEnabled=false;x2.drawImage(src,0,0,78,38);return c2});addProp(W,wh,p[0]*16-14,(p[1]+1)*16-36,{sy:(p[1]+1)*16-1});solidRect(W,p[0]-1,p[1],p[0]+3,p[1]);reserve(W,p[0]-1,p[1]-1,p[0]+3,p[1])}for(let k=0;k<4;k++){const q=pk(grass)||pk(fr);if(q)solidDeco(k%2?artBarrelC():artFishCrate(k%3),q[0],q[1])}}
+    if(I.id==='ember'){let vx=0,vy=0,ok=false;const cand=[];for(let oy=-I.r;oy<=I.r;oy++)for(let ox=-I.r;ox<=I.r;ox++)cand.push([ox,oy]);cand.sort((p1,p2)=>Math.abs(Math.hypot(p1[0],p1[1])-6)-Math.abs(Math.hypot(p2[0],p2[1])-6));for(const[ox,oy]of cand){vx=I.x+ox;vy=I.y+oy;ok=true;for(let y=vy-1;y<=vy;y++)for(let x=vx-1;x<=vx+2;x++)if(!freeG(W,x,y))ok=false;if(ok)break}if(ok){const fr2=[0,1,2,3].map(artVolcano);addProp(W,fr2[0],vx*16+8-32,(vy+1)*16-60,{sy:(vy+1)*16-1,anim:t=>fr2[Math.floor(t*3)%4]});solidRect(W,vx-1,vy-1,vx+2,vy);reserve(W,vx-1,vy-3,vx+2,vy)}
+      const sp=pk(grass);if(sp){const fs=[0,1,2].map(artHotSpring);addProp(W,fs[0],sp[0]*16+8-15,sp[1]*16,{flat:1,sy:sp[1]*16,anim:t=>fs[Math.floor(t*2)%3]});W.res[idx(sp[0],sp[1])]=1;W.spots.spring={x:sp[0]*16+8,y:sp[1]*16+12}}
+      for(let k=0;k<5;k++){const q=pk(grass)||pk(fr);if(q)solidDeco(artRock(false,3),q[0],q[1])}}}
+  // a few palms on the coral atoll's sand ring
+  for(let k=0;k<7;k++){const an=-1.2+k*.62;if(Math.abs(an-1.57)<.6)continue;const tx=Math.round(ATOLL.x+Math.cos(an)*ATOLL.R),ty=Math.round(ATOLL.y+Math.sin(an)*ATOLL.R);const i=idx(tx,ty);if(W.g[i]!=='sa'||W.sol[i])continue;const im=artPalmC(k%2);addProp(W,im,tx*16+8-18,ty*16+16-48,{sy:ty*16+14,sway:1});W.sol[i]=1}
   // a dive flag off each island's reef
-  W.diveSites=[];for(const I of W.islands||[]){let got=null;for(let rr=I.r+3;rr<=I.r+7&&!got;rr++)for(let a=0;a<16&&!got;a++){const an=2.4+a/16*6.283;const tx=Math.round(I.x+Math.cos(an)*rr),ty=Math.round(I.y+Math.sin(an)*rr/1.2);const i=idx(tx,ty);if(W.g[i]!=='o'||!W.nav[i])continue;const z=ZONE_ORDER[W.zone[i]];if(['shallows','reef','kelp'].includes(z))got={key:'i'+I.id,x:tx*16+8,y:ty*16+8,zone:z}}if(got)W.diveSites.push(got)}
+  W.diveSites=[];for(const I of W.islands||[]){let got=null;for(let rr=I.r+3;rr<=I.r+7&&!got;rr++)for(let a=0;a<16&&!got;a++){const an=2.4+a/16*6.283;const tx=Math.round(I.x+Math.cos(an)*rr),ty=Math.round(I.y+Math.sin(an)*rr/1.2);const i=idx(tx,ty);if(W.g[i]!=='o'||!W.nav[i])continue;const z=ZONE_ORDER[W.zone[i]];if(['shallows','reef','kelp','wreck','blue'].includes(z))got={key:'i'+I.id,x:tx*16+8,y:ty*16+8,zone:z}}if(got)W.diveSites.push(got)}
   W.lakeCenter={x:L.x*16,y:L.y*16}}
 function lakeOpen(){return!!(typeof S!=='undefined'&&S&&S.story&&S.story.lake)}
+
+/* ================= the chart and minimap picture: one colour per tile (no need to paint the whole sea) =================
+   Islands that are still locked stay hidden as open water until you open them. */
+function hiddenAt(tx,ty){for(const I of(WORLD&&WORLD.islands)||[]){if(!I.lock||islandOpen(I.id))continue;if(Math.hypot(tx-I.x,(ty-I.y)*1.2)<I.r+12)return true}return false}
+const TILE_COL={g:['#5b9a52','#6aa85a','#4f8a4b'],sa:['#e8d4a0','#dcc490'],mud:['#6e604a','#7a6a50'],rk:['#8a86a0','#7a7690'],w:['#c39a6b','#b8905f'],k:['#9c9ab0','#8f8da4'],p:['#e0d6c4','#d6cab4'],pr:['#b27b52','#9a6a46'],bw:['#86829a','#76728a'],sk:['#5a566a']};
+function tileMap(S,k){const[c,x]=mk(S.w*k,S.h*k);const id=x.createImageData(S.w*k,S.h*k);const u=new Uint32Array(id.data.buffer);
+  for(let ty=0;ty<S.h;ty++)for(let tx=0;tx<S.w;tx++){const i=ty*S.w+tx;let t=S.g[i];let col;const n=hash2(tx,ty,5);
+    const hid=hiddenAt(tx+.5,ty+.5);if(t==='o'||hid){let z=ZONE_ORDER[S.zone[i]];if(hid||!z)z=tx>=188?'deep':tx>=152?'blue':'wreck';const P=SEA[z]||SEA.deep;const d=t==='o'?S.depth[i]:40;col=P[d<2?0:d<5?1:d<30?2:3];if(n>.85)col=mix(col,'#ffffff',.08)}
+    else{const P=TILE_COL[t]||TILE_COL.g;col=P[Math.floor(n*P.length)]}
+    const v=c32(col);for(let j=0;j<k;j++)for(let a=0;a<k;a++){const px=tx*k+a,py=ty*k+j;let vv=v;if(k>1&&(t==='o')&&hash2(px,py,9)<.06)vv=c32(mix(col,'#ffffff',.18));u[py*S.w*k+px]=vv}}
+  x.putImageData(id,0,0);return c}
 
 /* ================= game state (save v7, Gullhaven) ================= */
 const SAVE_KEY='gullhaven.save';
@@ -2957,7 +3050,7 @@ function nearestAct(){if(player.ride)return rideAct();const px=player.x,py=playe
     for(const c of combSpots())consider(c.x,c.y,16,{label:c.where==='rocks'?'Search the pool':'Dig',icon:c.where==='rocks'?'hand':'shovel',act:()=>startDig(c)});
     const w=waterAhead();if(w&&!best)best={label:'Fish',icon:'rod_'+S.gear.rod,act:()=>startFishing({x:w.x,y:w.y,zone:w.zone,shore:true})}}
   return best}
-function boatAct(){const b=player.boat;if(!b)return null;const z=zoneAtPx(b.x,b.y);
+function boatAct(){const b=player.boat;if(!b)return null;const la=lockAct();if(la)return la;const z=zoneAtPx(b.x,b.y);
   for(const p of S.pots){if(Math.hypot(p.x-b.x,p.y-b.y)<28)return{label:'Haul pot',icon:'pot',act:()=>haulPot(p)}}
   for(const s of WORLD.salvage)if(!s.dead&&Math.hypot(s.x-b.x,s.y-b.y)<30)return{label:'Grapple',icon:'grapple',act:()=>startSalvage(s)};
   if(Math.hypot(WORLD.spots.fuel.x-b.x,WORLD.spots.fuel.y-b.y)<56&&S.gear.engine>0&&S.fuel<fuelCap()-1)return{label:'Refuel',icon:'fuel',act:refuel};
@@ -3052,7 +3145,7 @@ const WAKE=[];
 function updWake(dt){for(let i=WAKE.length-1;i>=0;i--){WAKE[i].t-=dt;if(WAKE[i].t<=0)WAKE.splice(i,1)}}
 function sailTo(wx,wy){const b=player.boat;const tx=Math.floor(wx/16),ty=Math.floor(wy/16);if(!navOK(wx,wy,false))return false;
   const pass=(x,y)=>{if(x<0||y<0||x>=WORLD.w||y>=WORLD.h)return false;return!!WORLD.nav[y*WORLD.w+x]};
-  const path=findPathP(pass,WORLD.w,WORLD.h,Math.floor(b.x/16),Math.floor(b.y/16),tx,ty,20000);if(!path){toast("Can't find a way through.");return false}
+  const path=findPathP(pass,WORLD.w,WORLD.h,Math.floor(b.x/16),Math.floor(b.y/16),tx,ty,90000);if(!path){toast("Can't find a way through.");return false}
   const pts=path.map(p=>({x:p.tx*16+8,y:p.ty*16+8}));const simp=[];let last={x:b.x,y:b.y};for(let i=0;i<pts.length;i++){if(i===pts.length-1||!losNav(last,pts[i+1])){simp.push(pts[i]);last=pts[i]}}if(!simp.length)simp.push({x:wx,y:wy});simp[simp.length-1]={x:wx,y:wy};b.tgt=simp;tapFx={x:wx,y:wy,t:.5};return true}
 function losNav(a,b){const d=Math.hypot(b.x-a.x,b.y-a.y);const n=Math.ceil(d/6);for(let i=1;i<=n;i++){const k=i/n;if(!navOK(a.x+(b.x-a.x)*k,a.y+(b.y-a.y)*k,true))return false}return true}
 function onSailArrive(){const a=boatAct();if(a)setActButton(a)}
@@ -3154,8 +3247,8 @@ function lifeUpdate(dt){if(!WORLD)return;const t=gameT;
   for(const f of FOLK){if(f.bubble){f.bubble.t-=dt;if(f.bubble.t<=0)f.bubble=null}if(f.talk>0){f.talk-=dt;f.moving=false;continue}
     if(!f.path){f.wait-=dt;f.moving=false;if(f.wait<=0){const P=folkPOIs();const g=P[Math.floor(Math.random()*P.length)];const p=findPathP(walkP,WORLD.w,WORLD.h,Math.floor(f.x/16),Math.floor(f.y/16),Math.floor(g.x/16),Math.floor(g.y/16),6000);if(p&&p.length)f.path=p.map(q=>({x:q.tx*16+8,y:q.ty*16+10}));else f.wait=3}continue}
     const q=f.path[0];const dx=q.x-f.x,dy=q.y-f.y,d=Math.hypot(dx,dy);if(d<1.5){f.path.shift();if(!f.path.length){f.path=null;f.wait=4+Math.random()*12;if(Math.random()<.25)f.bubble={text:folkMutter(f),t:3}}continue}const sp=Math.min(d,30*dt);f.x+=dx/d*sp;f.y+=dy/d*sp;f.dir=faceFrom(dx,dy,f.dir);f.moving=true;f.ft+=dt;if(f.ft>.14){f.ft=0;f.f=(f.f+1)%4}}
-  for(const b of AIBOATS){if(b.state==='moored'){b.wait-=dt;if(b.wait<=0){const zs=COOPI[b.co].zones;const z=zs[Math.floor(Math.random()*zs.length)];const tgt=randomWaterIn(z);if(tgt){const p=findPathP(navP,WORLD.w,WORLD.h,Math.floor(b.x/16),Math.floor(b.y/16),tgt[0],tgt[1],16000);if(p){b.path=p.map(q=>({x:q.tx*16+8,y:q.ty*16+8}));b.state='out'}}if(!b.path)b.wait=20}}
-    else if(b.state==='fish'){b.wait-=dt;b.v*=.95;if(b.wait<=0){const p=findPathP(navP,WORLD.w,WORLD.h,Math.floor(b.x/16),Math.floor(b.y/16),Math.floor(b.home.x/16),Math.floor(b.home.y/16),16000);if(p){b.path=p.map(q=>({x:q.tx*16+8,y:q.ty*16+8}));b.state='back'}else b.wait=10}}
+  for(const b of AIBOATS){if(b.state==='moored'){b.wait-=dt;if(b.wait<=0){const zs=COOPI[b.co].zones;const z=zs[Math.floor(Math.random()*zs.length)];const tgt=randomWaterIn(z);if(tgt){const p=findPathP(navP,WORLD.w,WORLD.h,Math.floor(b.x/16),Math.floor(b.y/16),tgt[0],tgt[1],40000);if(p){b.path=p.map(q=>({x:q.tx*16+8,y:q.ty*16+8}));b.state='out'}}if(!b.path)b.wait=20}}
+    else if(b.state==='fish'){b.wait-=dt;b.v*=.95;if(b.wait<=0){const p=findPathP(navP,WORLD.w,WORLD.h,Math.floor(b.x/16),Math.floor(b.y/16),Math.floor(b.home.x/16),Math.floor(b.home.y/16),40000);if(p){b.path=p.map(q=>({x:q.tx*16+8,y:q.ty*16+8}));b.state='back'}else b.wait=10}}
     else if(b.path){const q=b.path[0];const dx=q.x-b.x,dy=q.y-b.y,d=Math.hypot(dx,dy);if(d<8){b.path.shift();if(!b.path.length){b.path=null;if(b.state==='out'){b.state='fish';b.wait=30+Math.random()*90}else{b.state='moored';b.wait=60+Math.random()*120;b.x=b.home.x;b.y=b.home.y;b.h=b.home.dir==='n'?-Math.PI/2:Math.PI/2}}continue}
       const want=Math.atan2(dy,dx);let dd=((want-b.h+Math.PI*3)%(Math.PI*2))-Math.PI;b.h+=clamp(dd,-2*dt,2*dt);b.v+=(52-b.v)*Math.min(1,dt);b.x+=Math.cos(b.h)*b.v*dt;b.y+=Math.sin(b.h)*b.v*dt;
       if(b.v>20&&Math.random()<dt*14)WAKE.push({x:b.x-Math.cos(b.h)*16,y:b.y-Math.sin(b.h)*16,t:1,s:.6})}}
@@ -3176,7 +3269,7 @@ function nearFeatures(x,y){const n={};for(const h of HOTS)if(Math.hypot(h.x-x,h.
 function shadowAt(x,y,r){let best=null,bd=r||40;for(const s of SHADOWS){const d=Math.hypot(s.x-x,s.y-y);if(d<bd){bd=d;best=s}}return best}
 /* talking to people */
 function lifeActs(consider){for(const f of FOLK){consider(f.x,f.y,18,{label:'Talk to '+f.n,icon:'talk',act:()=>talkFolk(f)})}catActs(consider);const fb=friendBoatNear();if(fb)consider(fb[1].x,fb[1].y,40,{label:'Hop aboard',icon:'boat',act:()=>hopAboard(fb[0],fb[1])})}
-function talkFolk(f){f.talk=4;f.dir=faceFrom(player.x-f.x,player.y-f.y,f.dir);f.bubble={text:folkLine(f),t:5}}
+function talkFolk(f){f.talk=4;f.dir=faceFrom(player.x-f.x,player.y-f.y,f.dir);f.bubble={text:coveLine(f)||folkLine(f),t:5}}
 function folkLine(f){const r=Math.random();const unl=CAT.filter(e=>(e.cat==='fish'||e.cat==='legend')&&!logged(e.id)&&e.cp&&!e.cp.flags.includes('oddone'));
   if(r<.45&&unl.length){const e=unl[Math.floor(Math.random()*unl.length)];return`I hear the ${e.n}... ${e.hint.replace(/^Bites |^Sighted /,'').replace(/\.$/,'')}.`}
   const E=envAt();const lines=[`Tide's ${E.tideState} right now. ${E.tide<0?'Good time to comb the beach.':'Fish come in close on a high tide.'}`,`${E.nextSky==='storm'?'Storm coming. Big sharks love it, small boats hate it.':E.sky==='storm'?'Batten down! Only a skiff or bigger should be out in this.':'Weather looks '+E.nextSky+' next.'}`,
@@ -3248,6 +3341,7 @@ function wildsActs(){storyInit();applyGate();const W=WORLD,s=W.spots;
   if(s.cafe)act(W,s.cafe.x,s.cafe.y,16,'Cat Caf\u00e9','door',()=>openPanel('cafe'));
   if(s.bakery)act(W,s.bakery.x,s.bakery.y,16,'Bakery','door',()=>toast(['Nora: "Fresh loaves at dawn. Bread dough bait is always free, love."','Nora: "The cats get the crusts. Don\'t tell the caf\u00e9."','The bakery smells of cinnamon and warm bread.'][Math.floor(Math.random()*3)]));
   if(s.fountain)act(W,s.fountain.x,s.fountain.y,22,'Toss a Shell','shell',()=>{if(!payShells(1))return;sfx('coin');splash(s.fountain.x,s.fountain.y-20,4);toast(['You wish for a big one.','You wish for calm seas.','You wish for a legend on the line.','A gull eyes your wish suspiciously.'][Math.floor(Math.random()*4)])});
+  advInit();if(s.spring)act(W,s.spring.x,s.spring.y,18,'Hot spring','sleep',()=>{const f=$('fade');f.hidden=false;f.textContent='Ahh...';sfx('splash');setTimeout(()=>{f.hidden=true;toast('A soak in the hot spring. You feel brand new.')},1000)});
   spawnCats()}
 function panelGate(body,H){head('The old gate','Four rusted dials on a brass lock',uiIcon('map'));tabs(null);
   if(lakeOpen()){H('p','The gate stands open. Mirrorlake is yours to fish.');return}
@@ -3279,8 +3373,8 @@ function panelCafe(body,H){head('Cat Caf\u00e9','Tea, cake and the harbour cats'
   const l=el('div','list');for(const c of COATS){const love=S.catLove[c.k]||0,mine=S.pet===c.k;
     l.append(itemRow(catFace(c.k),c.name+' \u00b7 '+c.n,love?'\u2665'.repeat(love)+'\u2661'.repeat(5-love):'Not met yet. Look around town.',mine?btn('Send home',()=>{S.pet=null;petF=null;markDirty();renderPanel()},'sm alt'):love>=5?btn('Adopt',()=>{S.pet=c.k;petF=null;markDirty();sfx('purr');toast(c.name+' is your companion now.','lvl');renderPanel()},'sm gold'):null))}
   body.append(l)}
-function worldTick(dt){rideTick(dt);catsTick(dt);hullTick(dt);diveTick(dt);worldTick.t=(worldTick.t||0)+dt;if(worldTick.t>.5){worldTick.t=0;updHullChip()}}
-const EXTRA_PANELS={gate:panelGate,cafe:panelCafe};
+function worldTick(dt){rideTick(dt);lockWarnTick();prefetchGround();catsTick(dt);hullTick(dt);diveTick(dt);worldTick.t=(worldTick.t||0)+dt;if(worldTick.t>.5){worldTick.t=0;updHullChip()}}
+const EXTRA_PANELS={gate:panelGate,cafe:panelCafe,adventures:panelAdventures};
 // background music follows where you are
 function musMode(){if(typeof gachaOpen!=='undefined'&&gachaOpen)return'arcade';if(scene&&scene.dive)return'dive';const h=ghour(),night=h<6||h>=20.5;if(!scene||!WORLD)return night?'night':'day';
   if(scene!==WORLD)return scene.homeOwner?'home':'inside';const E=envAt();if(E.sky==='storm')return'storm';const px=player.x/16,py=player.y/16;
@@ -3377,7 +3471,7 @@ const CLOUD={t:0,busy:false};
 function cloudOn(){return NET.mode==='ws'&&!!S.name}
 async function cloudLogin(fresh){if(!cloudOn()||CLOUD.busy)return;CLOUD.busy=true;try{const r=await NET.req({t:'login',name:S.name});if(r.err)return;
     if(r.s&&(fresh||(r.ts||0)>(S.ts||0)+5000)){let j=null;try{j=migrate(JSON.parse(r.s))}catch(e){}if(j){applyCloudSave(j,fresh);return}}cloudSave(true)}finally{CLOUD.busy=false}}
-function applyCloudSave(j,fresh){const name=S.name;S=j;S.name=S.name||name;storyInit();saveLocal();syncCrew();if(WORLD){applyGate();const sp=WORLD.spots.spawn;player.boat=null;player.ride=null;DIVE=null;setScene(WORLD,sp.x,sp.y,'up')}refreshAll();sendPresence(true);
+function applyCloudSave(j,fresh){const name=S.name;S=j;S.name=S.name||name;storyInit();saveLocal();syncCrew();if(WORLD){applyGate();applyLocks();miniBase=null;mapBase=null;const sp=WORLD.spots.spawn;player.boat=null;player.ride=null;DIVE=null;setScene(WORLD,sp.x,sp.y,'up')}refreshAll();sendPresence(true);
   toast(fresh?`Welcome back, ${S.name}! Your progress was loaded from the harbour server.`:'Loaded your newer progress from another device.','lvl')}
 function cloudSave(now){if(!cloudOn())return;const t=performance.now();if(!now&&t-CLOUD.t<15000)return;CLOUD.t=t;S.ts=Date.now();const s=JSON.stringify(S);if(s.length<380000)wsSend({t:'usave',name:S.name,s})}
 // renaming: refuse a name another fisher already uses on this server
@@ -3401,6 +3495,55 @@ function drawRiders(list,t,Sc){if(Sc!==WORLD)return;const seat=(k,i)=>{const sp=
     else{const host=NET.peers.get(pe.r);if(host&&host.b)draw(pe.id,host.x,host.y,host.b.h,host.b.k,0,pe.n)}}
   for(const k of[...RIDERS])if(!seen.has(k)){RIDERS.delete(k);const pe=NET.peers.get(k);if(pe)toast(pe.n+' hopped off.')}
   if(player.ride){const h=rideHost();if(h&&h.b){const k=h.b.k;const ang=h.b.h/16*Math.PI*2;const s=seat(k,1);const x=h.x+Math.cos(ang)*s*.9,y=h.y+Math.sin(ang)*s*.9;list.push({sy:h.y+6,draw:()=>{drawChar(ctx,ACTIVE(),x-camX,y-camY+8,player.dir,MG&&MG.type==='fish'?(Math.floor(t*6)%2?1:2):0,0,18);if(player.bubble)bubble(ctx,player.bubble.text,x-camX,y-camY-14)}})}}}
+
+/* ================= adventures: three locked islands and the quest chains that open them =================
+   Kelpwood hides in a fog bank (the lighthouse keeper's chart), Wrecker's Cove behind breakers (a password from three
+   townsfolk), Ember Isle needs a Harbourmaster permit (three island bounties and a trawler or bigger). */
+const ADV={kelpwood:{n:'Kelpwood',lock:'fog'},cove:{n:"Wrecker's Cove",lock:'breakers'},ember:{n:'Ember Isle',lock:'permit'}};
+const COVE_WORDS={'Captain Moe':'SALT','Sully':'ROPE','Wren':'LANTERN'};
+const KEEPER_FISH=3;
+function islandOpen(id){return!ADV[id]||!!(S.story&&S.story[id])}
+function applyLocks(){if(!WORLD||!WORLD.locks)return;for(const[id,tiles]of Object.entries(WORLD.locks)){const open=islandOpen(id);for(const i of tiles)WORLD.nav[i]=open?1:0}}
+function unlockIsland(id,msg){S.story[id]=1;markDirty();applyLocks();miniBase=null;mapBase=null;drawMini();sfx('fanfare2');addShells(750);if(!S.titles.includes(ADV[id].n+' finder'))S.titles.push(ADV[id].n+' finder');toast(msg+' +750 Shells','rare')}
+// the lighthouse keeper outside at the point: kelp fish for the fog chart
+function keeperTalk(){if(islandOpen('kelpwood')){toast('Keeper Odile: "Mind the fog on the way back. It remembers boats."');return}
+  const kelp=S.hold.filter(c=>{const e=CATI[c.id];return e&&e.cat==='fish'&&e.z==='kelp'});S.story.keeper=1;markDirty();
+  if(kelp.length<KEEPER_FISH){toast(`Keeper Odile: "There's an island in the fog north-east of Tideglass. My chart will see you through, but I'm hungry. Bring me ${KEEPER_FISH} fish from the Kelp Forest." (${kelp.length}/${KEEPER_FISH})`);return}
+  let left=KEEPER_FISH;S.hold=S.hold.filter(c=>{const e=CATI[c.id];if(left&&e&&e.cat==='fish'&&e.z==='kelp'){left--;return false}return true});
+  unlockIsland('kelpwood','Keeper Odile hands you her fog chart. The fog around Kelpwood thins!')}
+function coveLine(f){const w=COVE_WORDS[f.n];if(!w||!islandOpen('kelpwood')||islandOpen('cove'))return null;S.story.words=S.story.words||{};const fresh=!S.story.words[w];S.story.words[w]=1;markDirty();
+  const n=Object.keys(S.story.words).length;if(fresh)setTimeout(()=>toast(`Password word ${n}/3: ${w}${n===3?'. Sail to the breakers off Wrecker\'s Cove and call it out!':''}`,'lvl'),600);return`The wreckers' word? ...${w}. You didn't hear it from me.`}
+function permitReady(){return(S.story.bounties||0)>=3&&S.boats.some(k=>BOATI[k].tier>=4)}
+function claimPermit(){if(!permitReady()){toast('The Harbourmaster needs 3 island bounties done and a trawler or bigger.');return}if(!scene||scene.in!=='harbourmaster'){toast('Collect the permit from the Harbourmaster.');return}unlockIsland('ember','The Harbourmaster stamps your Ember Isle permit. The harbour patrol will let you through!')}
+// sailing up to a locked island
+function lockAct(){const b=player.boat;if(!b)return null;for(const I of WORLD.islands||[]){if(!I.lock||islandOpen(I.id))continue;const d=Math.hypot(b.x/16-I.x,(b.y/16-I.y)*1.2);if(d>I.r+12)continue;
+    if(I.lock==='breakers')return{label:'Call out',icon:'talk',act:()=>{const w=Object.keys((S.story.words)||{});if(w.length<3){toast(`Nobody answers. You need the wreckers' three-word password (${w.length}/3). Townsfolk in Gullhaven know it.`);return}unlockIsland('cove','You shout "SALT, ROPE, LANTERN!" A lantern swings on the cliff and the breakers ease. Wrecker\'s Cove is open!')}};
+    if(I.lock==='fog')return{label:'Fog bank',icon:'fog',act:()=>toast('A wall of fog. Without a chart you would only sail in circles. The lighthouse keeper might have one.')};
+    return{label:'Patrol',icon:'anchor',act:()=>toast('A patrol skiff waves you off: "Permit holders only. See the Harbourmaster."')}}return null}
+function lockWarnTick(){const b=player.boat;if(!b||scene!==WORLD)return;for(const I of WORLD.islands||[]){if(!I.lock||islandOpen(I.id))continue;const d=Math.hypot(b.x/16-I.x,(b.y/16-I.y)*1.2);if(d<I.r+13&&lockWarnTick.last!==I.id){lockWarnTick.last=I.id;toast(I.lock==='fog'?'Thick fog ahead. Kelpwood is in there somewhere.':I.lock==='breakers'?"Breakers boom around Wrecker's Cove. Someone is watching from the cliff.":'A harbour patrol skiff circles Ember Isle.','warn')}}}
+// fog and breakers around the locked islands
+function drawLocks(t){if(scene!==WORLD)return;for(const I of WORLD.islands||[]){if(!I.lock||islandOpen(I.id))continue;const cx=I.x*16,cy=I.y*16,R=(I.r+8)*16;if(!inView(cx-R-40,cy-R-40,R*2+80,R*2+80))continue;
+    if(I.lock==='fog'){for(let k=0;k<26;k++){const a=k/26*6.283+t*.03,rr=R*(.55+((k*37)%10)/22);const x=cx+Math.cos(a)*rr-camX,y=cy+Math.sin(a)*rr/1.2-camY;const s=34+(k%5)*10;ctx.globalAlpha=.42;ctx.fillStyle='#e8eef4';ctx.beginPath();ctx.ellipse(x,y,s,s*.55,0,0,6.283);ctx.fill()}
+      ctx.globalAlpha=.55;ctx.fillStyle='#dfe8ee';ctx.beginPath();ctx.ellipse(cx-camX,cy-camY,(I.r+5)*16,(I.r+5)*16/1.2,0,0,6.283);ctx.fill();ctx.globalAlpha=1}
+    else if(I.lock==='breakers'){ctx.strokeStyle='rgba(255,255,255,.8)';ctx.lineWidth=2;for(let k=0;k<3;k++){const ph=(t*.6+k/3)%1;const rr=R*(.85+ph*.2);ctx.globalAlpha=1-ph;ctx.beginPath();for(let a=0;a<=64;a++){const an=a/64*6.283;const w=Math.sin(an*9+t*3)*4;ctx[a?'lineTo':'moveTo'](cx+Math.cos(an)*(rr+w)-camX,cy+Math.sin(an)*(rr+w)/1.2-camY)}ctx.stroke()}ctx.globalAlpha=1;ctx.lineWidth=1}
+    else{const a=t*.25;const x=cx+Math.cos(a)*R*.95-camX,y=cy+Math.sin(a)*R*.95/1.2-camY;const im=boatImg('dinghy',Math.round(((a+Math.PI/2)/(Math.PI*2))*16)&15,'#c8443a');ctx.drawImage(im,Math.round(x-im.width/2),Math.round(y-im.height/2))}}}
+// the island locals of the new islands
+const NEW_NPC={kelpwood:['Sage Wynn',4422,['"The fog keeps Kelpwood quiet. We like quiet."','"Wreckers? They open their cove to anyone who knows three words. Ask Moe, Sully and Wren back in Gullhaven."']],
+  cove:['Captain Rook',4466,['"Every chest in this cove came off a wreck. Every wreck came off a storm."','"Ember Isle? The Harbourmaster guards it. Do three island bounties and bring a trawler, and he might sign."']],
+  ember:['Smith Ada',4499,['"The mountain keeps the forge hot and the water warmer. Take a dip in the springs."','"You came through the patrol? Then you are a real captain now."']]};
+/* ---------- the adventures panel ---------- */
+function panelAdventures(body,H){head('Adventures','Secrets around the sea',uiIcon('map'));tabs(null);const l=el('div','list');const st=S.story||{};
+  const clues=Object.keys(st.clues||{}).length;
+  l.append(itemRow(uiIcon('fish'),'Mirrorlake',lakeOpen()?'Opened. Freshwater fish wait behind the old gate.':`Find the four riddles (${clues}/4) and open the old gate in the south wood.`,lakeOpen()?el('b',null,'Done'):null));
+  const kelp=S.hold.filter(c=>{const e=CATI[c.id];return e&&e.cat==='fish'&&e.z==='kelp'}).length;
+  l.append(itemRow(uiIcon('fog'),'Kelpwood',islandOpen('kelpwood')?'The fog has cleared. Sail north-east of Tideglass.':st.keeper?`Bring ${KEEPER_FISH} Kelp Forest fish to Keeper Odile at Lighthouse Point (${kelp}/${KEEPER_FISH} in your hold).`:'An island lost in fog. The lighthouse keeper at Lighthouse Point knows the way.',islandOpen('kelpwood')?el('b',null,'Done'):null));
+  const w=Object.keys(st.words||{}).length;
+  l.append(itemRow(uiIcon('talk'),"Wrecker's Cove",islandOpen('cove')?'The breakers let you through. Far north-east.':!islandOpen('kelpwood')?'Locked. Someone on Kelpwood knows more.':`Learn the wreckers' password from Captain Moe, Sully and Wren in town (${w}/3), then call it out at the breakers.`,islandOpen('cove')?el('b',null,'Done'):null));
+  const bn=Math.min(3,st.bounties||0),tr=S.boats.some(k=>BOATI[k].tier>=4);
+  l.append(itemRow(uiIcon('storm'),'Ember Isle',islandOpen('ember')?'Permit stamped. South-west of Lantern Key.':`A Harbourmaster permit: island bounties ${bn}/3, trawler or bigger ${tr?'yes':'no'}.`,islandOpen('ember')?el('b',null,'Done'):permitReady()?btn('Claim',claimPermit,'sm gold'):null));
+  body.append(l);H('p','Unlocking an island pays 750 Shells and gives you a title. Each new island has a shop, a bounty board, a dive flag and a local with stories.')}
+function advInit(){S.story=S.story||{};applyLocks();const W=WORLD;for(const I of W.islands||[]){const n=NEW_NPC[I.id];if(!n)continue;const nx=(I.x-3)*16+8,ny=(I.y+2)*16+12;W.keepers.push({id:n[1],x:nx,y:ny,dir:'down'});let k=0;act(W,nx,ny,20,'Talk to '+n[0],'talk',()=>{toast(n[0]+': '+n[2][k%n[2].length]);k++})}
+  const c=W.spots.carving;if(c){const kx=c.x+22,ky=c.y+4;W.keepers.push({id:3907,x:kx,y:ky,dir:'left'});act(W,kx,ky,18,'Talk to Keeper Odile','talk',keeperTalk)}}
 
 /* ================= rendering: the coast, the sea, boats, people, weather and light ================= */
 const cv=$('cv');const ctx=cv.getContext('2d');let VW=320,VH=240,SCALE=2,camX=0,camY=0;
@@ -3427,9 +3570,9 @@ function inView(x,y,w,h){return!(x-camX>VW||y-camY>VH||x+w-camX<0||y+h-camY<0)}
 /* the sea */
 function drawSea(t){const Sc=WORLD;const E=envAt();const x0=Math.max(0,Math.floor(camX/16)),y0=Math.max(0,Math.floor(camY/16)),x1=Math.min(Sc.w-1,Math.floor((camX+VW)/16)),y1=Math.min(Sc.h-1,Math.floor((camY+VH)/16));
   // high tide covers the wet sand; low tide uncovers it
-  const tk=(E.tide+1)/2;if(tk>.05){ctx.globalAlpha=tk*.75;ctx.drawImage(Sc.tideC,camX,camY,VW,VH,0,0,VW,VH);ctx.globalAlpha=1}
+  const tk=(E.tide+1)/2;if(tk>.05){ctx.globalAlpha=tk*.75;drawGround(Sc,'t',0,0);ctx.globalAlpha=1}
   // lapping foam along the shore
-  const f=(Math.sin(t*1.6)+1)/2;ctx.globalAlpha=.25+f*.55;ctx.drawImage(Sc.foam,camX+Math.round(f*1.5),camY+Math.round(f),VW,VH,0,0,VW,VH);ctx.globalAlpha=1;
+  const f=(Math.sin(t*1.6)+1)/2;ctx.globalAlpha=.25+f*.55;drawGround(Sc,'f',-Math.round(f*1.5),-Math.round(f));ctx.globalAlpha=1;
   const caps=E.sky==='storm'?.5:E.sky==='windy'?.25:.06;
   for(let ty=y0;ty<=y1;ty++)for(let tx=x0;tx<=x1;tx++){const i=ty*Sc.w+tx;if(Sc.g[i]!=='o')continue;const x=tx*16-camX,y=ty*16-camY;const h=hash2(tx,ty,91);const ph=(t*.7+h*7)%7;const z=Sc.zone[i];const deep=z>=6;
     if(ph<1.2){const gx=x+2+(hash2(tx,ty,92)*9|0)+Math.round(Math.sin(t+h*6)*2),gy=y+3+(hash2(tx,ty,93)*10|0);const w=ph<.35||ph>.85?2:4;R(ctx,gx+(4-w)/2,gy,w,1,deep?'#5a7ac0':'#c8f0f8');if(w===4)R(ctx,gx+1,gy+1,2,1,deep?'#3a5aa0':'#8ad4ec')}
@@ -3453,7 +3596,7 @@ function boatDraw(list,k,x,y,h,paint,flag,rider,t,opts={}){const hi=typeof h==='
 function render(t){const Sc=scene;const ww=Sc.w*16,wh=Sc.h*16;const fx0=player.boat?player.boat.x:player.x,fy0=player.boat?player.boat.y:player.y-12;
   camX=ww<=VW?-(VW-ww)/2:clamp(fx0-VW/2,0,ww-VW);camY=wh<=VH?-(VH-wh)/2:clamp(fy0-VH/2,0,wh-VH);camX=Math.round(camX);camY=Math.round(camY);
   ctx.fillStyle=Sc===WORLD?'#2a74a8':'#0e1626';ctx.fillRect(0,0,VW,VH);
-  const sx=Math.max(0,camX),sy=Math.max(0,camY),sw=Math.min(VW,ww-sx),sh=Math.min(VH,wh-sy);if(sw>0&&sh>0)ctx.drawImage(Sc.ground,sx,sy,sw,sh,sx-camX,sy-camY,sw,sh);
+  const sx=Math.max(0,camX),sy=Math.max(0,camY),sw=Math.min(VW,ww-sx),sh=Math.min(VH,wh-sy);if(Sc===WORLD)drawGround(Sc,'g',0,0);else if(sw>0&&sh>0)ctx.drawImage(Sc.ground,sx,sy,sw,sh,sx-camX,sy-camY,sw,sh);
   const list=[];
   if(Sc===WORLD){drawSea(t);drawSeaLife(t);for(const c of combSpots()){if(!inView(c.x-6,c.y-6,12,12))continue;const k=Math.floor(t*4+c.i)%4;const x=Math.round(c.x-camX),y=Math.round(c.y-camY);P(ctx,x,y-k%2,'#ffffff');if(k<2){P(ctx,x-1,y,'#fff6c0');P(ctx,x+1,y,'#fff6c0')}P(ctx,x,y+2,'#c8ac78')}}
   for(const p of Sc.props){const img=p.anim?p.anim(t):p.img;if(!inView(p.x,p.y,img.width,img.height))continue;if(p.flat){ctx.drawImage(img,Math.round(p.x-camX),Math.round(p.y-camY));continue}if(p.sway){list.push({sy:p.sy,draw:()=>drawSway(img,Math.round(p.x-camX),Math.round(p.y-camY),swayAt(p.x,p.y,t),img.height-14)});continue}list.push({sy:p.sy,draw:()=>ctx.drawImage(img,Math.round(p.x-camX),Math.round(p.y-camY))})}
@@ -3469,7 +3612,7 @@ function render(t){const Sc=scene;const ww=Sc.w*16,wh=Sc.h*16;const fx0=player.b
     if(pe.b&&Sc===WORLD){boatDraw(list,pe.b.k,pe.x,pe.y,pe.b.h,pe.b.p,pe.co,{id:pe.id,f:pe.fish?(Math.floor(t*6)%2?1:2):0},t,{name:pe.b.n||pe.n,col,decor:pe.b.de,fishing:pe.fish});continue}
     list.push({sy:pe.y,draw:()=>{drawChar(ctx,pe.id,pe.x-camX,pe.y-camY,pe.dir,pe.moving?WALK[pe.f]:0);if(pe.co)drawBands(ctx,pe.x-camX,pe.y-camY,pe.dir,COOPI[pe.co].col,false);nameTag(ctx,pe.n,pe.x-camX,pe.y-camY+4,col);if(pe.bubble)bubble(ctx,pe.bubble.text,pe.x-camX,pe.y-camY-26);if(pe.emote)drawEmote(pe.emote.k,pe.x-camX,pe.y-camY-32,t)}})}
   if(!player.boat&&!player.ride)list.push({sy:player.y,draw:()=>drawPlayer(t)});
-  list.sort((a,b)=>a.sy-b.sy);for(const d of list)d.draw();if(Sc.dive)drawDive(t,Sc);
+  list.sort((a,b)=>a.sy-b.sy);for(const d of list)d.draw();if(Sc.dive)drawDive(t,Sc);else if(Sc===WORLD)drawLocks(t);
   if(player.boat){const b=player.boat;if(player.bubble)bubble(ctx,player.bubble.text,b.x-camX,b.y-camY-22);if(player.emote)drawEmote(player.emote.k,b.x-camX,b.y-camY-28,t)}
   if(Sc===WORLD){for(const g of GULLS){if(!inView(g.x-6,g.y-30,12,40))continue;const x=Math.round(g.x-camX),y=Math.round(g.y-camY-24);const up=Math.floor(t*5+g.ph)%2;ctx.fillStyle='rgba(18,48,74,.25)';ctx.fillRect(x-2,y+24,5,1);ctx.fillStyle='#fbfbff';ctx.fillRect(x-1,y,3,1);ctx.fillStyle=OL;if(up){P(ctx,x-3,y-2,OL);P(ctx,x-2,y-1,OL);P(ctx,x+2,y-1,OL);P(ctx,x+3,y-2,OL)}else{P(ctx,x-3,y+1,OL);P(ctx,x-2,y,OL);P(ctx,x+2,y,OL);P(ctx,x+3,y+1,OL)}}
     drawWeather(t);drawTimeOfDay(t)}
@@ -3496,7 +3639,7 @@ function drawPlayer(t){const p=player;const f=p.moving?WALK[p.f]:0;const fishing
   if(p.bubble)bubble(ctx,p.bubble.text,p.x-camX,p.y-camY-26);if(p.emote)drawEmote(p.emote.k,p.x-camX,p.y-camY-32,t)}
 /* minimap */
 let miniBase=null;const mini=$('mini'),mctx=mini.getContext('2d');
-function buildMiniBase(){const Sc=WORLD;const[c,x]=mk(Sc.w,Sc.h);x.imageSmoothingEnabled=true;x.drawImage(Sc.ground,0,0,Sc.w,Sc.h);for(const p of Sc.props)if(p.sy-p.y>40&&p.img.width>=60){x.fillStyle='#c45a4a';x.fillRect(p.x/16|0,(p.sy/16|0)-2,p.img.width/16|0,2)}miniBase=c}
+function buildMiniBase(){const Sc=WORLD;const c=tileMap(Sc,1);const x=c.getContext('2d');for(const p of Sc.props)if(p.sy-p.y>40&&p.img.width>=60&&!hiddenAt(p.x/16,p.sy/16)){x.fillStyle='#c45a4a';x.fillRect(p.x/16|0,(p.sy/16|0)-2,p.img.width/16|0,2)}miniBase=c}
 function drawMini(){const w=mini.width,h=mini.height;mctx.imageSmoothingEnabled=false;mctx.fillStyle='#0e1626';mctx.fillRect(0,0,w,h);
   if(scene!==WORLD){const Sc=scene;if(!Sc.ground)return;const k=Math.min((w-6)/(Sc.w*16),(h-6)/(Sc.h*16));const dw=Sc.w*16*k,dh=Sc.h*16*k,ox=(w-dw)/2,oy=(h-dh)/2;mctx.imageSmoothingEnabled=true;mctx.drawImage(Sc.ground,ox,oy,dw,dh);const px=ox+player.x*k,py=oy+player.y*k;mctx.fillStyle='#2b2130';mctx.fillRect(px-3,py-3,6,6);mctx.fillStyle='#ff7a6b';mctx.fillRect(px-2,py-2,4,4);return}
   if(!miniBase)buildMiniBase();const z=player.boat?1.4:2,vw=w/z,vh=h/z;const fx0=player.x/16,fy0=player.y/16;const cx=clamp(fx0-vw/2,0,WORLD.w-vw),cy=clamp(fy0-vh/2,0,WORLD.h-vh);mctx.drawImage(miniBase,cx,cy,vw,vh,0,0,w,h);
@@ -3687,22 +3830,22 @@ function showCatch(e,o){const c=$('catch');c.innerHTML='';c.className='px';const
   clearTimeout(showCatch.t);c.onclick=()=>{c.hidden=true};showCatch.t=setTimeout(()=>c.hidden=true,o.isNew?4200:2600)}
 /* map */
 let mapBase=null;
-function buildMapBase(){const Sc=WORLD,k=2;const[c,g]=mk(Sc.w*16/k,Sc.h*16/k);g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.drawImage(Sc.ground,0,0,c.width,c.height);
-  const list=[];for(const p of Sc.props){const im=p.anim?p.anim(0):p.img;if(p.flat){g.drawImage(im,p.x/k,p.y/k,im.width/k,im.height/k);continue}list.push([p.sy,im,p.x,p.y])}list.sort((a,b)=>a[0]-b[0]);for(const[,im,x,y]of list)g.drawImage(im,x/k,y/k,im.width/k,im.height/k);mapBase=c}
+function buildMapBase(){const Sc=WORLD,k=4;const c=tileMap(Sc,16/k);const g=c.getContext('2d');g.imageSmoothingEnabled=true;
+  const list=[];for(const p of Sc.props){if(hiddenAt((p.x+p.img.width/2)/16,p.sy/16))continue;const im=p.anim?p.anim(0):p.img;if(p.flat){g.drawImage(im,p.x/k,p.y/k,im.width/k,im.height/k);continue}list.push([p.sy,im,p.x,p.y])}list.sort((a,b)=>a[0]-b[0]);for(const[,im,x,y]of list)g.drawImage(im,x/k,y/k,im.width/k,im.height/k);mapBase=c}
 const POIS=[['Fish Market','market','shop'],['Tackle Shop','tackle','shop'],['Boatyard','boatyard','shop'],['Island Guild','exchange','shop'],['Aquarium','aquarium','shop'],['Salty Gull','tavern','shop'],['Harbourmaster','harbourmaster','shop'],['Lighthouse','lighthouse','job'],['Your cottage','home','home'],['Character atelier','machine','job']];
 function panelMap(body,H){head('Sea chart','Tap a place to walk or sail there',uiIcon('map'));const t=tabs([['map','Chart'],['zones','Grounds']],'map');
   if(t==='zones'){for(const z of ZONE_ORDER){const Z=ZONES[z];const need=BOATS.find(b=>b.tier>=Z.need);const got=CAT.filter(e=>e.z===z);const n=got.filter(e=>logged(e.id)).length;const r=itemRow(null,Z.n,`${Z.need?'Needs a '+need.n.toLowerCase():'From the shore or any boat'} \u00b7 about ${Z.depth} m deep \u00b7 ${n}/${got.length} logged`);r.style.boxShadow=`inset 4px 0 0 ${Z.col}`;body.append(r)}H('p','Better boats reach further grounds. Storms make the open sea dangerous for small boats.');return}
   if(!mapBase)buildMapBase();const scr=el('div','');scr.style.cssText='overflow:auto;max-height:min(58vh,520px);border:2px solid var(--ink);background:#0e1626;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y';const w=el('div','');w.style.cssText='position:relative;width:160%;min-width:520px';
   const c=document.createElement('canvas');c.width=mapBase.width;c.height=mapBase.height;c.style.cssText='width:100%;display:block';c.getContext('2d').drawImage(mapBase,0,0);const g=c.getContext('2d');
-  g.font='bold 9px sans-serif';for(const z of ZONE_ORDER){if(z==='lake'&&!lakeOpen())continue;const zi=ZONE_ORDER.indexOf(z);let sx=0,sy=0,n=0;for(let i=0;i<WORLD.zone.length;i+=7)if(WORLD.zone[i]===zi){sx+=i%WORLD.w;sy+=Math.floor(i/WORLD.w);n++}if(!n)continue;const x=sx/n*8,y=sy/n*8;g.fillStyle='rgba(14,22,38,.7)';const tw=g.measureText(ZONES[z].short).width;g.fillRect(x-tw/2-3,y-7,tw+6,11);g.fillStyle=ZONES[z].need>boatTier()?'#ff9f8a':'#bff8e8';g.fillText(ZONES[z].short,x-tw/2,y+1)}
+  g.font='bold 9px sans-serif';for(const z of ZONE_ORDER){if(z==='lake'&&!lakeOpen())continue;const zi=ZONE_ORDER.indexOf(z);let sx=0,sy=0,n=0;for(let i=0;i<WORLD.zone.length;i+=7)if(WORLD.zone[i]===zi&&!hiddenAt(i%WORLD.w,Math.floor(i/WORLD.w))){sx+=i%WORLD.w;sy+=Math.floor(i/WORLD.w);n++}if(!n)continue;const x=sx/n*4,y=sy/n*4;g.fillStyle='rgba(14,22,38,.7)';const tw=g.measureText(ZONES[z].short).width;g.fillRect(x-tw/2-3,y-7,tw+6,11);g.fillStyle=ZONES[z].need>boatTier()?'#ff9f8a':'#bff8e8';g.fillText(ZONES[z].short,x-tw/2,y+1)}
   w.append(c);scr.append(w);const pct=(x,y)=>[x/(WORLD.w*16)*100+'%',y/(WORLD.h*16)*100+'%'];
   const pin=(name,x,y,col,fn)=>{const p=el('button','');p.style.cssText=`position:absolute;transform:translate(-50%,-100%);padding:1px 4px;font-size:10px;background:rgba(14,22,38,.9);border:2px solid var(--ink);color:${col};white-space:nowrap`;p.textContent=name;[p.style.left,p.style.top]=pct(x,y);if(fn)p.onclick=fn;w.append(p);return p};
   for(const[n,k,cls]of POIS){const s=WORLD.spots[k];if(!s)continue;pin(n,s.x,s.y-6,cls==='shop'?'#7fdcc0':cls==='home'?'#ff9fc0':'#ffd24d',()=>{if(scene!==WORLD){toast('Head outside first.');return}if(player.boat){toast('Tie up first, then walk there.');return}closePanel();walkTo({x:s.x,y:s.y,face:'up'})})}
   if(S.boat&&!player.boat){const sp=myBoatSpot();pin('Your boat',sp.x,sp.y,'#bfe8f4',()=>{closePanel();walkTo(tapTarget(sp.x,sp.y))})}
   for(const p of S.pots)pin('Pot',p.x,p.y,'#ffd24d',null);const me=player.boat||player;pin('YOU',me.x,me.y,'#ff7a6b',null);
   c.onclick=ev=>{if(scene!==WORLD)return;const r=c.getBoundingClientRect();const wx=(ev.clientX-r.left)/r.width*WORLD.w*16,wy=(ev.clientY-r.top)/r.height*WORLD.h*16;if(player.boat){if(isWaterPx(wx,wy)){closePanel();sailTo(wx,wy)}}else{const tg=tapTarget(wx,wy);if(tg){closePanel();walkTo(tg)}}};
-  for(const I of WORLD.islands||[])pin(I.n,I.bounty.x,I.bounty.y,'#ff9fc0',()=>{if(player.boat&&scene===WORLD){closePanel();sailTo(I.dock.x,I.dock.y)}else openPanel('island',I.id)});
-  body.append(scr);const islands=el('div','list');islands.style.marginTop='10px';for(const I of WORLD.islands||[])islands.append(itemRow(uiIcon('map'),I.n,(S.visitedIslands.includes(I.id)?'Discovered':'Unvisited')+' \u00b7 '+(I.id==='tideglass'?'Any boat':I.id==='mossbank'?'Rough for small boats':'A skiff or better is wise'),btn(player.boat?'Set course':'Bounty',()=>{if(player.boat&&scene===WORLD){closePanel();sailTo(I.dock.x,I.dock.y)}else openPanel('island',I.id)},'sm')));body.append(islands);H('p',player.boat?'Tap the water on the chart to set a course. Red names need a bigger boat.':'Tap a place to walk there. Board your boat to sail to the far grounds.');
+  for(const I of(WORLD.islands||[]).filter(I=>!I.lock||islandOpen(I.id)))pin(I.n,I.bounty.x,I.bounty.y,'#ff9fc0',()=>{if(player.boat&&scene===WORLD){closePanel();sailTo(I.dock.x,I.dock.y)}else openPanel('island',I.id)});
+  body.append(scr);const islands=el('div','list');islands.style.marginTop='10px';for(const I of(WORLD.islands||[]).filter(I=>!I.lock||islandOpen(I.id)))islands.append(itemRow(uiIcon('map'),I.n,(I.lock&&!islandOpen(I.id)?({fog:'Hidden in fog',breakers:'Behind the breakers',permit:'Permit needed'}[I.lock]):(S.visitedIslands.includes(I.id)?'Discovered':'Unvisited')+' \u00b7 '+(I.id==='tideglass'?'Any boat':I.id==='mossbank'||I.id==='kelpwood'?'Rough for small boats':'A skiff or better is wise')),btn(player.boat?'Set course':'Bounty',()=>{if(player.boat&&scene===WORLD){closePanel();sailTo(I.dock.x,I.dock.y)}else openPanel('island',I.id)},'sm')));body.append(islands);H('p',player.boat?'Tap the water on the chart to set a course. Red names need a bigger boat.':'Tap a place to walk there. Board your boat to sail to the far grounds.');
   requestAnimationFrame(()=>{const me2=player.boat||player;scr.scrollLeft=me2.x/(WORLD.w*16)*w.offsetWidth-scr.clientWidth/2;scr.scrollTop=me2.y/(WORLD.h*16)*w.offsetHeight-scr.clientHeight/2})}
 function panelQuest(body,H){head('First season','Learn the harbour',uiIcon('book'));tabs(null);const q=curQuest();if(!q){H('p','You have finished the first season. The harbour is yours.');return}
   const d=el('div','say');d.textContent=q.d;body.append(d);H('p',`Step ${S.quest.i+1} of ${QUESTS.length}${q.goal>1?` \u00b7 ${Math.min(S.quest.prog,q.goal)}/${q.goal}`:''}`);const l=el('div','list');QUESTS.forEach((x,i)=>{const r=itemRow(null,(i<S.quest.i?'Done: ':i===S.quest.i?'Now: ':'')+x.n,null);if(i>S.quest.i)r.style.opacity='.5';l.append(r)});body.append(l)}
@@ -3967,7 +4110,7 @@ function tavernLine(){const E=envAt();const lines=[E.sky==='storm'?'"Storm\'s up
 function rumourPick(){const heard=new Set(S.rumours||[]);const cands=CAT.filter(e=>!logged(e.id)&&!heard.has(e.id)&&e.how!=='gift'&&e.cat!=='junk'&&e.cat!=='legend');if(!cands.length)return null;cands.sort((a,b)=>a.r-b.r);const lo=cands.filter(e=>e.r<=cands[0].r+1);return lo[Math.floor(Math.random()*lo.length)]}
 /* ---------- the Harbourmaster: free membership, names and friendly derby ---------- */
 const HANDLE_RE=/^[A-Za-z0-9_]{1,15}$/;
-function panelLicence(body,H){head('Harbourmaster','Everyone is welcome to fish',uiIcon('anchor'));const t=tabs([['licence','Harbour'],['handle','Name'],['derby','Derby']],'licence');
+function panelLicence(body,H){head('Harbourmaster','Everyone is welcome to fish',uiIcon('anchor'));const t=tabs([['licence','Harbour'],['handle','Name'],['derby','Derby']],'licence');if(t==='licence'&&!islandOpen('ember'))body.append(itemRow(uiIcon('storm'),'Ember Isle permit',permitReady()?'Ready to stamp. Collect it here.':`Needs 3 island bounties (${Math.min(3,(S.story&&S.story.bounties)||0)}/3) and a trawler or bigger.`,permitReady()?btn('Claim',claimPermit,'sm gold'):null));
   if(t==='handle'){H('p','Choose your fisher name. It appears beside your character, catches and aquarium donations.');const row=el('div','row'),inp=txtIn('fisher name',S.name,15);row.append(inp,btn('Save',async()=>{const n=inp.value.trim();if(!HANDLE_RE.test(n)){toast('Use letters, numbers and _ (up to 15).','warn');return}if(!(await claimName(n)))return;S.name=n;cloudSave(true);markDirty();updHUD();sendPresence(true);if(NET.db)pushMyDoc(true);toast('You are '+n+' in Gullhaven.','lvl');inp.blur();renderPanel()},'gold'));body.append(row);return}
   if(t==='derby'){const E=envAt(),sp=derbySpecies(E.day),D=S.derby.day===E.day?S.derby:null,sd=NET.shared.derby&&NET.shared.derby.day===E.day?NET.shared.derby:null;
     const field=(sd?sd.top:[]).concat(CSIM.derbyField(E.day)).sort((a,b)=>b-a);body.append(itemRow(catArt(sp.id),sp.n,ZONES[sp.z].n+' \u00b7 longest fish wins'));
@@ -3990,7 +4133,7 @@ function panelWeather(body,H){head('Lighthouse','Weather, tides and sightings',u
 function keeperLine(E){if(E.sky==='storm')return'"Batten down. Rowboats and dinghies should be tied up till it passes."';if(E.after)return'"The storm\'s passed. Wrecks have shifted out there, and the beach will be full of wash-up."';if(E.king)return'"King tide tonight. The sea\'s right up to the wall."';if(E.moon==='fullmoon'&&isNightNow())return'"Full moon. I\'ve seen things out there on nights like this."';if(E.sky==='fog')return'"Fog. Keep your lamp lit and your ears open."';if(isNightNow())return'"Night fishing\'s good off the piers. Squid come to the lights."';return'"Fair sailing. The reef should be busy."'}
 /* ---------- the notice board on the square ---------- */
 function panelNotice(body,H){head('Notice board','A little more to do each day',uiIcon('talk'));tabs(null);const E=envAt(),cod=catchOfDay(E.day),st=cupStandings();
-  const l=el('div','list');l.append(itemRow(uiIcon('map'),'Island bounties','Three little settlements, each with a shop and a daily fishing request.',btn('Explore',()=>openPanel('exchange'),'sm gold')));
+  const l=el('div','list');l.append(itemRow(uiIcon('fog'),'Adventures','Locked islands, a hidden lake and the secrets that open them.',btn('Open',()=>openPanel('adventures'),'sm gold')));l.append(itemRow(uiIcon('map'),'Island bounties','Three little settlements, each with a shop and a daily fishing request.',btn('Explore',()=>openPanel('exchange'),'sm gold')));
   l.append(itemRow(uiIcon('home'),'Make yourself at home','Room styles, furniture and visits to online neighbours.',btn('Home',()=>openPanel('home'),'sm')));
   l.append(itemRow(uiIcon('trophy'),'Harbour Cup',COOPI[st[0].id].s+' lead the friendly daily race.',btn('Race',()=>openPanel('coop','cup'),'sm')));
   l.append(itemRow(uiIcon('fish'),'Big Fish Derby','Free entry \u00b7 '+fmt(CFG.DERBY.reward)+' Shells for the longest catch.',btn('Enter',()=>openPanel('licence','derby'),'sm')));
@@ -4155,7 +4298,7 @@ function panelIsland(body,H){tabs(null);const I=(WORLD.islands||[]).find(i=>i.id
   const q=islandQuest(I),e=CATI[q.id],have=S.hold.filter(c=>c.id===q.id).length;
   const row=itemRow(catArt(e.id),I.n+' needs '+q.n+' \u00d7 '+e.n,q.done?'Delivered. Thank you!':ZONES[e.z].n+' \u00b7 in your hold '+have+'/'+q.n+' \u00b7 reward '+fmt(q.pay)+' Shells');body.append(row);
   H('p','One personal bounty per island each real day. Deliver your fish here at the board. Your progress is your own.');
-  if(!q.done){const b=btn('Deliver \u00b7 '+fmt(q.pay)+' Shells',()=>{if(q.done||!atIslandBoard(I))return;if(S.hold.filter(c=>c.id===q.id).length<q.n){toast('Bring '+q.n+' '+e.n+' in your hold.');return}let left=q.n;S.hold=S.hold.filter(c=>{if(c.id===q.id&&left){left--;return false}return true});q.done=true;addShells(q.pay);bumpQuest('bounty');markDirty();sfx('lvl');toast('Bounty complete \u00b7 +'+fmt(q.pay)+' Shells','lvl');renderPanel()},'gold');b.disabled=!here||have<q.n;body.append(b)}
+  if(!q.done){const b=btn('Deliver \u00b7 '+fmt(q.pay)+' Shells',()=>{if(q.done||!atIslandBoard(I))return;if(S.hold.filter(c=>c.id===q.id).length<q.n){toast('Bring '+q.n+' '+e.n+' in your hold.');return}let left=q.n;S.hold=S.hold.filter(c=>{if(c.id===q.id&&left){left--;return false}return true});q.done=true;S.story=S.story||{};S.story.bounties=(S.story.bounties||0)+1;addShells(q.pay);bumpQuest('bounty');markDirty();sfx('lvl');toast('Bounty complete \u00b7 +'+fmt(q.pay)+' Shells','lvl');renderPanel()},'gold');b.disabled=!here||have<q.n;body.append(b)}
   if(!here)H('p','Tie up and walk to this island\u2019s board to discover the settlement and deliver its bounty.');
   const r=el('div','row');r.style.marginTop='12px';r.append(btn('Sea chart',()=>openPanel('map'),'alt'));if(here)r.append(btn(I.shopLabel,()=>openPanel(I.shopKind==='home'?'home':'shop',I.shopKind==='home'?null:I.shopKind),'sea'));body.append(r)}
 

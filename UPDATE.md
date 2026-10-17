@@ -1,3 +1,13 @@
+# Islands update
+
+- **A much bigger sea:** the ocean is now about twice the size, with lots more room between islands. The mainland ends in a south coast, and the open sea beyond it has **Seagrass Meadows** along the shore (9 new fish, any boat but a rowboat) and a coral atoll holding the **Turquoise Lagoon** (8 new fish, dinghy or better), plus reef, kelp, wreck and blue water further out.
+- Locked islands stay off the minimap and sea chart until you open them.
+- **Three locked islands**, each with a shop, bounty board, dive flag and a local:
+  - **Kelpwood** hides in a fog bank north-east of Tideglass. Keeper Odile at Lighthouse Point trades her fog chart for 3 Kelp Forest fish.
+  - **Wrecker's Cove** sits behind breakers in the far north-east. Once Kelpwood is open, Captain Moe, Sully and Wren in town each know one word of the password. Sail to the breakers and **Call out**.
+  - **Ember Isle**, south of Lantern Key, has a volcano and a hot spring. The Harbourmaster stamps a permit once you've done 3 island bounties and own a trawler or bigger.
+- Opening an island pays 750 Shells and gives a title. The **Adventures** board (on the notice board) tracks every secret, including Mirrorlake.
+
 # Friends update
 
 - **Ride with a friend:** walk up to a friend's boat and tap **Hop aboard**. You ride along wherever they sail and can fish from their deck (their boat decides which grounds are calm enough). Tap **Hop off** to step ashore, or get dropped back at the quay if you're at sea.

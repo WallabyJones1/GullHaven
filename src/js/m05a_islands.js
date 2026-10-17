@@ -1,15 +1,18 @@
 /* Small additions to the original world, painted with Gullhaven's existing pixel art. */
 const ISLAND_TOWNS=[
   {id:'tideglass',n:'Tideglass Cay',x:128,y:125,r:12,shore:'sand',zone:'shallows',shopKind:'bait',shopLabel:'BAIT & TEA',roof:'#3f7a8a',wall:'#f4e4c8',desc:'A quiet sandy cay with a bait shop, beachcombing and harbour errands. Follow the southern shallows in any boat.'},
-  {id:'mossbank',n:'Mossbank',x:169,y:49,r:13,shore:'sand',zone:'reef',shopKind:'home',shopLabel:'HOME GOODS',roof:'#3f7a5a',wall:'#e8f0d8',desc:'A little garden village on the coral shelf. Browse home decorations and take on local fishing bounties. Open water out here is rough on small boats.'},
-  {id:'lantern',n:'Lantern Key',x:197,y:118,r:14,shore:'rock',zone:'kelp',shopKind:'boatyard',shopLabel:'BOATWORKS',roof:'#5a4a7a',wall:'#d8e8f4',desc:'A rocky fishing outpost among the kelp, with a boat workshop and deep-water stories. Far out past the deep: a skiff or bigger makes the trip safely.'}
+  {id:'mossbank',n:'Mossbank',x:190,y:58,r:13,shore:'sand',zone:'reef',shopKind:'home',shopLabel:'HOME GOODS',roof:'#3f7a5a',wall:'#e8f0d8',desc:'A little garden village on the coral shelf. Browse home decorations and take on local fishing bounties. Open water out here is rough on small boats.'},
+  {id:'lantern',n:'Lantern Key',x:250,y:150,r:14,shore:'rock',zone:'kelp',shopKind:'boatyard',shopLabel:'BOATWORKS',roof:'#5a4a7a',wall:'#d8e8f4',desc:'A rocky fishing outpost among the kelp, with a boat workshop and deep-water stories. Far out past the deep: a skiff or bigger makes the trip safely.'}
+  ,{id:'kelpwood',n:'Kelpwood',x:176,y:104,r:12,shore:'sand',zone:'kelp',shopKind:'bait',shopLabel:'KELP TEA',roof:'#2f6a5a',wall:'#d8e8d0',lock:'fog',desc:'A misty island of kelp gardens and tea houses, hidden in a fog bank. Quiet folk, strange bait.'},
+  {id:'cove',n:"Wrecker's Cove",x:285,y:30,r:12,shore:'rock',zone:'wreck',shopKind:'boatyard',shopLabel:'SALVAGER',roof:'#4a3a3a',wall:'#c8b090',lock:'breakers',desc:'A cliff-ringed cove of salvagers and old wreckers. Repairs, dive gear and stories of every storm.'},
+  {id:'ember',n:'Ember Isle',x:215,y:196,r:13,shore:'rock',zone:'blue',shopKind:'home',shopLabel:'EMBER GOODS',roof:'#8a3a2a',wall:'#e8d0b0',lock:'permit',desc:'A warm volcanic island with hot springs and a forge. Only permit holders may land.'}
 ];
 function islandShoreAt(x,y){if(x<110)return null;for(const I of ISLAND_TOWNS){const dx=x-I.x,dy=(y-I.y)*1.2;if(dx*dx+dy*dy<(I.r+3)*(I.r+3))return I}return null}
 function islandSeaZone(x,y){
   // Broad, visible shelves leave the old fishing grounds available and give every dock a safe approach.
   if(x>=74.5&&x<83.5&&y>56&&y<91)return'shallows';
   const wb=(NZ.at(x*.6+11,y*.6+5)-.5)*9;
-  if(x>94&&x<148&&y>98&&y<145&&x<y+18+wb)return'shallows';
+  if(x>94&&x<148+wb&&y>98&&y<145+wb&&x<y+18+wb)return'shallows';
   if(x<110)return null;
   for(const I of ISLAND_TOWNS){const dx=x-I.x,dy=(y-I.y)*1.2;if(dx*dx+dy*dy<(I.r+6)*(I.r+6))return I.zone}
   return null}

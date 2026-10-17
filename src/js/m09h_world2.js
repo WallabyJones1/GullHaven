@@ -31,6 +31,7 @@ function wildsActs(){storyInit();applyGate();const W=WORLD,s=W.spots;
   if(s.cafe)act(W,s.cafe.x,s.cafe.y,16,'Cat Café','door',()=>openPanel('cafe'));
   if(s.bakery)act(W,s.bakery.x,s.bakery.y,16,'Bakery','door',()=>toast(['Nora: "Fresh loaves at dawn. Bread dough bait is always free, love."','Nora: "The cats get the crusts. Don\'t tell the café."','The bakery smells of cinnamon and warm bread.'][Math.floor(Math.random()*3)]));
   if(s.fountain)act(W,s.fountain.x,s.fountain.y,22,'Toss a Shell','shell',()=>{if(!payShells(1))return;sfx('coin');splash(s.fountain.x,s.fountain.y-20,4);toast(['You wish for a big one.','You wish for calm seas.','You wish for a legend on the line.','A gull eyes your wish suspiciously.'][Math.floor(Math.random()*4)])});
+  advInit();if(s.spring)act(W,s.spring.x,s.spring.y,18,'Hot spring','sleep',()=>{const f=$('fade');f.hidden=false;f.textContent='Ahh...';sfx('splash');setTimeout(()=>{f.hidden=true;toast('A soak in the hot spring. You feel brand new.')},1000)});
   spawnCats()}
 function panelGate(body,H){head('The old gate','Four rusted dials on a brass lock',uiIcon('map'));tabs(null);
   if(lakeOpen()){H('p','The gate stands open. Mirrorlake is yours to fish.');return}
@@ -62,8 +63,8 @@ function panelCafe(body,H){head('Cat Café','Tea, cake and the harbour cats',uiI
   const l=el('div','list');for(const c of COATS){const love=S.catLove[c.k]||0,mine=S.pet===c.k;
     l.append(itemRow(catFace(c.k),c.name+' · '+c.n,love?'♥'.repeat(love)+'♡'.repeat(5-love):'Not met yet. Look around town.',mine?btn('Send home',()=>{S.pet=null;petF=null;markDirty();renderPanel()},'sm alt'):love>=5?btn('Adopt',()=>{S.pet=c.k;petF=null;markDirty();sfx('purr');toast(c.name+' is your companion now.','lvl');renderPanel()},'sm gold'):null))}
   body.append(l)}
-function worldTick(dt){rideTick(dt);catsTick(dt);hullTick(dt);diveTick(dt);worldTick.t=(worldTick.t||0)+dt;if(worldTick.t>.5){worldTick.t=0;updHullChip()}}
-const EXTRA_PANELS={gate:panelGate,cafe:panelCafe};
+function worldTick(dt){rideTick(dt);lockWarnTick();prefetchGround();catsTick(dt);hullTick(dt);diveTick(dt);worldTick.t=(worldTick.t||0)+dt;if(worldTick.t>.5){worldTick.t=0;updHullChip()}}
+const EXTRA_PANELS={gate:panelGate,cafe:panelCafe,adventures:panelAdventures};
 // background music follows where you are
 function musMode(){if(typeof gachaOpen!=='undefined'&&gachaOpen)return'arcade';if(scene&&scene.dive)return'dive';const h=ghour(),night=h<6||h>=20.5;if(!scene||!WORLD)return night?'night':'day';
   if(scene!==WORLD)return scene.homeOwner?'home':'inside';const E=envAt();if(E.sky==='storm')return'storm';const px=player.x/16,py=player.y/16;

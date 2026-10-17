@@ -5,7 +5,7 @@ const CLOUD={t:0,busy:false};
 function cloudOn(){return NET.mode==='ws'&&!!S.name}
 async function cloudLogin(fresh){if(!cloudOn()||CLOUD.busy)return;CLOUD.busy=true;try{const r=await NET.req({t:'login',name:S.name});if(r.err)return;
     if(r.s&&(fresh||(r.ts||0)>(S.ts||0)+5000)){let j=null;try{j=migrate(JSON.parse(r.s))}catch(e){}if(j){applyCloudSave(j,fresh);return}}cloudSave(true)}finally{CLOUD.busy=false}}
-function applyCloudSave(j,fresh){const name=S.name;S=j;S.name=S.name||name;storyInit();saveLocal();syncCrew();if(WORLD){applyGate();const sp=WORLD.spots.spawn;player.boat=null;player.ride=null;DIVE=null;setScene(WORLD,sp.x,sp.y,'up')}refreshAll();sendPresence(true);
+function applyCloudSave(j,fresh){const name=S.name;S=j;S.name=S.name||name;storyInit();saveLocal();syncCrew();if(WORLD){applyGate();applyLocks();miniBase=null;mapBase=null;const sp=WORLD.spots.spawn;player.boat=null;player.ride=null;DIVE=null;setScene(WORLD,sp.x,sp.y,'up')}refreshAll();sendPresence(true);
   toast(fresh?`Welcome back, ${S.name}! Your progress was loaded from the harbour server.`:'Loaded your newer progress from another device.','lvl')}
 function cloudSave(now){if(!cloudOn())return;const t=performance.now();if(!now&&t-CLOUD.t<15000)return;CLOUD.t=t;S.ts=Date.now();const s=JSON.stringify(S);if(s.length<380000)wsSend({t:'usave',name:S.name,s})}
 // renaming: refuse a name another fisher already uses on this server

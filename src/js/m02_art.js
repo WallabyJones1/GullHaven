@@ -179,7 +179,7 @@ function cardArt(id){if(cardCache.has(id))return cardCache.get(id);const t=trait
 /* ---------- ground (pixel buffer, world-space noise, grass edge transitions) ---------- */
 const GR={base:'#6cad5b',lt:'#79b962',dk:'#5f9f53',lip:'#477f49',hl:'#94cd70',blade:'#4f8f4c',bladeL:'#9ad375'};
 const colCache=new Map();function c32(hex){let v=colCache.get(hex);if(v===undefined){const n=parseInt(hex.slice(1),16);v=(255<<24)|((n&255)<<16)|(n&0xff00)|(n>>16&255);colCache.set(hex,v)}return v}
-function mkBuf(w,h){const[c,x]=mk(w,h);const id=x.createImageData(w,h);return{c,x,w,h,id,u:new Uint32Array(id.data.buffer),set(px,py,hex){if(px<0||py<0||px>=w||py>=h)return;this.u[py*w+px]=c32(hex)},get(px,py){return this.u[py*w+px]},flush(){x.putImageData(id,0,0)}}}
+function mkBuf(w,h){const[c,x]=mk(w,h);const id=x.createImageData(w,h);return{c,x,w,h,id,u:new Uint32Array(id.data.buffer),set(px,py,hex){if(px<0||py<0||px>=w||py>=h)return;this.u[py*w+px]=c32(hex)},get(px,py){return this.u[py*w+px]},put(px,py,v){if(px<0||py<0||px>=w||py>=h)return;this.u[py*w+px]=v},flush(){x.putImageData(id,0,0)}}}
 const GRF={base:'#5c9a52',lt:'#6aa85a',dk:'#4f8a4b',lip:'#3a6a40',hl:'#7cb862',blade:'#3f7a45',bladeL:'#86c06a'};
 let GZONE=null; // world gen sets this: (wx,wy)=>forestness 0..1
 function grassPal(wx,wy){if(!GZONE)return GR;return GZONE(wx,wy)>.5+(hash2(wx,wy,41)-.5)*.18?GRF:GR}
@@ -222,10 +222,10 @@ function drawTile(B,S,type,tx,ty){
   if(type==='hd'){for(let j=0;j<16;j++)for(let i=0;i<16;i++){let col='#a8744a';if(j>=3&&j<=13){col=((i+j)%4<2)?'#5fb79c':'#4f9a86';if(j===3||j===13)col='#3f7a6a'}set(i,j,col)}return}
 }
 // grass lips over neighbouring tiles
-function grassEdges(B,S){const W=S.w;for(let ty=0;ty<S.h;ty++)for(let tx=0;tx<W;tx++){const t=S.g[ty*W+tx];if(t==='g'||t[0]==='h'||NOLIP.has(t))continue;const x0=tx*16,y0=ty*16;const lip=(i,j,col)=>B.set(x0+i,y0+j,col);
+function grassEdges(B,S,X0=0,Y0=0,X1=S.w-1,Y1=S.h-1){const W=S.w;for(let ty=Y0;ty<=Y1;ty++)for(let tx=X0;tx<=X1;tx++){const t=S.g[ty*W+tx];if(t==='g'||t[0]==='h'||NOLIP.has(t))continue;const x0=tx*16,y0=ty*16;const lip=(i,j,col)=>B.set(x0+i,y0+j,col);
   const N=isGrassT(tileAt(S,tx,ty-1)),Sd=isGrassT(tileAt(S,tx,ty+1)),E=isGrassT(tileAt(S,tx+1,ty)),Wt=isGrassT(tileAt(S,tx-1,ty));
   const dep=(k,s)=>2+(vnoise(k,s,5,31)>.55?1:0)+(vnoise(k,s,3,33)>.8?1:0);
-  const shade=(i,j)=>{const v=B.get(x0+i,y0+j);const r=v&255,g=v>>8&255,b=v>>16&255;B.u[(y0+j)*B.w+x0+i]=(255<<24)|((b*.78|0)<<16)|((g*.76|0)<<8)|(r*.8|0)};
+  const shade=(i,j)=>{const v=B.get(x0+i,y0+j);const r=v&255,g=v>>8&255,b=v>>16&255;B.put(x0+i,y0+j,(255<<24)|((b*.78|0)<<16)|((g*.76|0)<<8)|(r*.8|0))};
   if(N)for(let i=0;i<16;i++){const d=dep(x0+i,y0);for(let j=0;j<d;j++)lip(i,j,grassAt(x0+i,y0+j));lip(i,d-1,grassPal(x0+i,y0).lip);if(t!=='a'&&t!=='A')shade(i,d);}
   if(Sd)for(let i=0;i<16;i++){const d=dep(x0+i,y0+16);for(let j=0;j<d;j++)lip(i,15-j,grassAt(x0+i,y0+15-j));lip(i,16-d,grassPal(x0+i,y0+15).hl)}
   if(Wt)for(let j=0;j<16;j++){const d=dep(x0,y0+j);for(let i=0;i<d;i++)lip(i,j,grassAt(x0+i,y0+j));lip(d-1,j,grassPal(x0,y0+j).lip);if(t!=='a'&&t!=='A')shade(d,j)}

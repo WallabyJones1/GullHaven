@@ -33,7 +33,7 @@ function nearestAct(){if(player.ride)return rideAct();const px=player.x,py=playe
     for(const c of combSpots())consider(c.x,c.y,16,{label:c.where==='rocks'?'Search the pool':'Dig',icon:c.where==='rocks'?'hand':'shovel',act:()=>startDig(c)});
     const w=waterAhead();if(w&&!best)best={label:'Fish',icon:'rod_'+S.gear.rod,act:()=>startFishing({x:w.x,y:w.y,zone:w.zone,shore:true})}}
   return best}
-function boatAct(){const b=player.boat;if(!b)return null;const z=zoneAtPx(b.x,b.y);
+function boatAct(){const b=player.boat;if(!b)return null;const la=lockAct();if(la)return la;const z=zoneAtPx(b.x,b.y);
   for(const p of S.pots){if(Math.hypot(p.x-b.x,p.y-b.y)<28)return{label:'Haul pot',icon:'pot',act:()=>haulPot(p)}}
   for(const s of WORLD.salvage)if(!s.dead&&Math.hypot(s.x-b.x,s.y-b.y)<30)return{label:'Grapple',icon:'grapple',act:()=>startSalvage(s)};
   if(Math.hypot(WORLD.spots.fuel.x-b.x,WORLD.spots.fuel.y-b.y)<56&&S.gear.engine>0&&S.fuel<fuelCap()-1)return{label:'Refuel',icon:'fuel',act:refuel};

@@ -22,7 +22,7 @@ const WAKE=[];
 function updWake(dt){for(let i=WAKE.length-1;i>=0;i--){WAKE[i].t-=dt;if(WAKE[i].t<=0)WAKE.splice(i,1)}}
 function sailTo(wx,wy){const b=player.boat;const tx=Math.floor(wx/16),ty=Math.floor(wy/16);if(!navOK(wx,wy,false))return false;
   const pass=(x,y)=>{if(x<0||y<0||x>=WORLD.w||y>=WORLD.h)return false;return!!WORLD.nav[y*WORLD.w+x]};
-  const path=findPathP(pass,WORLD.w,WORLD.h,Math.floor(b.x/16),Math.floor(b.y/16),tx,ty,20000);if(!path){toast("Can't find a way through.");return false}
+  const path=findPathP(pass,WORLD.w,WORLD.h,Math.floor(b.x/16),Math.floor(b.y/16),tx,ty,90000);if(!path){toast("Can't find a way through.");return false}
   const pts=path.map(p=>({x:p.tx*16+8,y:p.ty*16+8}));const simp=[];let last={x:b.x,y:b.y};for(let i=0;i<pts.length;i++){if(i===pts.length-1||!losNav(last,pts[i+1])){simp.push(pts[i]);last=pts[i]}}if(!simp.length)simp.push({x:wx,y:wy});simp[simp.length-1]={x:wx,y:wy};b.tgt=simp;tapFx={x:wx,y:wy,t:.5};return true}
 function losNav(a,b){const d=Math.hypot(b.x-a.x,b.y-a.y);const n=Math.ceil(d/6);for(let i=1;i<=n;i++){const k=i/n;if(!navOK(a.x+(b.x-a.x)*k,a.y+(b.y-a.y)*k,true))return false}return true}
 function onSailArrive(){const a=boatAct();if(a)setActButton(a)}

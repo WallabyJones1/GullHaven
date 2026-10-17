@@ -48,3 +48,11 @@ function artWreckHull(){return cc('whull',()=>{const W=120,H=58;const N=PN(W,H);
 function artBubble(){return cc('bubble',()=>{const N=PN(5,5);N.ell(2.5,2.5,2.2,2.2,(nx,ny)=>Math.hypot(nx,ny)>.6?'#d6f2f8':ny<-.1&&nx<0?'#ffffff':null,1);return N.canvas()})}
 // a small heart for petting
 function artHeart(){return cc('heart',()=>{const[c,x]=mk(7,6);stamp(x,['.kk.kk.','kRWkRRk','kRRRRRk','.kRRRk.','..kRk..','...k...'],{k:'#6a1a2a',R:'#ff7a8a',W:'#ffd0d8'},0,0);return c})}
+// Ember Isle: a small smoking volcano and a hot spring
+function artVolcano(f){return cc('volc'+f,()=>{const W=64,H=60;const N=PN(W,H);const R5=ramp5('#5a4a4a');
+  N.poly([[2,58],[24,16],[40,16],[62,58]],(x,y)=>{const rib=((x*3+y)%11===0);return rib?R5[0]:rampPick(R5,.5-x/W*.9+(hash2(x>>1,y>>1,4)-.5)*.3)},1);
+  N.ell(32,17,8,3,(nx,ny)=>Math.hypot(nx,ny)>.6?'#3a2a2a':(f%2?'#ff9a3a':'#ffc85a'),2);
+  for(let i=0;i<4;i++){const x=28+i*3,len=6+((i*7+f)%5);N.line(x,19,x+(i%2?3:-3),19+len,i%2?'#e8602a':'#ff9a3a',1,3)}
+  for(let i=0;i<5;i++){const y=12-i*3-(f%3),x=30+Math.sin(i+f*.7)*3;N.ell(x,y,3+i*.8,2+i*.5,i%2?'#8a8a96':'#a8a8b4',4)}
+  N.outline();return N.canvas()})}
+function artHotSpring(f){return cc('spring'+f,()=>{const N=PN(30,18);N.ell(15,10,14,7,(nx,ny)=>Math.hypot(nx,ny)>.78?'#7c7894':((Math.round(nx*6+f)+Math.round(ny*4))%3?'#7fd8d0':'#bff0e8'),1);for(let i=0;i<3;i++){const x=8+i*7,y=4-(f+i)%3;N.px(x,y,'#ffffff',3);N.px(x+1,y-1,'#e8f4f4',3)}N.outline();return N.canvas()})}

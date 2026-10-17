@@ -230,8 +230,10 @@ const ZONES={
   blue:{n:'Open Blue',short:'Open Blue',depth:30,need:4,col:'#2f5fb0'},
   deep:{n:'The Deep',short:'The Deep',depth:80,need:5,col:'#26265a'},
   lake:{n:'Mirrorlake',short:'Mirrorlake',depth:3,need:0,col:'#5cb8a8',fresh:1},
+  seagrass:{n:'Seagrass Meadows',short:'Seagrass',depth:2,need:1,col:'#6aa87a'},
+  lagoon:{n:'Turquoise Lagoon',short:'Lagoon',depth:2,need:2,col:'#5ad8d0'},
   beach:{n:'Beach',short:'Beach'},rocks:{n:'Rock platform',short:'Rocks'},any:{n:'Anywhere',short:'Anywhere'},unknown:{n:'Unknown',short:'?'}};
-const ZONE_ORDER=['harbour','shallows','estuary','reef','kelp','wreck','blue','deep','lake'];
+const ZONE_ORDER=['harbour','shallows','estuary','reef','kelp','wreck','blue','deep','lake','seagrass','lagoon'];
 /* fish: [name, zone, rarity, conditions, minCm, maxCm, art] ; art = shape|back|side|belly|pattern|patCol|fin(|extra) */
 const FISH_RAW=[
  ['Yellowtail Scad','harbour',0,'any',14,30,'torp|#5f8fa0|#b9cdd6|#eef3f4|lat|#e8c84a|#e8c84a'],
@@ -399,6 +401,26 @@ const LAKE_RAW=[
  ['Murray Cod','lake',2,'any',60,130,'grouper|#4a5a3a|#7a8a5a|#e0e0c0|spots|#2a3a20|#4a5a3a|big'],
  ['Saratoga','lake',3,'day summer calm',50,90,'torp|#6a6a40|#c8b878|#f0e8c8|scales|#c84a3a|#8a8a50|big']];
 for(const[n,z,r,c,a,b,art]of LAKE_RAW)addEntry({id:slug(n),n,cat:'fish',z,r,how:'fish',c,sz:[a,b],price:FISH_PRICE[r],art});
+/* the southern sea: seagrass meadows along the south coast and a turquoise lagoon inside a coral atoll */
+const SOUTH_RAW=[
+ ['King George Whiting','seagrass',0,'day',20,45,'torp|#c8b890|#e8dcc0|#f6f0e4|spots|#a07850|#d8c8a0|slim'],
+ ['Six-spined Leatherjacket','seagrass',0,'any',15,40,'jacket|#5a7a8a|#c8b060|#e8dca0|lines|#2a5a8a|#e8c040'],
+ ['Rock Flathead','seagrass',0,'day low',25,50,'flathead|#6a6a48|#8a8a60|#d8d0b0|spots|#3a3a2a|#7a7a5a'],
+ ['Snook','seagrass',1,'dawn/dusk',40,90,'torp|#6a7a5a|#b8c0a0|#eef0e4|none|#000|#8a9a70|slim'],
+ ['Sea Sweep','seagrass',1,'day',20,40,'deep|#5a6a7a|#9aa8b4|#dfe6ec|bars|#3a4a5a|#6a7a8a'],
+ ['Globefish','seagrass',1,'night',20,50,'puffer|#9a9a6a|#c8c890|#f4f4e0|spots|#3a3a2a|#9a9a6a'],
+ ['Southern Eagle Ray','seagrass',2,'day calm',80,180,'ray|#6a5a4a|#8a7a64|#e8e0d0|spots|#d8c8a0|#6a5a4a'],
+ ['Blue Groper','seagrass',2,'any crabbait',60,120,'grouper|#2a5aa8|#4a7ac8|#a8c4e8|none|#000|#2a5aa8'],
+ ['Leafy Seadragon','seagrass',3,'calm release',20,35,'dragon|#a8a040|#c8c060|#f0e8a8|bars|#6a7a2a|#8a9a3a'],
+ ['Milkfish','lagoon',0,'any',40,100,'torp|#8aa0b0|#d0dce4|#f2f6f8|none|#000|#a0b4c4'],
+ ['Bonefish','lagoon',1,'day rising',40,80,'torp|#a8b8c8|#d8e4ec|#f4f8fa|lines|#8a9aa8|#b8c8d4|slim'],
+ ['Bluefin Trevally','lagoon',1,'day',30,80,'deep|#3a6aa8|#9ab8d8|#e4eef6|spots|#2a4a8a|#4a8ad8'],
+ ['Picasso Triggerfish','lagoon',1,'day calm',15,30,'trigger|#e8dcc0|#f0e8d0|#fbf6ea|stripes|#2a6ad0|#e8a030'],
+ ['Rainbow Runner','lagoon',1,'birds',60,110,'torp|#2a6aa8|#7ac8e8|#f0f8fc|stripes|#ffd24d|#4aa8d8'],
+ ['Spotted Eagle Ray','lagoon',2,'day',100,220,'ray|#2a2a3a|#3a3a4a|#e8e8f0|spots|#ffffff|#2a2a3a'],
+ ['Bumphead Parrotfish','lagoon',2,'dawn',70,130,'parrot|#4a7a6a|#7aa890|#c8e0d0|none|#000|#4a7a6a|big'],
+ ['Lemon Shark','lagoon',3,'dusk',150,280,'shark|#c8b878|#d8c890|#f4ecd8|none|#000|#c8b878']];
+for(const[n,z,r,c,a,b,art]of SOUTH_RAW)addEntry({id:slug(n),n,cat:'fish',z,r,how:'fish',c,sz:[a,b],price:FISH_PRICE[r],art});
 addEntry({id:'the_mirror_cod',n:'The Mirror Cod',cat:'legend',z:'lake',r:4,how:'fish',c:'night fullmoon',sz:[150,185],price:FISH_PRICE[4],art:'grouper|#3a4a5a|#8aa0b8|#e8f0f8|spots|#ffffff|#3a4a5a|legend',what:'A Murray cod so old its scales hold the moon'});
 const SETS={bottles:{n:'Messages in Bottles',reward:'The bottle story and the lighthouse key room',shells:1500},coins:{n:'Old Gullhaven Coins',reward:'First Harbour Coin',shells:1000},lures:{n:'Vintage Lures',reward:'A trophy lure case and 1,000 Shells',shells:1000}};
 /* ---------- conditions ---------- */

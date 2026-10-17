@@ -13,7 +13,7 @@ with sync_playwright() as p:
     page.goto(URL);page.wait_for_function('window.RT && RT.world()',timeout=45000)
     page.fill('#nameIn','IslandFisher');page.click('#introGo')
     assert page.evaluate('S.v===7 && S.shells===1200 && !CHAIN.live && !!S.licence')
-    assert page.evaluate('WORLD.w*WORLD.h>160*120 && WORLD.islands.length===3')
+    assert page.evaluate('WORLD.w*WORLD.h>160*120 && WORLD.islands.length>=3')
     # Legacy gacha/exchange functions never charge money or award characters.
     old=page.evaluate('({shells:S.shells,owned:S.owned.length})')
     page.evaluate('pull(0);doSwap("s2r",100)')
@@ -22,7 +22,7 @@ with sync_playwright() as p:
     migrated=page.evaluate('''()=>{const old=DEF();old.v=6;old.shells=345;old.reel=999999;old.active=77;old.owned=[77];old.boats=['row'];old.boat='row';old.gear.rod=2;delete old.home;delete old.character;delete old.boatDecor;const n=migrate(old);return {v:n.v,shells:n.shells,reel:n.reel,boat:n.boat,rod:n.gear.rod,mode:n.character.mode,owned:n.owned}}''')
     assert migrated=={'v':7,'shells':345,'reel':0,'boat':'row','rod':2,'mode':'legacy','owned':[77]}
     # Open water is crossable in any boat (rough water wears the hull); each island has a boat route and walkable connection from dock to board/shop.
-    routes=page.evaluate('''()=>WORLD.islands.map(I=>{const pass=(x,y)=>{if(x<0||y<0||x>=WORLD.w||y>=WORLD.h)return false;return !!WORLD.nav[y*WORLD.w+x]};const sp=WORLD.berths[0];const path=findPathP(pass,WORLD.w,WORLD.h,sp.tx,sp.ty,Math.floor(I.dock.x/16),Math.floor(I.dock.y/16),40000);return [I.id,!!path,!!findPath(WORLD,Math.floor((I.dock.x-24)/16),Math.floor(I.dock.y/16),Math.floor(I.bounty.x/16),Math.floor(I.bounty.y/16))]})''')
+    routes=page.evaluate('''()=>WORLD.islands.filter(I=>!I.lock).map(I=>{const pass=(x,y)=>{if(x<0||y<0||x>=WORLD.w||y>=WORLD.h)return false;return !!WORLD.nav[y*WORLD.w+x]};const sp=WORLD.berths[0];const path=findPathP(pass,WORLD.w,WORLD.h,sp.tx,sp.ty,Math.floor(I.dock.x/16),Math.floor(I.dock.y/16),40000);return [I.id,!!path,!!findPath(WORLD,Math.floor((I.dock.x-24)/16),Math.floor(I.dock.y/16),Math.floor(I.bounty.x/16),Math.floor(I.bounty.y/16))]})''')
     assert all(r[1] and r[2] for r in routes),routes
     # Bounty requires the island board and requested fish, pays once, and consumes only those fish.
     page.evaluate("RT.panel('island','tideglass')")

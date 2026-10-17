@@ -23,9 +23,9 @@ function inView(x,y,w,h){return!(x-camX>VW||y-camY>VH||x+w-camX<0||y+h-camY<0)}
 /* the sea */
 function drawSea(t){const Sc=WORLD;const E=envAt();const x0=Math.max(0,Math.floor(camX/16)),y0=Math.max(0,Math.floor(camY/16)),x1=Math.min(Sc.w-1,Math.floor((camX+VW)/16)),y1=Math.min(Sc.h-1,Math.floor((camY+VH)/16));
   // high tide covers the wet sand; low tide uncovers it
-  const tk=(E.tide+1)/2;if(tk>.05){ctx.globalAlpha=tk*.75;ctx.drawImage(Sc.tideC,camX,camY,VW,VH,0,0,VW,VH);ctx.globalAlpha=1}
+  const tk=(E.tide+1)/2;if(tk>.05){ctx.globalAlpha=tk*.75;drawGround(Sc,'t',0,0);ctx.globalAlpha=1}
   // lapping foam along the shore
-  const f=(Math.sin(t*1.6)+1)/2;ctx.globalAlpha=.25+f*.55;ctx.drawImage(Sc.foam,camX+Math.round(f*1.5),camY+Math.round(f),VW,VH,0,0,VW,VH);ctx.globalAlpha=1;
+  const f=(Math.sin(t*1.6)+1)/2;ctx.globalAlpha=.25+f*.55;drawGround(Sc,'f',-Math.round(f*1.5),-Math.round(f));ctx.globalAlpha=1;
   const caps=E.sky==='storm'?.5:E.sky==='windy'?.25:.06;
   for(let ty=y0;ty<=y1;ty++)for(let tx=x0;tx<=x1;tx++){const i=ty*Sc.w+tx;if(Sc.g[i]!=='o')continue;const x=tx*16-camX,y=ty*16-camY;const h=hash2(tx,ty,91);const ph=(t*.7+h*7)%7;const z=Sc.zone[i];const deep=z>=6;
     if(ph<1.2){const gx=x+2+(hash2(tx,ty,92)*9|0)+Math.round(Math.sin(t+h*6)*2),gy=y+3+(hash2(tx,ty,93)*10|0);const w=ph<.35||ph>.85?2:4;R(ctx,gx+(4-w)/2,gy,w,1,deep?'#5a7ac0':'#c8f0f8');if(w===4)R(ctx,gx+1,gy+1,2,1,deep?'#3a5aa0':'#8ad4ec')}
@@ -49,7 +49,7 @@ function boatDraw(list,k,x,y,h,paint,flag,rider,t,opts={}){const hi=typeof h==='
 function render(t){const Sc=scene;const ww=Sc.w*16,wh=Sc.h*16;const fx0=player.boat?player.boat.x:player.x,fy0=player.boat?player.boat.y:player.y-12;
   camX=ww<=VW?-(VW-ww)/2:clamp(fx0-VW/2,0,ww-VW);camY=wh<=VH?-(VH-wh)/2:clamp(fy0-VH/2,0,wh-VH);camX=Math.round(camX);camY=Math.round(camY);
   ctx.fillStyle=Sc===WORLD?'#2a74a8':'#0e1626';ctx.fillRect(0,0,VW,VH);
-  const sx=Math.max(0,camX),sy=Math.max(0,camY),sw=Math.min(VW,ww-sx),sh=Math.min(VH,wh-sy);if(sw>0&&sh>0)ctx.drawImage(Sc.ground,sx,sy,sw,sh,sx-camX,sy-camY,sw,sh);
+  const sx=Math.max(0,camX),sy=Math.max(0,camY),sw=Math.min(VW,ww-sx),sh=Math.min(VH,wh-sy);if(Sc===WORLD)drawGround(Sc,'g',0,0);else if(sw>0&&sh>0)ctx.drawImage(Sc.ground,sx,sy,sw,sh,sx-camX,sy-camY,sw,sh);
   const list=[];
   if(Sc===WORLD){drawSea(t);drawSeaLife(t);for(const c of combSpots()){if(!inView(c.x-6,c.y-6,12,12))continue;const k=Math.floor(t*4+c.i)%4;const x=Math.round(c.x-camX),y=Math.round(c.y-camY);P(ctx,x,y-k%2,'#ffffff');if(k<2){P(ctx,x-1,y,'#fff6c0');P(ctx,x+1,y,'#fff6c0')}P(ctx,x,y+2,'#c8ac78')}}
   for(const p of Sc.props){const img=p.anim?p.anim(t):p.img;if(!inView(p.x,p.y,img.width,img.height))continue;if(p.flat){ctx.drawImage(img,Math.round(p.x-camX),Math.round(p.y-camY));continue}if(p.sway){list.push({sy:p.sy,draw:()=>drawSway(img,Math.round(p.x-camX),Math.round(p.y-camY),swayAt(p.x,p.y,t),img.height-14)});continue}list.push({sy:p.sy,draw:()=>ctx.drawImage(img,Math.round(p.x-camX),Math.round(p.y-camY))})}
@@ -65,7 +65,7 @@ function render(t){const Sc=scene;const ww=Sc.w*16,wh=Sc.h*16;const fx0=player.b
     if(pe.b&&Sc===WORLD){boatDraw(list,pe.b.k,pe.x,pe.y,pe.b.h,pe.b.p,pe.co,{id:pe.id,f:pe.fish?(Math.floor(t*6)%2?1:2):0},t,{name:pe.b.n||pe.n,col,decor:pe.b.de,fishing:pe.fish});continue}
     list.push({sy:pe.y,draw:()=>{drawChar(ctx,pe.id,pe.x-camX,pe.y-camY,pe.dir,pe.moving?WALK[pe.f]:0);if(pe.co)drawBands(ctx,pe.x-camX,pe.y-camY,pe.dir,COOPI[pe.co].col,false);nameTag(ctx,pe.n,pe.x-camX,pe.y-camY+4,col);if(pe.bubble)bubble(ctx,pe.bubble.text,pe.x-camX,pe.y-camY-26);if(pe.emote)drawEmote(pe.emote.k,pe.x-camX,pe.y-camY-32,t)}})}
   if(!player.boat&&!player.ride)list.push({sy:player.y,draw:()=>drawPlayer(t)});
-  list.sort((a,b)=>a.sy-b.sy);for(const d of list)d.draw();if(Sc.dive)drawDive(t,Sc);
+  list.sort((a,b)=>a.sy-b.sy);for(const d of list)d.draw();if(Sc.dive)drawDive(t,Sc);else if(Sc===WORLD)drawLocks(t);
   if(player.boat){const b=player.boat;if(player.bubble)bubble(ctx,player.bubble.text,b.x-camX,b.y-camY-22);if(player.emote)drawEmote(player.emote.k,b.x-camX,b.y-camY-28,t)}
   if(Sc===WORLD){for(const g of GULLS){if(!inView(g.x-6,g.y-30,12,40))continue;const x=Math.round(g.x-camX),y=Math.round(g.y-camY-24);const up=Math.floor(t*5+g.ph)%2;ctx.fillStyle='rgba(18,48,74,.25)';ctx.fillRect(x-2,y+24,5,1);ctx.fillStyle='#fbfbff';ctx.fillRect(x-1,y,3,1);ctx.fillStyle=OL;if(up){P(ctx,x-3,y-2,OL);P(ctx,x-2,y-1,OL);P(ctx,x+2,y-1,OL);P(ctx,x+3,y-2,OL)}else{P(ctx,x-3,y+1,OL);P(ctx,x-2,y,OL);P(ctx,x+2,y,OL);P(ctx,x+3,y+1,OL)}}
     drawWeather(t);drawTimeOfDay(t)}
@@ -92,7 +92,7 @@ function drawPlayer(t){const p=player;const f=p.moving?WALK[p.f]:0;const fishing
   if(p.bubble)bubble(ctx,p.bubble.text,p.x-camX,p.y-camY-26);if(p.emote)drawEmote(p.emote.k,p.x-camX,p.y-camY-32,t)}
 /* minimap */
 let miniBase=null;const mini=$('mini'),mctx=mini.getContext('2d');
-function buildMiniBase(){const Sc=WORLD;const[c,x]=mk(Sc.w,Sc.h);x.imageSmoothingEnabled=true;x.drawImage(Sc.ground,0,0,Sc.w,Sc.h);for(const p of Sc.props)if(p.sy-p.y>40&&p.img.width>=60){x.fillStyle='#c45a4a';x.fillRect(p.x/16|0,(p.sy/16|0)-2,p.img.width/16|0,2)}miniBase=c}
+function buildMiniBase(){const Sc=WORLD;const c=tileMap(Sc,1);const x=c.getContext('2d');for(const p of Sc.props)if(p.sy-p.y>40&&p.img.width>=60&&!hiddenAt(p.x/16,p.sy/16)){x.fillStyle='#c45a4a';x.fillRect(p.x/16|0,(p.sy/16|0)-2,p.img.width/16|0,2)}miniBase=c}
 function drawMini(){const w=mini.width,h=mini.height;mctx.imageSmoothingEnabled=false;mctx.fillStyle='#0e1626';mctx.fillRect(0,0,w,h);
   if(scene!==WORLD){const Sc=scene;if(!Sc.ground)return;const k=Math.min((w-6)/(Sc.w*16),(h-6)/(Sc.h*16));const dw=Sc.w*16*k,dh=Sc.h*16*k,ox=(w-dw)/2,oy=(h-dh)/2;mctx.imageSmoothingEnabled=true;mctx.drawImage(Sc.ground,ox,oy,dw,dh);const px=ox+player.x*k,py=oy+player.y*k;mctx.fillStyle='#2b2130';mctx.fillRect(px-3,py-3,6,6);mctx.fillStyle='#ff7a6b';mctx.fillRect(px-2,py-2,4,4);return}
   if(!miniBase)buildMiniBase();const z=player.boat?1.4:2,vw=w/z,vh=h/z;const fx0=player.x/16,fy0=player.y/16;const cx=clamp(fx0-vw/2,0,WORLD.w-vw),cy=clamp(fy0-vh/2,0,WORLD.h-vh);mctx.drawImage(miniBase,cx,cy,vw,vh,0,0,w,h);
