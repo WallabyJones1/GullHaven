@@ -25,7 +25,7 @@ const boatHeading=h=>((Math.round(h/(Math.PI*2)*16)%16)+16)%16;
 /* ---------- interactables ---------- */
 function frontTile(){const d={down:[0,1],up:[0,-1],left:[-1,0],right:[1,0]}[player.dir];return[Math.floor((player.x+d[0]*10)/16),Math.floor((player.y-2+d[1]*12)/16),d]}
 function waterAhead(){if(scene!==WORLD)return null;const[tx0,ty0,d]=frontTile();for(let k=0;k<3;k++){const tx=tx0+d[0]*k,ty=ty0+d[1]*k;const t=tileT(WORLD,tx,ty);if(t==='o')return{tx,ty,x:tx*16+8+d[0]*24,y:ty*16+8+d[1]*24,zone:ZONE_ORDER[WORLD.zone[ty*WORLD.w+tx]]}}return null}
-function nearestAct(){const px=player.x,py=player.y;let best=null,bd=1e9;const consider=(x,y,r,a)=>{const d=Math.hypot(x-px,y-py);if(d<=r&&d<bd){bd=d;best=a}};
+function nearestAct(){if(player.ride)return rideAct();const px=player.x,py=player.y;let best=null,bd=1e9;const consider=(x,y,r,a)=>{const d=Math.hypot(x-px,y-py);if(d<=r&&d<bd){bd=d;best=a}};
   if(player.boat)return boatAct();
   for(const a of scene.acts)consider(a.x,a.y,a.r,a);
   if(scene===WORLD){lifeActs(consider);
@@ -41,7 +41,7 @@ function boatAct(){const b=player.boat;if(!b)return null;const z=zoneAtPx(b.x,b.
   if(z&&ZONES[z].need>boatTier()){const need=BOATS.find(x=>x.tier>=ZONES[z].need);return{label:'Too rough',icon:'storm',act:()=>toast(`Too rough to fish ${ZONES[z].n} from a ${BOATI[b.k].n.toLowerCase()}. You need a ${need?need.n.toLowerCase():'bigger boat'}.`)}}
   return z?{label:'Cast',icon:'rod_'+S.gear.rod,act:()=>startFishing({x:b.x+Math.cos(b.h)*40,y:b.y+Math.sin(b.h)*40,zone:z,boat:true})}:null}
 // the second button: pots from the boat, bait choice on foot
-function secondAct(){if(player.boat){const ds=diveSiteNear();if(ds)return{label:'Dive',icon:'dive',act:()=>startDive(ds)};const z=zoneAtPx(player.boat.x,player.boat.y);if(z&&!['blue'].includes(z))return{label:S.pots.length>=potCap()?'Pots out':'Drop pot',icon:'pot',act:dropPot};return null}return{label:'Bait',icon:'bait_'+S.baitSel,act:()=>openPanel('hold','bait')}}
+function secondAct(){if(player.ride)return{label:'Hop off',icon:'anchor',act:()=>hopOff()};if(player.boat){const ds=diveSiteNear();if(ds)return{label:'Dive',icon:'dive',act:()=>startDive(ds)};const z=zoneAtPx(player.boat.x,player.boat.y);if(z&&!['blue'].includes(z))return{label:S.pots.length>=potCap()?'Pots out':'Drop pot',icon:'pot',act:dropPot};return null}return{label:'Bait',icon:'bait_'+S.baitSel,act:()=>openPanel('hold','bait')}}
 /* ---------- the town's fixed interactions ---------- */
 function setupWorldActs(){const Sc=WORLD,s=Sc.spots;
   const door=(k,label,fn)=>act(Sc,s[k].x,s[k].y,16,label,'door',fn);

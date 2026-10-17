@@ -22,7 +22,7 @@ function migrate(j){if(!j||![6,7].includes(j.v))return null;const d=DEF();const 
   if(j.v===6&&n.quest&&n.quest.i===11)n.quest={i:11,prog:0};return n}
 function loadLocal(){try{return migrate(JSON.parse(localStorage.getItem(SAVE_KEY)||'null'))}catch(e){return null}}
 let dirty=false,lastSave=0;
-function markDirty(){dirty=true;S.ts=Date.now()}
+function markDirty(){dirty=true;if(typeof INTRO==='undefined'||!INTRO.on)S.ts=Date.now()}
 function saveLocal(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(S))}catch(e){}}
 const ACTIVE=()=>typeof characterId==='function'?characterId():S.active||S.av;
 function myName(){return S.name||'Fisher'}

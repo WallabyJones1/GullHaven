@@ -2811,7 +2811,7 @@ function migrate(j){if(!j||![6,7].includes(j.v))return null;const d=DEF();const 
   if(j.v===6&&n.quest&&n.quest.i===11)n.quest={i:11,prog:0};return n}
 function loadLocal(){try{return migrate(JSON.parse(localStorage.getItem(SAVE_KEY)||'null'))}catch(e){return null}}
 let dirty=false,lastSave=0;
-function markDirty(){dirty=true;S.ts=Date.now()}
+function markDirty(){dirty=true;if(typeof INTRO==='undefined'||!INTRO.on)S.ts=Date.now()}
 function saveLocal(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(S))}catch(e){}}
 const ACTIVE=()=>typeof characterId==='function'?characterId():S.active||S.av;
 function myName(){return S.name||'Fisher'}
@@ -2888,10 +2888,10 @@ function wsStart(){return new Promise((resolve,reject)=>{let ok=false;const url=
     ws.send(JSON.stringify({t:'hello',cid,session,n:myName()}));updOnline();resolve()};
   ws.onmessage=ev=>{let m;try{m=JSON.parse(ev.data)}catch(e){return}
     if(m.t==='res'){const r=NET.wsWait.get(m.q);if(r){NET.wsWait.delete(m.q);r(m)}return}
-    if(m.t==='welcome'){CHAIN.live=false;applyServerState(m.state);if(m.acct)applyAcct(m.acct);updHUD();return}
+    if(m.t==='welcome'){CHAIN.live=false;NET.you=m.you;applyServerState(m.state);if(m.acct)applyAcct(m.acct);updHUD();if(S.name)setTimeout(()=>cloudLogin(false),300);return}
     if(m.t==='state'){applyServerState(m.state);return}
     if(m.t==='acct'){applyAcct(m.acct);return}
-    if(m.t==='peers'){const seen=new Set();for(const[k,p]of Object.entries(m.peers||{})){if(k===m.you)continue;seen.add(k);applyPeer(k,p)}for(const k of[...NET.peers.keys()])if(!seen.has(k))NET.peers.delete(k);updOnline();return}
+    if(m.t==='peers'){NET.you=m.you||NET.you;const seen=new Set();for(const[k,p]of Object.entries(m.peers||{})){if(k===m.you)continue;seen.add(k);applyPeer(k,p)}for(const k of[...NET.peers.keys()])if(!seen.has(k))NET.peers.delete(k);updOnline();return}
     if(m.t==='chat'){const pe=NET.peers.get(m.id);if(pe)pe.bubble={text:String(m.text).slice(0,90),t:5};chatLine(cleanName(m.n),String(m.text).slice(0,90));return}
     if(m.t==='news'){newsIn(cleanName(m.n),String(m.msg||'').slice(0,140),m.type);return}};
   ws.onclose=()=>{if(ok){NET.mode='solo';NET.ws=null;NET.peers.clear();updOnline();setTimeout(()=>wsStart().catch(()=>{}),3000)}else{clearTimeout(to);reject(new Error('closed'))}};ws.onerror=()=>{}})}
@@ -2901,10 +2901,10 @@ function applyServerState(st){if(!st)return;const sh=NET.shared;sh.firsts=st.fir
 /* ---------- presence, chat, news ---------- */
 function applyPeer(key,pr){if(!pr||typeof pr.x!=='number')return;let pe=NET.peers.get(key);if(!pe){pe={x:pr.x,y:pr.y,dir:'down',f:0,ft:0,moving:false};NET.peers.set(key,pe)}
   pe.tx=pr.x;pe.ty=pr.y;pe.dir=['down','up','left','right'].includes(pr.d)?pr.d:'down';pe.moving=!!pr.m;pe.id=registerLook(pr.look)||Number(pr.id)||1000;pe.n=cleanName(pr.n);pe.sc=String(pr.sc||'world').slice(0,48);pe.co=COOPI[pr.co]?pr.co:null;pe.ht=cleanHomeKey(pr.ht);pe.home=homeProfile(pr.home);
-  pe.b=pr.b&&typeof pr.b==='object'&&BOATI[pr.b.k]?{k:pr.b.k,h:(pr.b.h|0)&15,p:/^#[0-9a-f]{6}$/i.test(pr.b.p)?pr.b.p:null,de:hasRpg(BOAT_DECOR,pr.b.de)?pr.b.de:'none',n:String(pr.b.n||'').replace(/[^\w '\-.]/g,'').trim().slice(0,16)}:null;if(pr.e&&pr.et!==pe.et){pe.et=pr.et;pe.emote={k:pr.e,t:2.5}}pe.fish=!!pr.f;
+  pe.b=pr.b&&typeof pr.b==='object'&&BOATI[pr.b.k]?{k:pr.b.k,h:(pr.b.h|0)&15,p:/^#[0-9a-f]{6}$/i.test(pr.b.p)?pr.b.p:null,de:hasRpg(BOAT_DECOR,pr.b.de)?pr.b.de:'none',n:String(pr.b.n||'').replace(/[^\w '\-.]/g,'').trim().slice(0,16)}:null;if(pr.e&&pr.et!==pe.et){pe.et=pr.et;pe.emote={k:pr.e,t:2.5}}pe.fish=!!pr.f;pe.r=/^p\d{1,9}$/.test(pr.r)?pr.r:null;
   if(scene&&scene.homeGuest&&scene.homeOwner===pe.ht&&scene.homeDesign!==JSON.stringify(pe.home)){const exit=scene.exitFn;let x=player.x,y=player.y;const next=makeHomeInterior(pe.home,pe.ht,pe.n,false);setExit(next,exit);if(blocked(next,x,y)){x=next.spots.spawn.x;y=next.spots.spawn.y}setScene(next,x,y,player.dir)}}
 function sendPresence(force){const p=player;if(!scene)return;const b=p.boat?{k:p.boat.k,h:boatHeading(p.boat.h),p:S.paint[p.boat.k]||null,de:boatDetail(p.boat.k),n:S.boatName||''}:null;
-  const o={x:Math.round(p.boat?p.boat.x:p.x),y:Math.round(p.boat?p.boat.y:p.y),d:p.dir,m:p.moving?1:0,id:ACTIVE(),look:publicLook(),ht:publicHomeKey(),home:homeProfile(S.home),n:myName(),sc:scene.name,co:S.coop||null,b,e:p.emoteK||null,et:p.emoteT||0,f:MG&&MG.type==='fish'?1:0};
+  const o={x:Math.round(p.boat?p.boat.x:p.x),y:Math.round(p.boat?p.boat.y:p.y),d:p.dir,m:p.moving?1:0,id:ACTIVE(),look:publicLook(),ht:publicHomeKey(),home:homeProfile(S.home),n:myName(),sc:scene.name,co:S.coop||null,b,e:p.emoteK||null,et:p.emoteT||0,f:MG&&MG.type==='fish'?1:0,r:player.ride||null};
   const k=JSON.stringify(o);const now=performance.now();if(!force&&(k===NET.lastP||now-NET.lastPT<100))return;NET.lastP=k;NET.lastPT=now;
   if(NET.mode==='room'&&NET.room)NET.room.presence(o).catch(()=>{});if(NET.mode==='ws')wsSend({t:'p',p:o})}
 function sendChat(txt){if(NET.mode==='room'&&NET.room)return NET.room.emit('chat',{t:txt,n:myName()}).then(()=>true,e=>{toast(e&&e.code==='not_permitted'?'Chat needs Contributor access to this page.':'Chat could not send.');return false});if(NET.mode==='ws'){wsSend({t:'chat',text:txt});return Promise.resolve(true)}return Promise.resolve(true)}
@@ -2949,7 +2949,7 @@ const boatHeading=h=>((Math.round(h/(Math.PI*2)*16)%16)+16)%16;
 /* ---------- interactables ---------- */
 function frontTile(){const d={down:[0,1],up:[0,-1],left:[-1,0],right:[1,0]}[player.dir];return[Math.floor((player.x+d[0]*10)/16),Math.floor((player.y-2+d[1]*12)/16),d]}
 function waterAhead(){if(scene!==WORLD)return null;const[tx0,ty0,d]=frontTile();for(let k=0;k<3;k++){const tx=tx0+d[0]*k,ty=ty0+d[1]*k;const t=tileT(WORLD,tx,ty);if(t==='o')return{tx,ty,x:tx*16+8+d[0]*24,y:ty*16+8+d[1]*24,zone:ZONE_ORDER[WORLD.zone[ty*WORLD.w+tx]]}}return null}
-function nearestAct(){const px=player.x,py=player.y;let best=null,bd=1e9;const consider=(x,y,r,a)=>{const d=Math.hypot(x-px,y-py);if(d<=r&&d<bd){bd=d;best=a}};
+function nearestAct(){if(player.ride)return rideAct();const px=player.x,py=player.y;let best=null,bd=1e9;const consider=(x,y,r,a)=>{const d=Math.hypot(x-px,y-py);if(d<=r&&d<bd){bd=d;best=a}};
   if(player.boat)return boatAct();
   for(const a of scene.acts)consider(a.x,a.y,a.r,a);
   if(scene===WORLD){lifeActs(consider);
@@ -2965,7 +2965,7 @@ function boatAct(){const b=player.boat;if(!b)return null;const z=zoneAtPx(b.x,b.
   if(z&&ZONES[z].need>boatTier()){const need=BOATS.find(x=>x.tier>=ZONES[z].need);return{label:'Too rough',icon:'storm',act:()=>toast(`Too rough to fish ${ZONES[z].n} from a ${BOATI[b.k].n.toLowerCase()}. You need a ${need?need.n.toLowerCase():'bigger boat'}.`)}}
   return z?{label:'Cast',icon:'rod_'+S.gear.rod,act:()=>startFishing({x:b.x+Math.cos(b.h)*40,y:b.y+Math.sin(b.h)*40,zone:z,boat:true})}:null}
 // the second button: pots from the boat, bait choice on foot
-function secondAct(){if(player.boat){const ds=diveSiteNear();if(ds)return{label:'Dive',icon:'dive',act:()=>startDive(ds)};const z=zoneAtPx(player.boat.x,player.boat.y);if(z&&!['blue'].includes(z))return{label:S.pots.length>=potCap()?'Pots out':'Drop pot',icon:'pot',act:dropPot};return null}return{label:'Bait',icon:'bait_'+S.baitSel,act:()=>openPanel('hold','bait')}}
+function secondAct(){if(player.ride)return{label:'Hop off',icon:'anchor',act:()=>hopOff()};if(player.boat){const ds=diveSiteNear();if(ds)return{label:'Dive',icon:'dive',act:()=>startDive(ds)};const z=zoneAtPx(player.boat.x,player.boat.y);if(z&&!['blue'].includes(z))return{label:S.pots.length>=potCap()?'Pots out':'Drop pot',icon:'pot',act:dropPot};return null}return{label:'Bait',icon:'bait_'+S.baitSel,act:()=>openPanel('hold','bait')}}
 /* ---------- the town's fixed interactions ---------- */
 function setupWorldActs(){const Sc=WORLD,s=Sc.spots;
   const door=(k,label,fn)=>act(Sc,s[k].x,s[k].y,16,label,'door',fn);
@@ -3175,7 +3175,7 @@ function randomWaterIn(z){const zi=ZONE_ORDER.indexOf(z);for(let k=0;k<60;k++){c
 function nearFeatures(x,y){const n={};for(const h of HOTS)if(Math.hypot(h.x-x,h.y-y)<56)n[h.kind]=true;return n}
 function shadowAt(x,y,r){let best=null,bd=r||40;for(const s of SHADOWS){const d=Math.hypot(s.x-x,s.y-y);if(d<bd){bd=d;best=s}}return best}
 /* talking to people */
-function lifeActs(consider){for(const f of FOLK){consider(f.x,f.y,18,{label:'Talk to '+f.n,icon:'talk',act:()=>talkFolk(f)})}catActs(consider)}
+function lifeActs(consider){for(const f of FOLK){consider(f.x,f.y,18,{label:'Talk to '+f.n,icon:'talk',act:()=>talkFolk(f)})}catActs(consider);const fb=friendBoatNear();if(fb)consider(fb[1].x,fb[1].y,40,{label:'Hop aboard',icon:'boat',act:()=>hopAboard(fb[0],fb[1])})}
 function talkFolk(f){f.talk=4;f.dir=faceFrom(player.x-f.x,player.y-f.y,f.dir);f.bubble={text:folkLine(f),t:5}}
 function folkLine(f){const r=Math.random();const unl=CAT.filter(e=>(e.cat==='fish'||e.cat==='legend')&&!logged(e.id)&&e.cp&&!e.cp.flags.includes('oddone'));
   if(r<.45&&unl.length){const e=unl[Math.floor(Math.random()*unl.length)];return`I hear the ${e.n}... ${e.hint.replace(/^Bites |^Sighted /,'').replace(/\.$/,'')}.`}
@@ -3279,7 +3279,7 @@ function panelCafe(body,H){head('Cat Caf\u00e9','Tea, cake and the harbour cats'
   const l=el('div','list');for(const c of COATS){const love=S.catLove[c.k]||0,mine=S.pet===c.k;
     l.append(itemRow(catFace(c.k),c.name+' \u00b7 '+c.n,love?'\u2665'.repeat(love)+'\u2661'.repeat(5-love):'Not met yet. Look around town.',mine?btn('Send home',()=>{S.pet=null;petF=null;markDirty();renderPanel()},'sm alt'):love>=5?btn('Adopt',()=>{S.pet=c.k;petF=null;markDirty();sfx('purr');toast(c.name+' is your companion now.','lvl');renderPanel()},'sm gold'):null))}
   body.append(l)}
-function worldTick(dt){catsTick(dt);hullTick(dt);diveTick(dt);worldTick.t=(worldTick.t||0)+dt;if(worldTick.t>.5){worldTick.t=0;updHullChip()}}
+function worldTick(dt){rideTick(dt);catsTick(dt);hullTick(dt);diveTick(dt);worldTick.t=(worldTick.t||0)+dt;if(worldTick.t>.5){worldTick.t=0;updHullChip()}}
 const EXTRA_PANELS={gate:panelGate,cafe:panelCafe};
 // background music follows where you are
 function musMode(){if(typeof gachaOpen!=='undefined'&&gachaOpen)return'arcade';if(scene&&scene.dive)return'dive';const h=ghour(),night=h<6||h>=20.5;if(!scene||!WORLD)return night?'night':'day';
@@ -3370,6 +3370,38 @@ function diveShopRows(){const l=el('div','list');
 function artDiveFlag(f){return cc('dflag'+f,()=>{const N=PN(12,16);N.rect(5,8,2,7,'#e8e2d0',1);N.ell(6,15,4,1.5,'#c8443a',0);for(let y=1;y<8;y++)for(let x=6;x<12;x++){const w=Math.round(Math.sin(y*.8+f*1.5)*.6);N.px(x,y+w,Math.abs((x-6)-(y-1))<1.2?'#ffffff':'#e83a2a',2)}N.rect(5,1,1,8,'#e8e2d0',2);N.outline();return N.canvas()})}
 function drawDiveFlags(list,t){for(const d of diveSites()){if(!inView(d.x-20,d.y-30,40,40))continue;const im=artDiveFlag(Math.floor(t*3)%3);const x=Math.round(d.x+12-camX),y=Math.round(d.y-14-camY+Math.sin(t*2+d.x)*1);list.push({sy:d.y,draw:()=>ctx.drawImage(im,x-6,y)})}}
 
+/* ================= playing with friends: ride in a friend's boat, and keep your progress on the server under your name =================
+   Saves are kept by fisher name only (no password), as requested: typing your name on any device loads your progress. */
+/* ---------- your save on the harbour server ---------- */
+const CLOUD={t:0,busy:false};
+function cloudOn(){return NET.mode==='ws'&&!!S.name}
+async function cloudLogin(fresh){if(!cloudOn()||CLOUD.busy)return;CLOUD.busy=true;try{const r=await NET.req({t:'login',name:S.name});if(r.err)return;
+    if(r.s&&(fresh||(r.ts||0)>(S.ts||0)+5000)){let j=null;try{j=migrate(JSON.parse(r.s))}catch(e){}if(j){applyCloudSave(j,fresh);return}}cloudSave(true)}finally{CLOUD.busy=false}}
+function applyCloudSave(j,fresh){const name=S.name;S=j;S.name=S.name||name;storyInit();saveLocal();syncCrew();if(WORLD){applyGate();const sp=WORLD.spots.spawn;player.boat=null;player.ride=null;DIVE=null;setScene(WORLD,sp.x,sp.y,'up')}refreshAll();sendPresence(true);
+  toast(fresh?`Welcome back, ${S.name}! Your progress was loaded from the harbour server.`:'Loaded your newer progress from another device.','lvl')}
+function cloudSave(now){if(!cloudOn())return;const t=performance.now();if(!now&&t-CLOUD.t<15000)return;CLOUD.t=t;S.ts=Date.now();const s=JSON.stringify(S);if(s.length<380000)wsSend({t:'usave',name:S.name,s})}
+// renaming: refuse a name another fisher already uses on this server
+async function claimName(n){if(NET.mode!=='ws')return true;const r=await NET.req({t:'login',name:n,probe:1});if(r.err)return true;if(r.s&&n.toLowerCase()!==String(S.name||'').toLowerCase()){toast('That name belongs to another fisher on this server.','warn');return false}return true}
+/* ---------- riding in a friend's boat ---------- */
+const RIDERS=new Set();
+function rideHost(){const r=player.ride;return r?NET.peers.get(r):null}
+function friendBoatNear(){if(NET.mode!=='ws'||player.boat||player.ride||scene!==WORLD)return null;let best=null,bd=40;for(const[k,pe]of NET.peers){if(!pe.b||pe.sc!=='world'||pe.r)continue;const d=Math.hypot(pe.x-player.x,pe.y-player.y);if(d<bd){bd=d;best=[k,pe]}}return best}
+function hopAboard(k,pe){if(MG)return;player.ride=k;player.path=null;player.goal=null;sfx('thud');splash(pe.x,pe.y+4,5);toast(`You hopped aboard ${pe.b.n?'"'+pe.b.n+'"':pe.n+"'s "+BOATI[pe.b.k].n.toLowerCase()}. Fish from the deck, or tap Hop off.`,'lvl');sendPresence(true);setLocation()}
+function hopOff(reason){const host=rideHost();player.ride=null;let spot=null;if(host){for(let a=0;a<16&&!spot;a++){const an=a/16*6.283;for(const r of[16,24,32]){const x=host.x+Math.cos(an)*r,y=host.y+Math.sin(an)*r;const tx=Math.floor(x/16),ty=Math.floor(y/16);if(tx<0||ty<0||tx>=WORLD.w||ty>=WORLD.h)continue;const i=ty*WORLD.w+tx;if(WORLD.sol[i]||WORLD.g[i]==='o')continue;spot={x:tx*16+8,y:ty*16+10};break}}}
+  if(!spot){spot=WORLD.spots.spawn;toast(reason||'Your skipper dropped you back at the quay.')}else toast(reason||'You hopped ashore.');closeMG();player.x=spot.x;player.y=spot.y;player.dir='down';sfx('thud');sendPresence(true);setLocation()}
+function rideTick(dt){if(!player.ride)return;const h=rideHost();if(!h||!h.b||h.sc!=='world'||scene!==WORLD){hopOff(h?'Your skipper tied up. You stepped ashore.':'Your skipper left. A harbour taxi ran you back to the quay.');return}player.x=h.x;player.y=h.y;player.moving=false}
+function rideAct(){if(!player.ride)return null;const h=rideHost();if(!h)return null;const z=zoneAtPx(h.x,h.y);if(!z)return null;const tier=BOATI[h.b.k].tier;
+  if(ZONES[z].need>tier)return{label:'Too rough',icon:'storm',act:()=>toast(`Too rough to fish ${ZONES[z].n} from this boat.`)};
+  const d={left:[-1,0],right:[1,0],up:[0,-1],down:[0,1]}[player.dir]||[0,1];return{label:'Cast',icon:'rod_'+S.gear.rod,act:()=>startFishing({x:h.x+d[0]*40,y:h.y+d[1]*40,zone:z})}}
+// others riding with me, and me riding with others, drawn sitting in the boat
+function drawRiders(list,t,Sc){if(Sc!==WORLD)return;const seat=(k,i)=>{const sp=BOAT_SPEC[k]||{};return sp.seats&&sp.seats[1+i]!=null?sp.seats[1+i]:6+i*5};
+  const draw=(id,bx,by,h,k,i,name)=>{const ang=(typeof h==='number'&&h<16&&Number.isInteger(h)?h/16:h/(Math.PI*2))*Math.PI*2;const s=seat(k,i);const x=bx+Math.cos(ang)*s*.9,y=by+Math.sin(ang)*s*.9;list.push({sy:by+5,draw:()=>{drawChar(ctx,id,x-camX,y-camY+8,'down',0,0,18);if(name)nameTag(ctx,name,x-camX,y-camY+14,'#bfe8f4')}})};
+  const seen=new Set();let i=0;
+  for(const[k,pe]of NET.peers){if(!pe.r)continue;seen.add(k);if(pe.r===NET.you&&player.boat){draw(pe.id,player.boat.x,player.boat.y,player.boat.h,player.boat.k,i++,pe.n);if(!RIDERS.has(k)){RIDERS.add(k);toast(pe.n+' hopped aboard your boat!','lvl')}}
+    else{const host=NET.peers.get(pe.r);if(host&&host.b)draw(pe.id,host.x,host.y,host.b.h,host.b.k,0,pe.n)}}
+  for(const k of[...RIDERS])if(!seen.has(k)){RIDERS.delete(k);const pe=NET.peers.get(k);if(pe)toast(pe.n+' hopped off.')}
+  if(player.ride){const h=rideHost();if(h&&h.b){const k=h.b.k;const ang=h.b.h/16*Math.PI*2;const s=seat(k,1);const x=h.x+Math.cos(ang)*s*.9,y=h.y+Math.sin(ang)*s*.9;list.push({sy:h.y+6,draw:()=>{drawChar(ctx,ACTIVE(),x-camX,y-camY+8,player.dir,MG&&MG.type==='fish'?(Math.floor(t*6)%2?1:2):0,0,18);if(player.bubble)bubble(ctx,player.bubble.text,x-camX,y-camY-14)}})}}}
+
 /* ================= rendering: the coast, the sea, boats, people, weather and light ================= */
 const cv=$('cv');const ctx=cv.getContext('2d');let VW=320,VH=240,SCALE=2,camX=0,camY=0;
 const lightCv=document.createElement('canvas');const lctx=lightCv.getContext('2d');
@@ -3431,12 +3463,12 @@ function render(t){const Sc=scene;const ww=Sc.w*16,wh=Sc.h*16;const fx0=player.b
     if(player.boat){const b=player.boat;boatDraw(list,b.k,b.x,b.y,b.h,S.paint[b.k],S.coop,{id:ACTIVE(),f:MG&&MG.type==='fish'?(Math.floor(t*6)%2?1:2):0},t,{name:S.boatName||null,col:'#bfe8f4',decor:boatDetail(b.k)})}
     for(const f of FOLK){if(!inView(f.x-10,f.y-30,20,34))continue;list.push({sy:f.y,draw:()=>{drawChar(ctx,f.id,f.x-camX,f.y-camY,f.dir,f.moving?WALK[f.f]:0);if(f.bubble)bubble(ctx,f.bubble.text,f.x-camX,f.y-camY-26)}})}
     for(const c of CRABS){if(!inView(c.x-6,c.y-6,12,12))continue;list.push({sy:c.y,draw:()=>ctx.drawImage(artCrabBeach(Math.floor(t*8)%2),Math.round(c.x-camX)-6,Math.round(c.y-camY)-5)})}}
-  drawCats(list,t,Sc);if(Sc===WORLD)drawDiveFlags(list,t);
+  drawCats(list,t,Sc);drawRiders(list,t,Sc);if(Sc===WORLD)drawDiveFlags(list,t);
   for(const kp of(Sc.keepers||[]))list.push({sy:kp.y,draw:()=>drawChar(ctx,kp.id,kp.x-camX,kp.y-camY,kp.dir||'down',Math.floor(t*1.5+kp.x)%7===0?1:0)});
-  for(const[k,pe]of NET.peers){if(pe.sc!==Sc.name)continue;const col=pe.co?COOPI[pe.co].lt==='#ffffff'?'#bfe8f4':COOPI[pe.co].lt:'#7fdcc0';
+  for(const[k,pe]of NET.peers){if(pe.sc!==Sc.name||pe.r)continue;const col=pe.co?COOPI[pe.co].lt==='#ffffff'?'#bfe8f4':COOPI[pe.co].lt:'#7fdcc0';
     if(pe.b&&Sc===WORLD){boatDraw(list,pe.b.k,pe.x,pe.y,pe.b.h,pe.b.p,pe.co,{id:pe.id,f:pe.fish?(Math.floor(t*6)%2?1:2):0},t,{name:pe.b.n||pe.n,col,decor:pe.b.de,fishing:pe.fish});continue}
     list.push({sy:pe.y,draw:()=>{drawChar(ctx,pe.id,pe.x-camX,pe.y-camY,pe.dir,pe.moving?WALK[pe.f]:0);if(pe.co)drawBands(ctx,pe.x-camX,pe.y-camY,pe.dir,COOPI[pe.co].col,false);nameTag(ctx,pe.n,pe.x-camX,pe.y-camY+4,col);if(pe.bubble)bubble(ctx,pe.bubble.text,pe.x-camX,pe.y-camY-26);if(pe.emote)drawEmote(pe.emote.k,pe.x-camX,pe.y-camY-32,t)}})}
-  if(!player.boat)list.push({sy:player.y,draw:()=>drawPlayer(t)});
+  if(!player.boat&&!player.ride)list.push({sy:player.y,draw:()=>drawPlayer(t)});
   list.sort((a,b)=>a.sy-b.sy);for(const d of list)d.draw();if(Sc.dive)drawDive(t,Sc);
   if(player.boat){const b=player.boat;if(player.bubble)bubble(ctx,player.bubble.text,b.x-camX,b.y-camY-22);if(player.emote)drawEmote(player.emote.k,b.x-camX,b.y-camY-28,t)}
   if(Sc===WORLD){for(const g of GULLS){if(!inView(g.x-6,g.y-30,12,40))continue;const x=Math.round(g.x-camX),y=Math.round(g.y-camY-24);const up=Math.floor(t*5+g.ph)%2;ctx.fillStyle='rgba(18,48,74,.25)';ctx.fillRect(x-2,y+24,5,1);ctx.fillStyle='#fbfbff';ctx.fillRect(x-1,y,3,1);ctx.fillStyle=OL;if(up){P(ctx,x-3,y-2,OL);P(ctx,x-2,y-1,OL);P(ctx,x+2,y-1,OL);P(ctx,x+3,y-2,OL)}else{P(ctx,x-3,y+1,OL);P(ctx,x-2,y,OL);P(ctx,x+2,y,OL);P(ctx,x+3,y+1,OL)}}
@@ -3517,7 +3549,7 @@ function endJoy(e){if(!joy||e.pointerId!==joy.id)return;if(!joy.moved&&performan
 cv.addEventListener('pointerup',endJoy);cv.addEventListener('pointercancel',endJoy);
 document.addEventListener('gesturestart',e=>e.preventDefault());document.addEventListener('dblclick',e=>e.preventDefault());
 function doorBump(){if(doorBump.t>performance.now())return;for(const a of scene.acts){if(a.icon!=='door'||a.exit)continue;if(Math.abs(a.x-player.x)<12&&a.y-player.y>-4&&a.y-player.y<14){doorBump.t=performance.now()+800;a.act();return}}}
-function tapWorld(wx,wy){if(MG)return;
+function tapWorld(wx,wy){if(MG||player.ride)return;
   if(player.boat){// tap the water to sail there; tap a pot, salvage site or the shore to go to it
     for(const p of S.pots)if(Math.hypot(p.x-wx,p.y-wy)<16){sailTo(p.x+6,p.y+10);return}
     for(const s of WORLD.salvage)if(!s.dead&&Math.hypot(s.x-wx,s.y-wy)<18){sailTo(s.x+12,s.y+10);return}
@@ -3536,7 +3568,7 @@ function update(dt){gameT+=dt;
   let mx=0,my=0;if(keys.has('arrowleft')||keys.has('a'))mx-=1;if(keys.has('arrowright')||keys.has('d'))mx+=1;if(keys.has('arrowup')||keys.has('w'))my-=1;if(keys.has('arrowdown')||keys.has('s'))my+=1;
   if(joy&&joy.moved){const dx=joy.x-joy.x0,dy=joy.y-joy.y0;const d=Math.hypot(dx,dy);if(d>8){mx=dx/Math.max(d,38);my=dy/Math.max(d,38)}}
   const p=player;
-  if(p.boat){boatUpdate(dt,MG?0:mx,MG?0:my)}
+  if(p.ride){p.moving=false}else if(p.boat){boatUpdate(dt,MG?0:mx,MG?0:my)}
   else{let pathD=0;if(!mx&&!my&&p.path){const f=followPath(dt);mx=f[0];my=f[1];pathD=f[2]}if(MG)mx=my=0;const len=Math.hypot(mx,my);if(len>1){mx/=len;my/=len}
     if(mx||my){const spd=scene.dive?52:78;const sp=pathD?Math.min(spd*dt,pathD):spd*dt;const moved=moveEnt(p,mx*sp,my*sp,scene);if(!moved&&my<-.5&&!p.path)doorBump();p.dir=faceFrom(mx,my,p.dir);p.moving=moved;if(p.path){if(!moved){p.stuck=(p.stuck||0)+dt;if(p.stuck>.35){const g=p.goal;cancelPath();if(g&&!p.retried){p.retried=1;walkTo(g,true)}else p.retried=0}}else p.stuck=0}p.ft+=dt;if(p.ft>.11){p.ft=0;p.f=(p.f+1)%4}}else{p.moving=false;p.f=0}
     if(scene&&scene.exitFn&&p.y>(scene.h-1)*16+2&&!MG){const f=scene.exitFn;cancelPath();f();return}}
@@ -3549,7 +3581,7 @@ function update(dt){gameT+=dt;
   for(let i=fx.length-1;i>=0;i--){const q=fx[i];q.t-=dt;q.x+=q.vx*dt;q.y+=q.vy*dt;q.vy+=120*dt;if(q.t<=0)fx.splice(i,1)}
   const a=scene?nearestAct():null;if(!MG&&(a!==curAct||(a&&a.label!==$('actLabel').textContent))){curAct=a;setActButton(a)}
   sendPresence(false);miniT+=dt;if(miniT>.25){miniT=0;drawMini()}hudT+=dt;if(hudT>1){hudT=0;updEnvHUD();upd2Button();updChips();if(NET.db)pushMyDoc()}
-  if(dirty&&performance.now()-lastSave>5000){lastSave=performance.now();dirty=false;saveLocal();if(NET.db)remoteSave();if(NET.mode==='ws'&&CHAIN.live)wsSend({t:'save',s:JSON.stringify(S)})}}
+  if(dirty&&performance.now()-lastSave>5000){lastSave=performance.now();dirty=false;saveLocal();if(NET.db)remoteSave();if(NET.mode==='ws')cloudSave()}}
 function loop(now){const dt=Math.min(.05,(now-lastT)/1000);lastT=now;if(scene&&WORLD){update(dt);if(!gachaOpen&&$('book').hidden)render(gameT)}if(gachaOpen)gachaFrame(dt);requestAnimationFrame(loop)}
 
 /* ================= tap-to-walk: A* pathfinding, tap targets, auto-act on arrival ================= */
@@ -3936,7 +3968,7 @@ function rumourPick(){const heard=new Set(S.rumours||[]);const cands=CAT.filter(
 /* ---------- the Harbourmaster: free membership, names and friendly derby ---------- */
 const HANDLE_RE=/^[A-Za-z0-9_]{1,15}$/;
 function panelLicence(body,H){head('Harbourmaster','Everyone is welcome to fish',uiIcon('anchor'));const t=tabs([['licence','Harbour'],['handle','Name'],['derby','Derby']],'licence');
-  if(t==='handle'){H('p','Choose your fisher name. It appears beside your character, catches and aquarium donations.');const row=el('div','row'),inp=txtIn('fisher name',S.name,15);row.append(inp,btn('Save',()=>{const n=inp.value.trim();if(!HANDLE_RE.test(n)){toast('Use letters, numbers and _ (up to 15).','warn');return}S.name=n;markDirty();updHUD();sendPresence(true);if(NET.db)pushMyDoc(true);toast('You are '+n+' in Gullhaven.','lvl');inp.blur();renderPanel()},'gold'));body.append(row);return}
+  if(t==='handle'){H('p','Choose your fisher name. It appears beside your character, catches and aquarium donations.');const row=el('div','row'),inp=txtIn('fisher name',S.name,15);row.append(inp,btn('Save',async()=>{const n=inp.value.trim();if(!HANDLE_RE.test(n)){toast('Use letters, numbers and _ (up to 15).','warn');return}if(!(await claimName(n)))return;S.name=n;cloudSave(true);markDirty();updHUD();sendPresence(true);if(NET.db)pushMyDoc(true);toast('You are '+n+' in Gullhaven.','lvl');inp.blur();renderPanel()},'gold'));body.append(row);return}
   if(t==='derby'){const E=envAt(),sp=derbySpecies(E.day),D=S.derby.day===E.day?S.derby:null,sd=NET.shared.derby&&NET.shared.derby.day===E.day?NET.shared.derby:null;
     const field=(sd?sd.top:[]).concat(CSIM.derbyField(E.day)).sort((a,b)=>b-a);body.append(itemRow(catArt(sp.id),sp.n,ZONES[sp.z].n+' \u00b7 longest fish wins'));
     H('p','Free entry. Land today\u2019s species after entering. The winner earns '+fmt(CFG.DERBY.reward)+' Shells when the UTC day ends.');const l=el('div','list');field.slice(0,5).forEach((cm,i)=>l.append(itemRow(null,ord(i+1)+' \u00b7 '+cm+' cm',i===0?'Leading':'')));if(D&&D.in)l.prepend(itemRow(null,'You \u00b7 '+(D.best?D.best+' cm':'no fish yet'),'Your longest catch counts'));body.append(l);if(!(D&&D.in))body.append(btn('Enter for free',enterDerby,'gold'));return}
@@ -4233,7 +4265,7 @@ function updMachineUI(){}
 function refreshAll(){syncCrew();syncMachine();updHUD();updQuestHUD();if(!$('panel').hidden)renderPanel();if(!$('book').hidden)renderBook()}
 function introText(l){const nr=$('nameRow');if(l&&S.name){nr.hidden=true;$('introTxt').textContent=`Welcome back, ${S.name}. ${fmt(S.shells)} Shells, ${logCount()} of ${CAT.length} in your Logbook${S.coop?', fishing for '+COOPI[S.coop].s:''}.`;$('introGo').textContent='Back to the harbour'}
   else{nr.hidden=false;$('nameIn').value=S.name||'';$('introGo').textContent='Set sail'}$('introGo').disabled=false}
-function introGo(){const v=$('nameIn').value.replace(/^@/,'').trim();if(!$('nameRow').hidden&&v){if(!HANDLE_RE.test(v)){toast('Use letters, numbers and _ (up to 15).','warn');return}S.name=v;markDirty()}
+function introGo(){const v=$('nameIn').value.replace(/^@/,'').trim();if(!$('nameRow').hidden&&v){if(!HANDLE_RE.test(v)){toast('Use letters, numbers and _ (up to 15).','warn');return}S.name=v;markDirty();setTimeout(()=>cloudLogin(true),200)}
   $('intro').hidden=true;INTRO.on=false;audioUnlock();startMusic();updHUD();sendPresence(true);if(NET.db)pushMyDoc(true);setTimeout(updQuestHUD,50);
   if(!S.tutorial){S.tutorial=1;markDirty();toast('Tap the ground to walk. Tap the water to fish from the shore.');setTimeout(()=>toast('Hold the button to wind up a cast, let go to throw. Strike on the bite!'),4200);setTimeout(()=>toast(S.name?'The quest chip on the left walks you through your first season.':'Name your fisher in Menu so the town knows who caught what.'),8800)}}
 function dayTick(){rollPts();settleCup();settleDerby();updEnvHUD()}

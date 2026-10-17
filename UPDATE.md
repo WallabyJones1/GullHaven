@@ -1,3 +1,8 @@
+# Friends update
+
+- **Ride with a friend:** walk up to a friend's boat and tap **Hop aboard**. You ride along wherever they sail and can fish from their deck (their boat decides which grounds are calm enough). Tap **Hop off** to step ashore, or get dropped back at the quay if you're at sea.
+- **Your progress follows your name:** the server keeps your save under your fisher name. Type the same name on another phone or computer and your Shells, boats, catches and cottage come with you. There's no password, so pick a name your friends won't type by accident. Renaming to a name someone already uses is refused.
+
 # Diving update
 
 - **Diving:** buy a dive kit (2,000 Shells) at the Boatyard or Lantern Key. Red-and-white dive flags mark the wrecks and island reefs. Stop your boat by a flag and tap **Dive**.

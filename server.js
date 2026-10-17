@@ -62,7 +62,8 @@ let st = {
   withdrawals: [],         // {id, wallet, amount, at, status, tx}
   awards: [],              // {id, wallet, nft, at, status, tx}
   ledger: [],              // last N money movements, for audit
-  saves: {}                // wallet -> client save string (live mode)
+  saves: {},               // wallet -> client save string (live mode)
+  users: {}                // lower-case fisher name -> {n, s: save string, ts} (free play: progress follows the name)
 };
 try { const d = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')); if (d && d.v === 2) st = Object.assign(st, d); } catch (e) { /* fresh */ }
 st.co.fees = Object.assign({}, CFG.COOP.feeDefault);
@@ -312,7 +313,7 @@ function cleanPresence(p) {
   const ht = /^[a-z0-9]{1,20}$/.test(p.ht) ? p.ht : null;
   const l = p.look;
   const look = l && typeof l === 'object' ? { base: num(l.base, 1, 500) | 0, skin: hex(l.skin), hs: num(l.hs, 0, 5) | 0, hair: l.hair === 'prism' ? 'prism' : hex(l.hair), eyes: num(l.eyes, 0, 4) | 0, mouth: num(l.mouth, 0, 3) | 0, shirt: hex(l.shirt), pants: hex(l.pants), pat: num(l.pat, 0, 3) | 0, acc: num(l.acc, 0, 10) | 0 } : null;
-  return { x: num(p.x, 0, 20000), y: num(p.y, 0, 20000), d: ['down', 'up', 'left', 'right'].includes(p.d) ? p.d : 'down', m: p.m ? 1 : 0, id: num(p.id, 1, 1e9) | 0, n: text(p.n || 'Fisher', 16), sc: /^[a-z0-9:_]{1,48}$/.test(p.sc) ? p.sc : 'world', co: G.COOPI[p.co] ? p.co : null, b, home, ht, look, e: typeof p.e === 'string' ? p.e.slice(0, 8) : null, et: num(p.et, 0, 9e15), f: p.f ? 1 : 0 };
+  return { x: num(p.x, 0, 20000), y: num(p.y, 0, 20000), d: ['down', 'up', 'left', 'right'].includes(p.d) ? p.d : 'down', m: p.m ? 1 : 0, id: num(p.id, 1, 1e9) | 0, n: text(p.n || 'Fisher', 16), sc: /^[a-z0-9:_]{1,48}$/.test(p.sc) ? p.sc : 'world', co: G.COOPI[p.co] ? p.co : null, b, home, ht, look, e: typeof p.e === 'string' ? p.e.slice(0, 8) : null, et: num(p.et, 0, 9e15), f: p.f ? 1 : 0, r: /^p\d{1,9}$/.test(p.r) ? p.r : null };
 }
 function limit(c, k, ms) { const now = Date.now(); if (now - (c.t[k] || 0) < ms) return false; c.t[k] = now; return true; }
 wss.on('connection', ws => {
@@ -330,6 +331,12 @@ wss.on('connection', ws => {
         case 'hello': { c.cid = String(m.cid || c.key).slice(0, 64);
           send(ws, { t: 'welcome', you: c.key, live: false, mode: 'free', currency: 'Shells', mint: '', treasury: '', decimals: 0, rpc: '', state: publicState(), acct: null }); break; }
         case 'p': c.p = cleanPresence(m.p); break;
+        // ---- free play: progress kept by fisher name (no password, by the owner's choice) ----
+        case 'login': { if (!limit(c, 'login', 800)) return reply({ err: 'Slow down.' }); const n = String(m.name || ''); if (!/^[A-Za-z0-9_]{1,15}$/.test(n)) return reply({ err: 'Bad name.' }); const key = n.toLowerCase(); const u = st.users[key];
+          if (!m.probe) c.user = key; return reply({ exists: !!u, s: u ? u.s : null, ts: u ? u.ts : 0 }); }
+        case 'usave': { if (!c.user || !limit(c, 'usave', 4000)) return; const s = String(m.s || ''); if (s.length > 400000 || s[0] !== '{') return; if (String(m.name || '').toLowerCase() !== c.user) return;
+          let ts = Date.now(); try { const j = JSON.parse(s); if (j && typeof j.ts === 'number') ts = Math.min(Date.now() + 60000, j.ts); } catch (e) { return; }
+          st.users[c.user] = { n: String(m.name).slice(0, 15), s, ts }; save(); break; }
         case 'chat': { if (!limit(c, 'chat', 800)) return; const text = String(m.text || '').replace(/[\u0000-\u001f]/g, '').slice(0, 90).trim(); if (!text) return; for (const [w2] of clients) if (w2 !== ws) send(w2, { t: 'chat', id: c.key, n: a && a.x ? '@' + a.x : (c.p ? c.p.n : 'Someone'), text }); break; }
         case 'news': { if (!limit(c, 'news', 3000)) return; for (const [w2] of clients) if (w2 !== ws) send(w2, { t: 'news', id: c.key, n: a && a.x ? '@' + a.x : (c.p ? c.p.n : 'Someone'), msg: String(m.msg || '').slice(0, 140), type: m.type === 'legend' || m.type === 'rare' ? m.type : null }); break; }
         // ---- shared registry (both modes) ----

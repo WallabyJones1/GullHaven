@@ -2,7 +2,7 @@
 function refreshAll(){syncCrew();syncMachine();updHUD();updQuestHUD();if(!$('panel').hidden)renderPanel();if(!$('book').hidden)renderBook()}
 function introText(l){const nr=$('nameRow');if(l&&S.name){nr.hidden=true;$('introTxt').textContent=`Welcome back, ${S.name}. ${fmt(S.shells)} Shells, ${logCount()} of ${CAT.length} in your Logbook${S.coop?', fishing for '+COOPI[S.coop].s:''}.`;$('introGo').textContent='Back to the harbour'}
   else{nr.hidden=false;$('nameIn').value=S.name||'';$('introGo').textContent='Set sail'}$('introGo').disabled=false}
-function introGo(){const v=$('nameIn').value.replace(/^@/,'').trim();if(!$('nameRow').hidden&&v){if(!HANDLE_RE.test(v)){toast('Use letters, numbers and _ (up to 15).','warn');return}S.name=v;markDirty()}
+function introGo(){const v=$('nameIn').value.replace(/^@/,'').trim();if(!$('nameRow').hidden&&v){if(!HANDLE_RE.test(v)){toast('Use letters, numbers and _ (up to 15).','warn');return}S.name=v;markDirty();setTimeout(()=>cloudLogin(true),200)}
   $('intro').hidden=true;INTRO.on=false;audioUnlock();startMusic();updHUD();sendPresence(true);if(NET.db)pushMyDoc(true);setTimeout(updQuestHUD,50);
   if(!S.tutorial){S.tutorial=1;markDirty();toast('Tap the ground to walk. Tap the water to fish from the shore.');setTimeout(()=>toast('Hold the button to wind up a cast, let go to throw. Strike on the bite!'),4200);setTimeout(()=>toast(S.name?'The quest chip on the left walks you through your first season.':'Name your fisher in Menu so the town knows who caught what.'),8800)}}
 function dayTick(){rollPts();settleCup();settleDerby();updEnvHUD()}

@@ -41,10 +41,10 @@ function wsStart(){return new Promise((resolve,reject)=>{let ok=false;const url=
     ws.send(JSON.stringify({t:'hello',cid,session,n:myName()}));updOnline();resolve()};
   ws.onmessage=ev=>{let m;try{m=JSON.parse(ev.data)}catch(e){return}
     if(m.t==='res'){const r=NET.wsWait.get(m.q);if(r){NET.wsWait.delete(m.q);r(m)}return}
-    if(m.t==='welcome'){CHAIN.live=false;applyServerState(m.state);if(m.acct)applyAcct(m.acct);updHUD();return}
+    if(m.t==='welcome'){CHAIN.live=false;NET.you=m.you;applyServerState(m.state);if(m.acct)applyAcct(m.acct);updHUD();if(S.name)setTimeout(()=>cloudLogin(false),300);return}
     if(m.t==='state'){applyServerState(m.state);return}
     if(m.t==='acct'){applyAcct(m.acct);return}
-    if(m.t==='peers'){const seen=new Set();for(const[k,p]of Object.entries(m.peers||{})){if(k===m.you)continue;seen.add(k);applyPeer(k,p)}for(const k of[...NET.peers.keys()])if(!seen.has(k))NET.peers.delete(k);updOnline();return}
+    if(m.t==='peers'){NET.you=m.you||NET.you;const seen=new Set();for(const[k,p]of Object.entries(m.peers||{})){if(k===m.you)continue;seen.add(k);applyPeer(k,p)}for(const k of[...NET.peers.keys()])if(!seen.has(k))NET.peers.delete(k);updOnline();return}
     if(m.t==='chat'){const pe=NET.peers.get(m.id);if(pe)pe.bubble={text:String(m.text).slice(0,90),t:5};chatLine(cleanName(m.n),String(m.text).slice(0,90));return}
     if(m.t==='news'){newsIn(cleanName(m.n),String(m.msg||'').slice(0,140),m.type);return}};
   ws.onclose=()=>{if(ok){NET.mode='solo';NET.ws=null;NET.peers.clear();updOnline();setTimeout(()=>wsStart().catch(()=>{}),3000)}else{clearTimeout(to);reject(new Error('closed'))}};ws.onerror=()=>{}})}
@@ -54,10 +54,10 @@ function applyServerState(st){if(!st)return;const sh=NET.shared;sh.firsts=st.fir
 /* ---------- presence, chat, news ---------- */
 function applyPeer(key,pr){if(!pr||typeof pr.x!=='number')return;let pe=NET.peers.get(key);if(!pe){pe={x:pr.x,y:pr.y,dir:'down',f:0,ft:0,moving:false};NET.peers.set(key,pe)}
   pe.tx=pr.x;pe.ty=pr.y;pe.dir=['down','up','left','right'].includes(pr.d)?pr.d:'down';pe.moving=!!pr.m;pe.id=registerLook(pr.look)||Number(pr.id)||1000;pe.n=cleanName(pr.n);pe.sc=String(pr.sc||'world').slice(0,48);pe.co=COOPI[pr.co]?pr.co:null;pe.ht=cleanHomeKey(pr.ht);pe.home=homeProfile(pr.home);
-  pe.b=pr.b&&typeof pr.b==='object'&&BOATI[pr.b.k]?{k:pr.b.k,h:(pr.b.h|0)&15,p:/^#[0-9a-f]{6}$/i.test(pr.b.p)?pr.b.p:null,de:hasRpg(BOAT_DECOR,pr.b.de)?pr.b.de:'none',n:String(pr.b.n||'').replace(/[^\w '\-.]/g,'').trim().slice(0,16)}:null;if(pr.e&&pr.et!==pe.et){pe.et=pr.et;pe.emote={k:pr.e,t:2.5}}pe.fish=!!pr.f;
+  pe.b=pr.b&&typeof pr.b==='object'&&BOATI[pr.b.k]?{k:pr.b.k,h:(pr.b.h|0)&15,p:/^#[0-9a-f]{6}$/i.test(pr.b.p)?pr.b.p:null,de:hasRpg(BOAT_DECOR,pr.b.de)?pr.b.de:'none',n:String(pr.b.n||'').replace(/[^\w '\-.]/g,'').trim().slice(0,16)}:null;if(pr.e&&pr.et!==pe.et){pe.et=pr.et;pe.emote={k:pr.e,t:2.5}}pe.fish=!!pr.f;pe.r=/^p\d{1,9}$/.test(pr.r)?pr.r:null;
   if(scene&&scene.homeGuest&&scene.homeOwner===pe.ht&&scene.homeDesign!==JSON.stringify(pe.home)){const exit=scene.exitFn;let x=player.x,y=player.y;const next=makeHomeInterior(pe.home,pe.ht,pe.n,false);setExit(next,exit);if(blocked(next,x,y)){x=next.spots.spawn.x;y=next.spots.spawn.y}setScene(next,x,y,player.dir)}}
 function sendPresence(force){const p=player;if(!scene)return;const b=p.boat?{k:p.boat.k,h:boatHeading(p.boat.h),p:S.paint[p.boat.k]||null,de:boatDetail(p.boat.k),n:S.boatName||''}:null;
-  const o={x:Math.round(p.boat?p.boat.x:p.x),y:Math.round(p.boat?p.boat.y:p.y),d:p.dir,m:p.moving?1:0,id:ACTIVE(),look:publicLook(),ht:publicHomeKey(),home:homeProfile(S.home),n:myName(),sc:scene.name,co:S.coop||null,b,e:p.emoteK||null,et:p.emoteT||0,f:MG&&MG.type==='fish'?1:0};
+  const o={x:Math.round(p.boat?p.boat.x:p.x),y:Math.round(p.boat?p.boat.y:p.y),d:p.dir,m:p.moving?1:0,id:ACTIVE(),look:publicLook(),ht:publicHomeKey(),home:homeProfile(S.home),n:myName(),sc:scene.name,co:S.coop||null,b,e:p.emoteK||null,et:p.emoteT||0,f:MG&&MG.type==='fish'?1:0,r:player.ride||null};
   const k=JSON.stringify(o);const now=performance.now();if(!force&&(k===NET.lastP||now-NET.lastPT<100))return;NET.lastP=k;NET.lastPT=now;
   if(NET.mode==='room'&&NET.room)NET.room.presence(o).catch(()=>{});if(NET.mode==='ws')wsSend({t:'p',p:o})}
 function sendChat(txt){if(NET.mode==='room'&&NET.room)return NET.room.emit('chat',{t:txt,n:myName()}).then(()=>true,e=>{toast(e&&e.code==='not_permitted'?'Chat needs Contributor access to this page.':'Chat could not send.');return false});if(NET.mode==='ws'){wsSend({t:'chat',text:txt});return Promise.resolve(true)}return Promise.resolve(true)}

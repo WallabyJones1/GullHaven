@@ -36,7 +36,7 @@ function randomWaterIn(z){const zi=ZONE_ORDER.indexOf(z);for(let k=0;k<60;k++){c
 function nearFeatures(x,y){const n={};for(const h of HOTS)if(Math.hypot(h.x-x,h.y-y)<56)n[h.kind]=true;return n}
 function shadowAt(x,y,r){let best=null,bd=r||40;for(const s of SHADOWS){const d=Math.hypot(s.x-x,s.y-y);if(d<bd){bd=d;best=s}}return best}
 /* talking to people */
-function lifeActs(consider){for(const f of FOLK){consider(f.x,f.y,18,{label:'Talk to '+f.n,icon:'talk',act:()=>talkFolk(f)})}catActs(consider)}
+function lifeActs(consider){for(const f of FOLK){consider(f.x,f.y,18,{label:'Talk to '+f.n,icon:'talk',act:()=>talkFolk(f)})}catActs(consider);const fb=friendBoatNear();if(fb)consider(fb[1].x,fb[1].y,40,{label:'Hop aboard',icon:'boat',act:()=>hopAboard(fb[0],fb[1])})}
 function talkFolk(f){f.talk=4;f.dir=faceFrom(player.x-f.x,player.y-f.y,f.dir);f.bubble={text:folkLine(f),t:5}}
 function folkLine(f){const r=Math.random();const unl=CAT.filter(e=>(e.cat==='fish'||e.cat==='legend')&&!logged(e.id)&&e.cp&&!e.cp.flags.includes('oddone'));
   if(r<.45&&unl.length){const e=unl[Math.floor(Math.random()*unl.length)];return`I hear the ${e.n}... ${e.hint.replace(/^Bites |^Sighted /,'').replace(/\.$/,'')}.`}

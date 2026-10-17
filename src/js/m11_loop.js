@@ -12,7 +12,7 @@ function endJoy(e){if(!joy||e.pointerId!==joy.id)return;if(!joy.moved&&performan
 cv.addEventListener('pointerup',endJoy);cv.addEventListener('pointercancel',endJoy);
 document.addEventListener('gesturestart',e=>e.preventDefault());document.addEventListener('dblclick',e=>e.preventDefault());
 function doorBump(){if(doorBump.t>performance.now())return;for(const a of scene.acts){if(a.icon!=='door'||a.exit)continue;if(Math.abs(a.x-player.x)<12&&a.y-player.y>-4&&a.y-player.y<14){doorBump.t=performance.now()+800;a.act();return}}}
-function tapWorld(wx,wy){if(MG)return;
+function tapWorld(wx,wy){if(MG||player.ride)return;
   if(player.boat){// tap the water to sail there; tap a pot, salvage site or the shore to go to it
     for(const p of S.pots)if(Math.hypot(p.x-wx,p.y-wy)<16){sailTo(p.x+6,p.y+10);return}
     for(const s of WORLD.salvage)if(!s.dead&&Math.hypot(s.x-wx,s.y-wy)<18){sailTo(s.x+12,s.y+10);return}
@@ -31,7 +31,7 @@ function update(dt){gameT+=dt;
   let mx=0,my=0;if(keys.has('arrowleft')||keys.has('a'))mx-=1;if(keys.has('arrowright')||keys.has('d'))mx+=1;if(keys.has('arrowup')||keys.has('w'))my-=1;if(keys.has('arrowdown')||keys.has('s'))my+=1;
   if(joy&&joy.moved){const dx=joy.x-joy.x0,dy=joy.y-joy.y0;const d=Math.hypot(dx,dy);if(d>8){mx=dx/Math.max(d,38);my=dy/Math.max(d,38)}}
   const p=player;
-  if(p.boat){boatUpdate(dt,MG?0:mx,MG?0:my)}
+  if(p.ride){p.moving=false}else if(p.boat){boatUpdate(dt,MG?0:mx,MG?0:my)}
   else{let pathD=0;if(!mx&&!my&&p.path){const f=followPath(dt);mx=f[0];my=f[1];pathD=f[2]}if(MG)mx=my=0;const len=Math.hypot(mx,my);if(len>1){mx/=len;my/=len}
     if(mx||my){const spd=scene.dive?52:78;const sp=pathD?Math.min(spd*dt,pathD):spd*dt;const moved=moveEnt(p,mx*sp,my*sp,scene);if(!moved&&my<-.5&&!p.path)doorBump();p.dir=faceFrom(mx,my,p.dir);p.moving=moved;if(p.path){if(!moved){p.stuck=(p.stuck||0)+dt;if(p.stuck>.35){const g=p.goal;cancelPath();if(g&&!p.retried){p.retried=1;walkTo(g,true)}else p.retried=0}}else p.stuck=0}p.ft+=dt;if(p.ft>.11){p.ft=0;p.f=(p.f+1)%4}}else{p.moving=false;p.f=0}
     if(scene&&scene.exitFn&&p.y>(scene.h-1)*16+2&&!MG){const f=scene.exitFn;cancelPath();f();return}}
@@ -44,5 +44,5 @@ function update(dt){gameT+=dt;
   for(let i=fx.length-1;i>=0;i--){const q=fx[i];q.t-=dt;q.x+=q.vx*dt;q.y+=q.vy*dt;q.vy+=120*dt;if(q.t<=0)fx.splice(i,1)}
   const a=scene?nearestAct():null;if(!MG&&(a!==curAct||(a&&a.label!==$('actLabel').textContent))){curAct=a;setActButton(a)}
   sendPresence(false);miniT+=dt;if(miniT>.25){miniT=0;drawMini()}hudT+=dt;if(hudT>1){hudT=0;updEnvHUD();upd2Button();updChips();if(NET.db)pushMyDoc()}
-  if(dirty&&performance.now()-lastSave>5000){lastSave=performance.now();dirty=false;saveLocal();if(NET.db)remoteSave();if(NET.mode==='ws'&&CHAIN.live)wsSend({t:'save',s:JSON.stringify(S)})}}
+  if(dirty&&performance.now()-lastSave>5000){lastSave=performance.now();dirty=false;saveLocal();if(NET.db)remoteSave();if(NET.mode==='ws')cloudSave()}}
 function loop(now){const dt=Math.min(.05,(now-lastT)/1000);lastT=now;if(scene&&WORLD){update(dt);if(!gachaOpen&&$('book').hidden)render(gameT)}if(gachaOpen)gachaFrame(dt);requestAnimationFrame(loop)}
