@@ -21,22 +21,39 @@ var _amb_goal := {}  # name -> 0..1
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	for bus in ["Music", "Effects"]:
+		if AudioServer.get_bus_index(bus) < 0:
+			AudioServer.add_bus()
+			var i := AudioServer.bus_count - 1
+			AudioServer.set_bus_name(i, bus)
+			AudioServer.set_bus_send(i, "Master")
 	for i in POOL:
 		var p := AudioStreamPlayer.new()
+		p.bus = "Effects"
 		add_child(p)
 		_pool.append(p)
 	for i in 2:
 		var m := AudioStreamPlayer.new()
 		m.volume_db = -80.0
+		m.bus = "Music"
 		add_child(m)
 		_music.append(m)
 	for k in AMB_DB:
 		var a := AudioStreamPlayer.new()
 		a.stream = _load("amb", k, true)
 		a.volume_db = -80.0
+		a.bus = "Effects"
 		add_child(a)
 		_amb[k] = a
 		_amb_goal[k] = 0.0
+
+
+## Set a bus's volume, 0 (silent) to 1 (full).
+static func set_volume(bus: String, amount: float) -> void:
+	var i := AudioServer.get_bus_index(bus)
+	if i >= 0:
+		AudioServer.set_bus_volume_db(i, linear_to_db(maxf(amount, 0.0001)))
+		AudioServer.set_bus_mute(i, amount <= 0.001)
 
 
 ## Play an effect. pitch_spread randomises pitch a little so repeats don't sound robotic.
@@ -52,7 +69,8 @@ func play(sound: String, volume_db := 0.0, pitch := 1.0, pitch_spread := 0.0) ->
 	p.play()
 
 
-## Crossfade to a music loop ("day", "night", "storm"), or "" for silence.
+## Crossfade to a music loop (music.gd picks: day, night, storm, title, town, river, islands,
+## lake, sailing, mystery, tavern, fight, dive, home), or "" for silence.
 func set_music(track: String) -> void:
 	if track == _music_name:
 		return

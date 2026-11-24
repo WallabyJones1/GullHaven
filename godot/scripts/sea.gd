@@ -41,6 +41,12 @@ func setup(clock_offset: float) -> void:
 		return
 	var data: Dictionary = JSON.parse_string(f.get_as_text())
 	items = data.get("items", [])
+	# the Godot build's own additions (new fish, legends and finds)
+	var fx := FileAccess.open("res://data/catalog_extra.json", FileAccess.READ)
+	if fx:
+		var extra: Variant = JSON.parse_string(fx.get_as_text())
+		if extra is Dictionary:
+			items.append_array(extra.get("items", []))
 	for e in items:
 		by_id[e.id] = e
 	bait = data.get("bait", {})
@@ -178,8 +184,8 @@ func cond_ok(e: Dictionary, E: Dictionary) -> bool:
 	if p.get("where") != null:
 		return false
 	var flags: Array = p.get("flags", [])
-	if flags.has("oddone") or flags.has("gift"):
-		return false
+	if flags.has("oddone") or flags.has("gift") or flags.has("quest"):
+		return false  # these turn up some other way (the mystery hands out its own)
 	if flags.has("spawn"):
 		return E.moon == "fullmoon" and E.season == "summer" and time_ok("night", E.hour)
 	return true
@@ -217,6 +223,34 @@ static func size_class(e: Dictionary) -> int:
 	if top < 220.0:
 		return 2
 	return 3
+
+
+const DIFFICULTY_NAMES := ["", "Easy", "Steady", "Tricky", "Tough", "Fearsome"]
+const STRONG_SHAPES := ["torp", "gar", "squid", "cuttle", "octo", "shark", "tuna", "marlin", "sail", "mahi", "wobbe"]
+const GENTLE_SHAPES := ["seahorse", "dragon", "crab", "puffer", "clown", "idol", "lantern", "flying", "lobster"]
+
+
+## How hard something fights, 1 (easy) to 5 (fearsome): rarer, bigger and faster fish fight
+## harder; seahorses and their kin never really fight. Legends are always 5.
+static func difficulty(e: Dictionary) -> int:
+	var cat := str(e.get("cat", ""))
+	if cat == "legend":
+		return 5
+	if cat != "fish":
+		return 1
+	if e.has("diff"):
+		return clampi(int(e.diff), 1, 5)
+	var r := int(e.get("r", 0))
+	var d := 1 + r
+	var cls := size_class(e)
+	if cls >= 2:
+		d += 1
+	var art := str(e.get("art", ""))
+	if art in STRONG_SHAPES and cls >= 1:
+		d += 1
+	if art in GENTLE_SHAPES:
+		d = mini(d, 2 + (1 if r >= 2 else 0))
+	return clampi(d, 1, 5)
 
 
 ## Everything that could take the hook on this cast, as [entry, weight] pairs.
@@ -314,13 +348,37 @@ static func roll_size(e: Dictionary, r: float) -> float:
 
 
 ## "g" golden (1 in 400), "a" albino (1 in 250), or "" for a normal catch.
-static func roll_variant(e: Dictionary, r: float) -> String:
+# Rare colours a fish can come in: name, value multiplier, and odds (1 in N) when they can happen.
+const VARIANTS := {
+	"g": {"n": "Golden", "mult": 3.0, "odds": 400},
+	"a": {"n": "Albino", "mult": 2.0, "odds": 250},
+	"m": {"n": "Moonlit", "mult": 2.5, "odds": 40},  # night, full moon
+	"s": {"n": "Storm-touched", "mult": 2.5, "odds": 60},  # in a storm
+	"p": {"n": "Ghostly", "mult": 2.5, "odds": 60},  # in fog
+	"r": {"n": "Rainbow", "mult": 6.0, "odds": 300},  # after a storm
+}
+
+
+## A rare colour for this catch, or "" (most of the time). Some only happen in the right
+## weather or moon.
+static func roll_variant(e: Dictionary, r: float, E: Dictionary = {}) -> String:
 	if e.cat != "fish" or e.get("release", false):
 		return ""
-	if r < 1.0 / 400.0:
-		return "g"
-	if r < 1.0 / 400.0 + 1.0 / 250.0:
-		return "a"
+	var can: Array[String] = ["g", "a"]
+	if not E.is_empty():
+		if E.moon == "fullmoon" and time_ok("night", float(E.hour)):
+			can.append("m")
+		if E.sky == "storm":
+			can.append("s")
+		if E.sky == "fog":
+			can.append("p")
+		if bool(E.get("after", false)):
+			can.append("r")
+	var acc := 0.0
+	for v in can:
+		acc += 1.0 / float(VARIANTS[v].odds)
+		if r < acc:
+			return v
 	return ""
 
 
@@ -351,9 +409,12 @@ func hint_for(e: Dictionary) -> String:
 		parts.append("on " + str(b.get("n", p.bait)).to_lower())
 	if e.cat == "legend":
 		parts.append("needs a Graphite Rod or better")
+	var verb := "Bites"
+	if str(e.get("how", "")) == "pot":
+		verb = "Crawls into crab pots"
 	if parts.is_empty():
-		return str(e.get("hint", "Any time."))
-	return "Bites " + ", ".join(PackedStringArray(parts)) + "."
+		return str(e.get("hint", "Any time.")) if verb == "Bites" else verb + " any time."
+	return verb + " " + ", ".join(PackedStringArray(parts)) + "."
 
 
 # --- the web game's integer hash (Math.imul semantics), so weather matches -------

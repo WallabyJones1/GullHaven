@@ -14,28 +14,77 @@ catalogue) and uses its own synthesized music and sound.
 
 ## Controls
 
+Every prompt shows the real key or button as a keycap, and switches to pad buttons (Xbox,
+PlayStation or Switch names) the moment you touch a controller. A strip along the bottom
+lists what you can do right now. Keyboard keys can be changed in the game menu, under
+Controls (saved per computer, in `user://settings.cfg`).
+
 | Action                                  | Keyboard / mouse                 | Gamepad              |
 |-----------------------------------------|----------------------------------|----------------------|
 | Walk (relative to the camera)           | WASD or arrow keys               | Left stick           |
 | Turn the camera                         | Q / E, or drag with right mouse  | Bumpers, right stick |
 | Zoom                                    | Mouse wheel, - / =               | Right stick up/down  |
 | Cast (hold, release), strike, reel      | Space, F or left click           | A                    |
-| Talk, shop, pet a cat, dig              | Space or F (while facing them)   | A                    |
+| Talk, shop, pet a cat, dig, haul a pot  | Space or F (while facing them)   | A                    |
 | Go inside (facing a door)               | Space or F; walk out to leave    | A                    |
 | Board your boat / steer it              | Space by the boat / move keys    | A / left stick       |
 | Step ashore (beside a dock or beach)    | Esc                              | B                    |
+| Use your kit (pots, net, trolling, dive)| G                                | X                    |
 | Arrange furniture (in your hut)         | B; Q/E choose, R turn, Space put | X                    |
 | Steer against a run                     | A/D or left/right                | Left stick           |
 | Change bait                             | R                                | Y                    |
-| Logbook (Q / E turn the page)           | L or Tab                         | Back                 |
-| World map                               | M                                | Start                |
-| Reel in early / close a menu            | Esc                              | B                    |
+| Bag                                     | I                                | D-pad right          |
+| Logbook (Q / E turn the page)           | L or Tab                         | D-pad left           |
+| Journal (story, mystery, quests)        | J                                | D-pad up, L3         |
+| World map                               | M                                | Back / View          |
+| Game menu                               | Esc                              | Start / Menu         |
+| Reel in early / back / close a menu     | Esc or Backspace                 | B                    |
 | Skip an hour                            | T                                |                      |
 | Quality high/low                        | F2                               |                      |
 | Hide the HUD (photo mode)               | P                                |                      |
 
+The game menu (Esc or Start) has Fisher (your level, skills and stats), Bag, Logbook,
+Journal, Map, Controls, Settings, and Save and quit. Screens opened from it come back to it.
+
 ## How it plays
 
+- **Make your fisher.** A new game opens the character creator: skin, hair style and
+  colour, beard, glasses, hat, shirt and pattern, jacket, trousers or a dress, shoes, with
+  a live preview walking round. Odette at **Threads & Tides** (behind the tavern) changes
+  any of it later and sells more: overalls, aprons, dresses, check and flowery cloth,
+  bucket, straw, ranger's and captain's hats, a bandana, and dyes for brighter colours.
+- **A story to follow.** Gran's letter leaves you her hut and her rod, and Old Marlo on
+  the docks teaches you to fish (casting, bait, the Logbook, her old crab pot) before
+  telling you about the lighthouse. Then five chapters follow the Gull's Eye round the
+  whole coast: the keeper's marks, the bridge, Willowford, a boat, Kelpwood's lanterns, the
+  ranger's permit, Silverjaw, the keeper's chest, Ember Isle, and finally the Warden.
+  The next step sits in the top-right corner with how far away it is and which way, a
+  beam of light marks the spot, and a gold pin marks it on the map. Marlo sends notes by
+  gull as chapters open and as each new way of fishing unlocks. Conversations open a
+  dialogue box with the speaker's portrait.
+- **Fisher levels.** Everything you land earns XP: more for harder and bigger fish, clean
+  fights and anything new. Requests, the mystery and mini-game prizes count too. Each of
+  the 30 levels brings a skill point for six skills (steady hands, strong arms, patience,
+  keen eye, haggler, sea legs; spend them under Fisher in the game menu), and better rods,
+  reels and lines need higher levels.
+- **Difficulty.** Every fish fights at a difficulty from 1 (easy) to 5 (fearsome), shown in
+  the Logbook and on the catch card. Difficulty 4 and 5 fish, and every legend, fight on
+  the **reel bar**: hold to lift your green zone, let go to drop it, and keep the fish
+  inside until it tires.
+- **Four more ways to fish** (the Kit tab at Hale's Tackle, as your level allows; G or
+  pad X to use):
+  - **Crab pots** (level 2): drop one in the water, come back a few town hours later and
+    haul it up. Twelve crabs, lobsters and crayfish only turn up in pots. Crab bait helps.
+  - **Cast net** (level 4): throw it, pull when it's sunk to the gold mark, and land a few
+    small fish at once plus a tin of live bait.
+  - **Trolling** (level 5): let lines out behind your boat and keep moving over open water;
+    the fast fish strike out of nowhere.
+  - **Spearfishing** (level 6): stop your boat over clear water (reef, kelp, shallows, a
+    wreck, the lagoon, seagrass) and dive. A side-on breath-hold dive: swim, aim, fire,
+    mind the jellyfish, and surface with up to five fish on your stringer.
+- **Music for every place.** A title theme, Gullhaven, Willowford, the islands,
+  Mirrorlake, sailing, the keeper's mystery, a tavern jig, tough fights, diving and your
+  hut, alongside the web game's day, night and storm loops.
 - **A big coast to explore** (1.3 by 1 km). Gullhaven sits on its harbour basin with a
   lighthouse on the breakwater; your fishing hut is on the beach just south of town. Walk
   the coast road north to the mangrove estuary and follow the river inland to the mill
@@ -100,9 +149,29 @@ catalogue) and uses its own synthesized music and sound.
   air or the line snaps), sulkers dive, darters dart (squid ink!). Runs are telegraphed;
   hold the opposite direction to steer. Keep tension under the marks for **Perfect** or
   **Great** catches. Back-to-back catches build a **streak** for bonus Shells.
-- **Surprises.** Junk (yes, the rubber duck), treasure and letters in bottles, golden
-  (1 in 400) and albino (1 in 250) fish, and legends for those with the right rod and
-  conditions.
+- **Surprises.** Junk (yes, the rubber duck), treasure and letters in bottles, and rare
+  colours: golden (1 in 400) and albino (1 in 250) any time, moonlit under a full moon,
+  storm-touched in storms, ghostly in fog, and rainbow after a storm. Legends for those
+  with the right rod and conditions. Cast right onto a fish's nose and it bites at once.
+- **A big catalogue.** About 190 fish and 16 legends across the eleven fishing grounds,
+  plus shells, coral, pearls, sea glass, fossils from the rock pools, treasure, and finds
+  that only wash up on particular islands.
+- **The mystery of the Gull's Eye.** Fifty years ago the lighthouse keeper took the great
+  lens out of the lamp, hid it, and vanished. His marks (a gull with one wing, carved in
+  stone) lead from the lighthouse through eight puzzles: a stone dug out at low tide, the
+  mill's bells, Gull Rock's standing stones, Kelpwood's lanterns, a pike that never takes
+  a hook twice, the keeper's chest, and a cave on Ember Isle. Twelve bottle letters drift
+  about the sea with more of the story.
+- **Journal (J).** The story and the mystery so far, quests and mini-game records, the
+  letters you've found, and how much of the sea you've collected.
+- **Side quests and games.** Granny Wick's lost cats, the mill sails, bottle post; stone
+  skipping on the beach, the bay race round six buoys, darts at the Gull & Anchor.
+- **Cats.** Feed a town cat fish from your bait tin (pilchards, live yakka, squid or prawns)
+  to win its trust; a tamed cat becomes your companion, follows you, rides in your boat
+  and sniffs out buried finds.
+- **A living coast.** Gulls that land and scatter and dive on frenzies, crabs, butterflies,
+  fireflies, jumping fish, dolphins, whales, chimney smoke, boats on the bay, townsfolk
+  strolling about, and plants that sway in the wind.
 - **Feeding frenzies.** Every few minutes the water boils somewhere. Bites come fast and
   rare fish are three times as likely, for one minute.
 - **Townsfolk.** Every town has its people: shopkeepers behind their counters, and
@@ -110,8 +179,8 @@ catalogue) and uses its own synthesized music and sound.
   the beach by your hut, Juniper in town, Ivy in Willowford, Old Sable at the lake, and one
   on each island). Land one that fits and it's kept for them; bring it over for a reward.
   Between requests they tell you what's biting nearby right now.
-- **Beachcombing.** Sparkles on any sandy shore are shells, sea glass and treasure to dig
-  up. Low tide uncovers more beach.
+- **Beachcombing.** Sparkles on sandy shores are shells, sea glass and treasure to dig
+  up; on rocky shores they're rock pools with fossils and coins. Low tide uncovers more.
 - **Logbook.** A page for each of the eleven fishing grounds plus one for finds, with
   silhouettes for ones you haven't caught, a hint for each, your best sizes, and a
   "Biting now" marker.
@@ -137,13 +206,30 @@ godot/
     hut_build.gd          arranging furniture in your hut
     quests.gd             the bridge, the ranger's permit and the Ember Isle permit
     map_screen.gd         the world map with fog of war
+    mystery.gd            the Gull's Eye: puzzles, the keeper's marks, bottle letters
+    sidequests.gd         Granny Wick's cats, the mill, bottle post
+    minigames.gd          stone skipping, the bay race, darts
+    companion.gd          taming cats and your companion
+    journal.gd            the Journal
+    ambient.gd            gulls, crabs, butterflies, fireflies, dolphins, whales, smoke, boats
+    menus.gd              the title screen, the game menu, settings and key changes
+    story.gd              the main story: chapters, Old Marlo's notes, the corner tracker, the beacon
+    dialogue.gd           the conversation box (portraits, typed text, choices)
+    progress.gd           fisher level, XP, skills and what each level unlocks
+    kit.gd                crab pots, the cast net and trolling
+    spearfishing.gd       the side-on spearfishing dive
+    bag.gd                the Bag
+    character.gd          builds your character's sprite from the layered wardrobe art
+    wardrobe.gd           the character creator and Threads & Tides
+    music.gd              picks the music for where you are and what you're doing
+    input_glyphs.gd       keycaps and pad button names in prompts
     player.gd             the fisher and footsteps
-    fishing.gd            cast, bite, fight styles, catch
+    fishing.gd            cast, bite, fight styles, the reel bar, catch
     fish_school.gd        fish shadows and feeding frenzies
     town.gd               townsfolk, requests, cats, beachcombing
     shop.gd               the tackle and bait shops
     logbook.gd            the Logbook
-    day_night.gd          sun, moon, lamps, weather, tide, music choice
+    day_night.gd          sun, moon, lamps, weather, tide
     audio.gd              music, ambience and effects
     camera_rig.gd         follow camera and tilt-shift focus
     hud.gd, ui_kit.gd     on-screen layer and menu style
@@ -154,6 +240,7 @@ godot/
   art/                    textures, sprites, catalogue art, cats, fonts (from the web game)
   audio/                  music, ambience and effects (rendered from the web game)
   data/catalog.json       the catalogue, bait and gear tables (from the web game)
+  data/catalog_extra.json the Godot build's own new fish, legends and finds
   models/                 drop Blender .glb files here (see models/README.md)
 ```
 
@@ -167,10 +254,39 @@ python3 tools/export_godot_audio.py
 ```
 
 The pixel art for characters, cats, plants, fish and interiors, and the world map itself,
-are drawn by three more scripts (they need Python with `pillow` and `numpy`):
+are drawn by four more scripts (they need Python with `pillow` and `numpy`):
 
 ```
 python3 tools/godot_art.py      # art/chars2, art/cats2, art/plants, art/fish2
 python3 tools/godot_world.py    # world/ and the extra terrain textures
-python3 tools/godot_interior_art.py   # floors, walls and decor for the interiors
+python3 tools/godot_interior_art.py   # floors, walls, decor and critters
+python3 tools/godot_catalog_extra.py  # new fish, legends, pot catches and finds, with their art
+python3 tools/godot_wardrobe.py       # the layered character art for the creator and outfitter
+python3 tools/godot_music.py          # the new music (needs scipy and ffmpeg)
 ```
+
+## Sharing the beta
+
+`export_presets.cfg` has Windows, macOS and Linux exports set up, and
+`.github/workflows/gullhaven-beta.yml` builds all three on GitHub's computers, so nobody
+has to export by hand:
+
+1. In GitHub Desktop, make sure everything's pushed to `hd2d`.
+2. On github.com, open the repo's **Releases**, click **Draft a new release**, choose
+   a new tag such as `beta-0.5`, set the target to `hd2d`, tick **Set as a pre-release**,
+   and publish. (Pushing a tag starting with `beta-` does the same.)
+3. About ten minutes later the release has three zips attached, one per system, each
+   with the tester guide (`BETA.md`). Send testers the release link.
+
+You can also export from the Godot editor yourself: **Project > Export**, pick a preset,
+**Export Project** (Godot will offer to download the export templates the first time).
+
+For a public or semi-public beta, **itch.io** is the easiest home: make a new project,
+upload the three zips (or use itch's `butler` tool), and set it to **Restricted** with
+download keys, or **Draft**, so only people you invite can get it. Steam Playtest comes
+later, once the game has a Steam page.
+
+The builds aren't signed yet, so Windows shows a SmartScreen warning and macOS needs
+**Open Anyway** in Privacy & Security; `BETA.md` walks testers through it. Signing and
+notarizing (an Apple Developer account, a Windows code-signing certificate) can come
+before a wider release.

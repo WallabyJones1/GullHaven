@@ -6,6 +6,7 @@ extends CanvasLayer
 ## catch right now. L or Tab opens and closes it, arrows move, Q / E or R turn the page.
 
 const UI := preload("res://scripts/ui_kit.gd")
+const Glyphs := preload("res://scripts/input_glyphs.gd")
 const Sea := preload("res://scripts/sea.gd")
 
 const ZONES := ["harbour", "shallows", "estuary", "seagrass", "reef", "kelp", "wreck", "lagoon", "blue", "deep", "lake"]
@@ -95,7 +96,7 @@ func setup(s: Node, sv: Dictionary, a: Node, h: CanvasLayer) -> void:
 	for c in [_d_name, _d_kind, _d_now, _d_stats, _d_hint]:
 		c.custom_minimum_size = Vector2(300.0, 0.0)
 		dcol.add_child(c)
-	col.add_child(UI.label("Arrows choose   Q / E or R turn the page   L or Esc close", 18, UI.DIM))
+	col.add_child(Glyphs.bind(UI.label("", 18, UI.DIM), "{arrows} choose   {rotate_left}/{rotate_right} turn the page   {logbook} or {cancel} close"))
 
 
 func open() -> void:
@@ -210,6 +211,9 @@ func _show_detail(e: Dictionary) -> void:
 			pass
 		_:
 			kind = "%s find" % kind
+	if str(e.cat) in ["fish", "legend"]:
+		var d := Sea.difficulty(e)
+		kind += "   %s fight (%d/5)" % [Sea.DIFFICULTY_NAMES[d], d]
 	_d_kind.text = kind
 	_d_kind.add_theme_color_override("font_color", UI.RARITY_COLORS[clampi(r, 0, UI.RARITY_COLORS.size() - 1)])
 	_d_now.text = "Biting now!" if _now(e) else ""

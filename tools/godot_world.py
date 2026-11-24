@@ -294,7 +294,7 @@ def towns():
         B('house', 377, 560, 5, 5, 3.2, 0, 'timber', 'roof_blue', 'Cottage'),
         B('house', 388, 598, 6, 5, 3.0, 3, 'plaster', 'roof_green', 'Cottage'),
         B('house', 374, 592, 5, 6, 3.4, 0, 'stone', 'roof_red', 'Cottage'),
-        B('house', 418, 612, 6, 5, 3.0, 3, 'plaster', 'roof_blue', 'Cottage'),
+        B('shop', 418, 612, 6, 5, 3.0, 3, 'plaster', 'roof_blue', 'Threads & Tides', 'CLOTHES', 'outfitter'),
         B('house', 368, 575, 6, 5, 3.0, 0, 'timber', 'roof_red', 'Cottage'),
         B('house', 401, 534, 6, 5, 3.0, 1, 'plaster', 'roof_green', 'Cottage'),
     ]
@@ -319,6 +319,7 @@ def towns():
         dict(name='Lottie', sheet='kid_b', x=416.0, z=566.0, role='tips'),
         dict(name='Granny Wick', sheet='villager_d', x=396.0, z=589.0, role='tips'),
         dict(name='Sam', sheet='villager_c', x=421.0, z=606.0, role='tips'),
+        dict(name='Odette', sheet='tailor', x=418.0, z=608.0, role='shop:outfitter', inside='outfitter'),
     ]
     g['props'] = [['crates', 443, 560], ['barrels', 443, 571], ['crates', 443, 588], ['nets', 443, 600], ['stall', 422, 566]]
     T.append(g)

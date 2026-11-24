@@ -5,6 +5,7 @@ Tiling 64x64 floor and wall textures go to godot/art/tex/, decor sprites (shelve
 racks, fireplaces, paintings, charts, nets, lanterns, the forge...) to godot/art/decor/.
 Same palette rules as tools/godot_art.py: hue-shifted ramps, dark selective outlines,
 light from the top left."""
+import math
 import os
 import sys
 
@@ -720,6 +721,290 @@ def driftwood():
     return p.outline()
 
 
+def mark_stone():
+    """A weathered standing stone with the keeper's mark: a gull with one wing."""
+    p = Pix(28, 36)
+    stone = '#8a8a86'
+    p.ellipse(14, 20, 12, 16, stone)
+    p.rect(3, 22, 24, 35, stone)
+    n = hashmap(28, 36, 71, 2)
+    for y in range(36):
+        for x in range(28):
+            if p.a[y, x, 3] and n[y, x] > 0.86:
+                p.px(x, y, shift(hx(stone), -0.12))
+            if p.a[y, x, 3] and n[y, x] < 0.05:
+                p.px(x, y, '#5a7a4a')  # moss
+    carve = '#34343c'
+    lit = '#c4c4bc'
+    # the gull: a body, a head, a tail, and only one wing raised
+    for x0, y0, x1, y1 in ((6, 20, 20, 20), (6, 21, 19, 21)):
+        p.line(x0, y0, x1, y1, carve)
+    p.rect(20, 18, 22, 20, carve)  # head
+    p.px(23, 19, '#d8a040')  # beak
+    for i in range(7):  # the wing, sweeping up and back
+        p.line(9 + i, 19 - i, 14 + i // 2, 19 - i, carve)
+    p.line(4, 19, 6, 21, carve)  # tail
+    p.line(4, 22, 6, 21, carve)
+    for x in range(6, 21):
+        p.px(x, 22, lit)
+    p.px(21, 21, lit)
+    for x in range(4, 24):
+        p.px(x, 35, shift(hx(stone), -0.3))
+    return p.outline()
+
+
+def bottle():
+    p = Pix(12, 22)
+    p.rect(4, 0, 7, 2, '#a87a4a')  # cork
+    p.rect(4, 3, 7, 6, '#7ab8a0')
+    p.ellipse(5.5, 14, 5, 8, '#7ab8a0')
+    p.rect(3, 9, 8, 18, '#f0e6c8')  # the letter rolled inside
+    p.rect(3, 12, 8, 12, '#c84a3a')
+    p.px(3, 7, '#e8fff4')
+    p.px(2, 10, '#e8fff4')
+    return p.outline()
+
+
+def gulls_eye():
+    """The lost lens: a faceted crystal that holds the light."""
+    p = Pix(28, 28)
+    p.ellipse(14, 14, 12, 12, '#c8a040')  # brass ring
+    p.ellipse(14, 14, 10, 10, '#bfefff')
+    p.ellipse(14, 14, 7, 7, '#8ad8f8')
+    p.ellipse(14, 14, 4, 4, '#fff8d8')
+    for k in range(8):
+        a = k * np.pi / 4
+        p.line(14 + np.cos(a) * 4, 14 + np.sin(a) * 4, 14 + np.cos(a) * 9, 14 + np.sin(a) * 9, '#e8fbff')
+    p.px(10, 9, '#ffffff')
+    p.px(11, 9, '#ffffff')
+    return p.outline()
+
+
+def cave_mouth():
+    p = Pix(48, 40)
+    rock = '#5a4a48'
+    p.ellipse(24, 26, 24, 22, rock)
+    p.ellipse(24, 30, 13, 14, '#140a0a')
+    p.ellipse(24, 36, 9, 5, '#3a1810')
+    p.ellipse(24, 37, 5, 2.5, '#e86a2a')  # a glow from deep inside
+    n = hashmap(48, 40, 81, 2)
+    for y in range(40):
+        for x in range(48):
+            if p.a[y, x, 3] and n[y, x] > 0.85 and tuple(p.a[y, x, :3]) == hx(rock):
+                p.px(x, y, shift(hx(rock), 0.18))
+    p.a[39:, :, 3] = 0
+    return p.outline()
+
+
+def dartboard():
+    p = Pix(34, 34)
+    p.ellipse(17, 17, 16, 16, '#2a2020')
+    for i, (r, c) in enumerate(((14, '#e8dcc0'), (11, '#2a2a2a'), (8, '#e8dcc0'), (5, '#3a8a4a'), (2.5, '#c83a3a'))):
+        p.ellipse(17, 17, r, r, c)
+    for k in range(10):
+        a = k * np.pi / 5
+        p.line(17 + np.cos(a) * 5, 17 + np.sin(a) * 5, 17 + np.cos(a) * 14, 17 + np.sin(a) * 14, '#8a7a6a')
+    p.ellipse(17, 17, 1.2, 1.2, '#ffd24d')
+    return p.outline()
+
+
+def skip_stone():
+    p = Pix(8, 6)
+    p.ellipse(4, 3, 3.6, 2.4, '#9a9690')
+    p.px(3, 2, '#c8c4bc')
+    return p.outline()
+
+
+def eye_carving():
+    p = Pix(16, 12)
+    p.ellipse(8, 6, 7, 4, '#3a3a40')
+    p.ellipse(8, 6, 5, 3, '#c8c0a0')
+    p.ellipse(8, 6, 2.2, 2.2, '#2a2a30')
+    p.px(7, 5, '#f0f0e0')
+    return p
+
+
+# ===================================================================== critters
+
+def gull_frames():
+    """Four 16x12 frames: wings up, level, down, and standing."""
+    p = Pix(64, 12)
+    white, grey, dark, beak = '#f4f4f0', '#b8bcc4', '#3a3a44', '#e8a030'
+    for f, wing in enumerate(('up', 'level', 'down')):
+        ox = f * 16
+        p.ellipse(ox + 8, 7, 4.5, 2, white)  # body
+        p.px(ox + 12, 6, white)
+        p.px(ox + 13, 6, beak)
+        p.px(ox + 11, 6, dark)
+        if wing == 'up':
+            p.line(ox + 7, 6, ox + 3, 1, grey)
+            p.line(ox + 9, 6, ox + 12, 1, grey)
+            p.px(ox + 3, 1, dark)
+            p.px(ox + 12, 1, dark)
+        elif wing == 'level':
+            p.line(ox + 2, 5, ox + 14, 5, grey)
+            p.px(ox + 1, 5, dark)
+            p.px(ox + 15, 5, dark)
+        else:
+            p.line(ox + 7, 7, ox + 3, 10, grey)
+            p.line(ox + 9, 7, ox + 12, 10, grey)
+        p.line(ox + 3, 7, ox + 4, 8, grey)  # tail
+    ox = 48  # standing
+    p.ellipse(ox + 8, 6, 4, 2.5, white)
+    p.rect(ox + 5, 5, ox + 9, 6, grey)
+    p.rect(ox + 11, 3, ox + 12, 5, white)
+    p.px(ox + 13, 4, beak)
+    p.px(ox + 12, 3, dark)
+    p.rect(ox + 7, 9, ox + 7, 11, beak)
+    p.rect(ox + 9, 9, ox + 9, 11, beak)
+    return p
+
+
+def crab_frames():
+    p = Pix(24, 8)
+    for f in range(2):
+        ox = f * 12
+        p.ellipse(ox + 6, 4, 3.5, 2.2, '#d0503a')
+        p.px(ox + 4, 2, '#1a1a1a')
+        p.px(ox + 8, 2, '#1a1a1a')
+        p.rect(ox + 0, 2 + f, ox + 1, 3 + f, '#e06a4a')  # claws
+        p.rect(ox + 10, 3 - f, ox + 11, 4 - f, '#e06a4a')
+        for k, x in enumerate((3, 5, 7, 9)):
+            p.px(ox + x, 6 + (k + f) % 2, '#a83a2a')
+    return p
+
+
+def butterfly_frames():
+    p = Pix(16, 7)
+    p.ellipse(3.5, 3.5, 3, 3, '#ffffff')
+    p.rect(3, 1, 4, 6, '#3a3030')
+    p.rect(9, 2, 14, 5, '#ffffff')
+    p.rect(11, 1, 12, 6, '#3a3030')
+    return p
+
+
+def dolphin():
+    p = Pix(30, 14)
+    for x in range(2, 27):
+        t = (x - 2) / 24.0
+        y = int(8 - math.sin(t * math.pi) * 5)
+        p.rect(x, y, x, y + 3 - int(abs(t - 0.5) * 3), '#5a6a80')
+        p.px(x, y + 3 - int(abs(t - 0.5) * 3), '#c8d0d8')
+    p.rect(13, 1, 15, 3, '#5a6a80')  # fin
+    p.px(25, 7, '#1a1a20')
+    p.rect(0, 9, 3, 10, '#5a6a80')  # tail
+    return p.outline()
+
+
+def whale_tail():
+    p = Pix(34, 22)
+    p.rect(14, 10, 19, 21, '#3a4250')
+    for x in range(0, 34):
+        d = abs(x - 16.5)
+        y = int(4 + (d / 16.5) ** 2 * -3 + d * 0.15)
+        p.rect(x, max(0, y), x, min(10, y + 5 - int(d / 6)), '#3a4250')
+    p.rect(15, 0, 18, 4, '#00000000') if False else None
+    p.a[0:3, 15:19, 3] = 0  # the notch
+    p.line(2, 4, 14, 8, '#5a6474')
+    return p.outline()
+
+
+def smoke():
+    p = Pix(16, 16)
+    yy, xx = np.mgrid[0:16, 0:16]
+    d = np.hypot(xx - 7.5, yy - 7.5) / 7.5
+    a = np.clip(1.0 - d, 0, 1) ** 1.5
+    p.a[..., :3] = 235
+    p.a[..., 3] = (a * 200).astype(np.uint8)
+    return p
+
+
+CRITTERS = {'gull': gull_frames, 'crab': crab_frames, 'butterfly': butterfly_frames, 'dolphin': dolphin,
+            'whale_tail': whale_tail, 'smoke': smoke}
+
+
+def clothes_rack():
+    """A rail of shirts and coats at the outfitter's."""
+    p = Pix(48, 44)
+    p.rect(4, 4, 43, 5, '#8a8a92')
+    p.rect(5, 6, 5, 41, '#6a6a72')
+    p.rect(42, 6, 42, 41, '#6a6a72')
+    p.rect(2, 41, 9, 42, '#5a5a62')
+    p.rect(38, 41, 45, 42, '#5a5a62')
+    cols = ['#c84a3a', '#e8b23a', '#2e3f6e', '#5f8f5a', '#f4f0e8', '#c87ac8', '#3aa8a0']
+    for i, c in enumerate(cols):
+        x = 8 + i * 5
+        p.line(x + 2, 5, x + 2, 8, '#3a3a40')
+        long = i % 3 == 1
+        p.box(x, 8, x + 4, 26 if not long else 32, c)
+        p.rect(x - 1, 9, x - 1, 15, shift(hx(c), -0.2))
+        p.rect(x + 5, 9, x + 5, 15, shift(hx(c), -0.2))
+        if i == 0:
+            for y in range(10, 26, 3):
+                p.rect(x, y, x + 4, y, '#f4f0e8')
+    return p.outline()
+
+
+def mirror():
+    """A tall standing mirror in a wooden frame."""
+    p = Pix(28, 52)
+    p.box(4, 2, 23, 46, '#8a5a34')
+    p.rect(7, 5, 20, 43, '#a8c8d8')
+    for i in range(8):
+        p.px(9 + i, 30 - i * 3, '#e8f4f8')
+        p.px(10 + i, 30 - i * 3, '#e8f4f8')
+    p.rect(7, 36, 20, 43, '#8aa8b8')
+    p.rect(6, 47, 9, 50, '#5a3a24')
+    p.rect(18, 47, 21, 50, '#5a3a24')
+    return p.outline()
+
+
+def hat_stand():
+    """A stand with hats hung on its pegs."""
+    p = Pix(32, 52)
+    p.rect(15, 6, 16, 47, '#6a4028')
+    p.rect(9, 47, 22, 49, '#5a3a24')
+    p.ellipse(15.5, 9, 7, 3.5, '#2f8a8a')  # a beanie
+    p.ellipse(15.5, 7, 4, 3.5, '#2f8a8a')
+    p.ellipse(15.5, 4, 1.8, 1.6, '#f4efe2')
+    p.ellipse(8, 22, 6.5, 1.6, '#e0c070')  # a straw hat
+    p.ellipse(8, 20, 3.5, 2.5, '#e0c070')
+    p.rect(5, 21, 11, 21, '#c84a3a')
+    p.rect(19, 30, 28, 32, '#24305a')  # a captain's cap
+    p.rect(19, 33, 28, 33, '#1a1a22')
+    p.px(23, 31, '#f0c840')
+    p.px(24, 31, '#f0c840')
+    return p.outline()
+
+
+def mannequin():
+    """A dressmaker's dummy wearing a striped top."""
+    p = Pix(28, 52)
+    p.ellipse(14, 6, 4, 4.5, '#e8dcc0')
+    p.rect(13, 10, 14, 12, '#e8dcc0')
+    p.box(6, 13, 21, 30, '#f4f0e8')
+    for y in range(15, 30, 3):
+        p.rect(6, y, 21, y, '#2e3f6e')
+    p.box(8, 31, 19, 36, '#c84a6a')
+    p.rect(13, 37, 14, 46, '#6a4028')
+    p.rect(8, 46, 19, 48, '#5a3a24')
+    return p.outline()
+
+
+def fabric_rolls():
+    """Bolts of cloth standing in a crate."""
+    p = Pix(40, 36)
+    cols = ['#c84a3a', '#3aa8a0', '#e8b23a', '#c87ac8', '#5f8f5a', '#7aa0d8']
+    for i, c in enumerate(cols):
+        x = 4 + i * 5
+        top = 4 + (i * 7) % 9
+        p.box(x, top, x + 4, 26, c)
+        p.ellipse(x + 2.5, top + 0.5, 2.5, 1.2, shift(hx(c), 0.15))
+    p.box(2, 22, 37, 33, '#8a5a34')
+    p.rect(3, 27, 36, 27, '#6a4028')
+    return p.outline()
+
+
 def bed_frame_texture():
     return quilt()
 
@@ -736,6 +1021,10 @@ DECOR = {
     'quilt_red': lambda: quilt('#c84a4a'), 'quilt_blue': lambda: quilt('#4a6ac8'), 'stove': stove, 'anvil': anvil,
     'furnace': furnace, 'gears': gears, 'sacks': sacks, 'tea_set': tea_set, 'telescope': telescope,
     'trophy_board': trophy_board, 'crates': crate_stack, 'boat_model': boat_model, 'driftwood': driftwood,
+    'mark_stone': mark_stone, 'bottle': bottle, 'gulls_eye': gulls_eye, 'cave_mouth': cave_mouth,
+    'dartboard': dartboard, 'skip_stone': skip_stone, 'eye_carving': eye_carving,
+    'clothes_rack': clothes_rack, 'mirror': mirror, 'hat_stand': hat_stand, 'mannequin': mannequin,
+    'fabric_rolls': fabric_rolls,
 }
 TEX = {
     'floor_wood': lambda: floor_wood(), 'floor_wood_dark': lambda: floor_wood('#7a5030', 2),
@@ -754,6 +1043,8 @@ def main():
         out['tex/' + k] = fn().save('tex/%s.png' % k)
     for k, fn in DECOR.items():
         out['decor/' + k] = fn().save('decor/%s.png' % k)
+    for k, fn in CRITTERS.items():
+        out['critters/' + k] = fn().save('critters/%s.png' % k)
     print('interior art: %d textures, %d decor sprites' % (len(TEX), len(DECOR)))
     if preview:
         os.makedirs(PREVIEW, exist_ok=True)

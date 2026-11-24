@@ -27,6 +27,22 @@ const Trade := preload("res://scripts/trade.gd")
 const HutBuild := preload("res://scripts/hut_build.gd")
 const Quests := preload("res://scripts/quests.gd")
 const MapScreen := preload("res://scripts/map_screen.gd")
+const Mystery := preload("res://scripts/mystery.gd")
+const SideQuests := preload("res://scripts/sidequests.gd")
+const Companion := preload("res://scripts/companion.gd")
+const Minigames := preload("res://scripts/minigames.gd")
+const Journal := preload("res://scripts/journal.gd")
+const Ambient := preload("res://scripts/ambient.gd")
+const Menus := preload("res://scripts/menus.gd")
+const Glyphs := preload("res://scripts/input_glyphs.gd")
+const Dialogue := preload("res://scripts/dialogue.gd")
+const Bag := preload("res://scripts/bag.gd")
+const Progress := preload("res://scripts/progress.gd")
+const Kit := preload("res://scripts/kit.gd")
+const Spearfishing := preload("res://scripts/spearfishing.gd")
+const Story := preload("res://scripts/story.gd")
+const Wardrobe := preload("res://scripts/wardrobe.gd")
+const Music := preload("res://scripts/music.gd")
 
 var env: Environment
 var world_env: WorldEnvironment
@@ -52,6 +68,23 @@ var trade: CanvasLayer
 var hut_build: Node3D
 var quests: Node
 var map_screen: CanvasLayer
+var mystery: Node3D
+var sidequests: Node3D
+var companion: Node3D
+var minigames: Node3D
+var journal: CanvasLayer
+var ambient: Node3D
+var menus: CanvasLayer
+var dialogue: CanvasLayer
+var bag: CanvasLayer
+var progress: Node
+var kit: Node3D
+var spear: CanvasLayer
+var story: Node3D
+var wardrobe: CanvasLayer
+var music: Node
+var _first_time := false
+var skip_save := false  # starting a new game: don't write the old save back on the way out
 var save: Dictionary
 var quality_high := true
 var _area := ""
@@ -60,6 +93,9 @@ var _area_t := 0.0
 
 func _ready() -> void:
 	InputSetup.setup()
+	var glyphs := Glyphs.new()
+	glyphs.name = "Glyphs"
+	add_child(glyphs)
 	save = SaveGame.load_save()
 	sea = Sea.new()
 	sea.name = "Sea"
@@ -105,6 +141,22 @@ func _ready() -> void:
 	add_child(hud)
 	hud.setup(sea, save)
 
+	progress = Progress.new()
+	progress.name = "Progress"
+	add_child(progress)
+	progress.setup(save, hud, audio)
+
+	dialogue = Dialogue.new()
+	dialogue.name = "Dialogue"
+	add_child(dialogue)
+	dialogue.setup(hud, audio, player)
+
+	wardrobe = Wardrobe.new()
+	wardrobe.name = "Wardrobe"
+	add_child(wardrobe)
+	wardrobe.setup(save, hud, audio, player)
+	wardrobe.apply()
+
 	shop = Shop.new()
 	shop.name = "Shop"
 	add_child(shop)
@@ -119,6 +171,10 @@ func _ready() -> void:
 	town.name = "Town"
 	add_child(town)
 	town.setup(harbour, player, hud, audio, sea, save, shop)
+	town.dialogue = dialogue
+	town.register_service("outfitter", wardrobe.open_shop)
+	town.progress = progress
+	shop.progress = progress
 
 	day_night = DayNight.new()
 	day_night.name = "DayNight"
@@ -176,13 +232,110 @@ func _ready() -> void:
 	add_child(fishing)
 	fishing.setup(player, school, hud, cam, harbour, save, sea, audio, town)
 	fishing.boats = boats
+	fishing.progress = progress
 	boats.fishing = fishing
+	boats.progress = progress
+	quests.progress = progress
 
-	if save.visited.is_empty():
-		hud.toast("Welcome to Gullhaven! Walk with WASD, turn the camera with Q and E. Hold Space to cast.")
-		hud.toast("Hale's Tackle on the quay sells bait and better gear. Townsfolk have requests.")
-		hud.toast("Follow the coast road north to the river. The islands across the bay will need a boat.")
+	mystery = Mystery.new()
+	mystery.name = "Mystery"
+	add_child(mystery)
+	mystery.setup(harbour, player, hud, audio, sea, save, town)
+	interiors.mystery = mystery
+	mystery.progress = progress
+	fishing.specials.append(mystery.special_catch)
+	fishing.catch_hooks.append(mystery.on_catch)
+	if bool(save.mystery.get("restored", false)):
+		harbour.restore_light()
+
+	sidequests = SideQuests.new()
+	sidequests.name = "SideQuests"
+	add_child(sidequests)
+	sidequests.setup(harbour, player, hud, audio, save, town)
+	sidequests.progress = progress
+
+	companion = Companion.new()
+	companion.name = "Companion"
+	add_child(companion)
+	companion.setup(harbour, player, cam, hud, audio, sea, save, town)
+	companion.fishing = fishing
+	companion.boats = boats
+	town.companion = companion
+
+	minigames = Minigames.new()
+	minigames.name = "Minigames"
+	add_child(minigames)
+	minigames.setup(harbour, player, hud, audio, save, boats, interiors)
+	interiors.minigames = minigames
+	minigames.progress = progress
+
+	kit = Kit.new()
+	kit.name = "Kit"
+	add_child(kit)
+	kit.setup(harbour, player, cam, hud, audio, sea, save, town)
+	kit.fishing = fishing
+	kit.boats = boats
+	kit.school = school
+	kit.dialogue = dialogue
+	kit.progress = progress
+	kit.interiors = interiors
+	spear = Spearfishing.new()
+	spear.name = "Spearfishing"
+	add_child(spear)
+	spear.setup(kit, fishing, sea, hud, audio)
+	kit.spear = spear
+
+	for prov in [boats, mystery, sidequests, companion, minigames, kit]:
+		town.providers.append(prov)
+
+	journal = Journal.new()
+	journal.name = "Journal"
+	add_child(journal)
+	journal.setup(save, sea, hud, audio)
+	journal.mystery = mystery
+	journal.sidequests = sidequests
+	journal.minigames = minigames
+	journal.companion = companion
+
+	bag = Bag.new()
+	bag.name = "Bag"
+	add_child(bag)
+	bag.setup(save, sea, hud, audio)
+	bag.extra_sections.append(_bag_kit)
+
+	story = Story.new()
+	story.name = "Story"
+	add_child(story)
+	story.setup(harbour, player, hud, audio, sea, save, town)
+	story.fishing = fishing
+	story.interiors = interiors
+	story.dialogue = dialogue
+	story.progress = progress
+	story.map_screen = map_screen
+	story.mystery = mystery
+	story.start()
+	journal.story = story
+
+	ambient = Ambient.new()
+	ambient.name = "Ambient"
+	add_child(ambient)
+	ambient.setup(harbour, player, cam, audio, sea, boats)
+	ambient.school = school
+
+	menus = Menus.new()
+	menus.name = "Menus"
+	add_child(menus)
+	menus.setup(self, hud, audio, player, cam)
+	set_quality(bool(menus.settings.quality), false)
+
+	music = Music.new()
+	music.name = "Music"
+	add_child(music)
+	music.setup(self, audio)
+
+	_first_time = save.visited.is_empty()
 	_update_area(true)
+	menus.show_title()
 
 
 func _process(delta: float) -> void:
@@ -191,18 +344,31 @@ func _process(delta: float) -> void:
 	if _area_t <= 0.0:
 		_area_t = 0.5
 		_update_area(false)
+		school.wait_mul = progress.less("patience")
+	_update_controls()
 	if Input.is_action_just_pressed("time_skip"):
 		sea.skip_hours(1.0)
 		save.clock_offset = sea.offset
 		hud.toast("An hour passes...")
 	if Input.is_action_just_pressed("quality"):
-		_set_quality(not quality_high)
+		set_quality(not quality_high)
+		menus.settings.quality = quality_high
+		menus._save_settings()
 	if Input.is_action_just_pressed("photo"):
 		hud.visible = not hud.visible
 	if Input.is_action_just_pressed("logbook") and not hud.input_blocked() and fishing.state == 0:
 		logbook.open()
 	if Input.is_action_just_pressed("map") and not hud.input_blocked() and fishing.state == 0:
 		map_screen.open()
+	if Input.is_action_just_pressed("journal") and not hud.input_blocked() and fishing.state == 0:
+		journal.open()
+	if Input.is_action_just_pressed("bag") and not hud.input_blocked() and fishing.state == 0:
+		bag.open()
+	if Input.is_action_just_pressed("menu") and not hud.input_blocked() and fishing.state == 0 and menus.mode == "":
+		# Esc on a keyboard is also "back": aboard by a jetty it steps you ashore instead
+		var esc_lands := Input.is_action_just_pressed("cancel") and boats.aboard and boats.can_land()
+		if not esc_lands and not player.swimming:
+			menus.open_pause()
 	# Hear a feeding frenzy bubbling as you get close to it.
 	var near := 0.0
 	if school.frenzy_on:
@@ -214,20 +380,153 @@ func _process(delta: float) -> void:
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_APPLICATION_PAUSED:
-		if sea:
-			save.clock_offset = sea.offset
-		if interiors and interiors.is_inside():
-			var door: Vector3 = interiors.inside.door
-			save.pos = [door.x, door.y, door.z]
-		elif boats and boats.aboard:
-			boats.remember()
-			var spot: Vector3 = boats.landing_spot()
-			if spot != Vector3.INF:
-				save.pos = [spot.x, spot.y, spot.z]
-		elif player and player.is_on_floor():
-			var p := player.global_position
-			save.pos = [p.x, p.y, p.z]
-		SaveGame.write(save)
+		save_now()
+
+
+## Write the save, remembering where you're standing (or the door, or your mooring).
+func save_now() -> void:
+	if skip_save:
+		return
+	if sea:
+		save.clock_offset = sea.offset
+	if interiors and interiors.is_inside():
+		var door: Vector3 = interiors.inside.door
+		save.pos = [door.x, door.y, door.z]
+	elif boats and boats.aboard:
+		boats.remember()
+		var spot: Vector3 = boats.landing_spot()
+		if spot != Vector3.INF:
+			save.pos = [spot.x, spot.y, spot.z]
+	elif player and player.is_on_floor():
+		var p := player.global_position
+		save.pos = [p.x, p.y, p.z]
+	SaveGame.write(save)
+
+
+## The strip of what you can do right now, at the bottom of the screen.
+func _update_controls() -> void:
+	if menus.mode != "" or hud.modal:
+		hud.set_controls([])
+		return
+	var pairs: Array = []
+	match int(fishing.state):
+		0:
+			if boats.aboard:
+				pairs = [["move", "Steer"], ["action", "Cast"], ["bait", "Bait"]]
+				if kit.has_any():
+					pairs.append(["tool", "Lines in" if kit.troll_on else "Kit"])
+				if boats.can_land():
+					pairs.append(["cancel", "Step ashore"])
+				pairs.append_array([["map", "Map"], ["menu", "Menu"]])
+			elif player.swimming:
+				pairs = [["move", "Swim to shore"], ["menu", "Menu"]]
+			elif interiors.is_inside():
+				pairs = [["move", "Walk"], ["action", "Use"], ["bag", "Bag"], ["journal", "Journal"], ["menu", "Menu"]]
+				if interiors.in_hut():
+					pairs.insert(2, ["build", "Arrange"])
+			else:
+				pairs = [["move", "Walk"], ["camera", "Camera"], ["action", "Cast / use"], ["bait", "Bait"]]
+				if kit.has_any():
+					pairs.append(["tool", "Kit"])
+				pairs.append_array([["bag", "Bag"], ["journal", "Journal"], ["map", "Map"], ["menu", "Menu"]])
+		1:
+			pairs = [["action", "Let go to cast"]]
+		2, 3:
+			pairs = [["action", "Strike when it bites"], ["cancel", "Reel in"]]
+		4:
+			pairs = [["action", "Strike!"]]
+		5:
+			pairs = [["action", "Hold to reel"], ["move", "Steer against runs"]]
+		6:
+			pairs = [["action", "Continue"]]
+	hud.set_controls(pairs)
+
+
+## The bag's Kit section: pots, net, trolling rig, speargun.
+func _bag_kit() -> String:
+	var k: Dictionary = save.kit
+	if k.is_empty():
+		return ""
+	var out := "[color=#ffd24d][b]Kit[/b][/color]\n"
+	if int(k.get("pot", 0)) > 0:
+		out += "Crab pots: %d (%d out in the water)\n" % [int(k.pot), (save.pots as Array).size()]
+	for pair in [["net", "Cast net"], ["troll", "Trolling rig"], ["spear", "Snorkel and speargun"]]:
+		if int(k.get(pair[0], 0)) > 0:
+			out += "%s\n" % pair[1]
+	return out
+
+
+## The line under the game menu's heading: day, time, where you are, your shells.
+func status_line() -> String:
+	var e: Dictionary = sea.env
+	var hour := float(e.get("hour", 9.0))
+	var h := int(hour)
+	var h12 := 12 if h % 12 == 0 else h % 12
+	var place := _area if _area != "" else "Out on the water"
+	if interiors.is_inside():
+		place = "Indoors"
+	var day := int(floor(float(e.get("t", 0.0)) / 1440.0)) % 7
+	var days := ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+	return "%s, %d:%02d %s   %s   %s   %d shells" % [days[day], h12, int((hour - h) * 60.0), "am" if h < 12 else "pm",
+		str(e.get("season", "")).capitalize(), place, int(save.shells)]
+
+
+## The Fisher page of the game menu: how you're getting on.
+func fisher_text() -> String:
+	var out := ""
+	var found: Dictionary = save.log
+	var species := 0
+	var biggest := ""
+	var big_cm := 0.0
+	for id in found:
+		var rec: Dictionary = found[id]
+		if int(rec.get("count", 0)) > 0:
+			species += 1
+		var e: Dictionary = sea.by_id.get(id, {})
+		if float(rec.get("best", 0.0)) > big_cm and str(e.get("cat", "")) in ["fish", "legend"]:
+			big_cm = float(rec.get("best", 0.0))
+			biggest = str(e.get("n", id))
+	var total := 0
+	for e: Dictionary in sea.items:
+		var cp: Dictionary = e.get("cp", {})
+		var flags: Array = cp.get("flags", []) if cp.get("flags") is Array else []
+		if not flags.has("quest"):
+			total += 1
+	var stats: Dictionary = save.stats
+	out += "[color=#ffd24d][b]The catch[/b][/color]\n"
+	out += "Logbook: %d of %d found\n" % [species, total]
+	out += "Fish landed: %d   Junk hauled: %d   Finds dug up: %d\n" % [int(stats.get("catches", 0)), int(stats.get("junk", 0)), int(stats.get("finds", 0))]
+	out += "Best streak: %d\n" % int(save.best_streak)
+	if biggest != "":
+		out += "Biggest fish: %s, %.1f cm\n" % [biggest, big_cm]
+	out += "\n[color=#ffd24d][b]Around the coast[/b][/color]\n"
+	var visited: Dictionary = save.visited
+	out += "Places found: %d   Map explored: %d%%\n" % [visited.size(), map_screen.explored_pct()]
+	var thanks: Dictionary = save.thanks
+	var helped := 0
+	for who in thanks:
+		helped += int(thanks[who])
+	out += "Requests done for townsfolk: %d\n" % helped
+	out += "Boats owned: %d   Shells: %d\n" % [(save.boats as Array).size(), int(save.shells)]
+	if str(save.companion) != "":
+		out += "Your cat: %s\n" % str(companion.cat_name(str(save.companion)))
+	return out
+
+
+## After the title screen: a few pointers the first time you play.
+func welcome() -> void:
+	if not _first_time:
+		return
+	_first_time = false
+	if (save.look as Dictionary).is_empty():
+		wardrobe.open_create(_created)
+	else:
+		_created()
+
+
+func _created() -> void:
+	hud.toast("Welcome to Gullhaven! Walk with {move}, turn the camera with {camera}. The gold corner says what to do next.")
+	story.intro()
 
 
 func _on_gate_blocked(text: String) -> void:
@@ -392,7 +691,7 @@ func _build_environment() -> void:
 	add_child(moon)
 
 
-func _set_quality(high: bool) -> void:
+func set_quality(high: bool, say := true) -> void:
 	quality_high = high
 	var attr := world_env.camera_attributes as CameraAttributesPractical
 	attr.dof_blur_far_enabled = high
@@ -400,4 +699,5 @@ func _set_quality(high: bool) -> void:
 	env.ssao_enabled = high
 	env.volumetric_fog_enabled = high
 	sun.shadow_blur = 1.5 if high else 0.5
-	hud.toast("Quality: " + ("High" if high else "Low"))
+	if say:
+		hud.toast("Quality: " + ("High" if high else "Low"))

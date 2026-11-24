@@ -11,7 +11,8 @@ config_version=5
 [application]
 
 config/name="Gullhaven"
-config/description="A cosy multiplayer fishing game in HD-2D."
+config/version="0.5.0-beta"
+config/description="A cosy fishing and exploration game in HD-2D."
 run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"

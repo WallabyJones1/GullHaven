@@ -296,7 +296,9 @@ func folk(parent: Node3D, p: Dictionary, t: Dictionary) -> void:
 		who = "%s of %s" % [who, str(t.name)]
 	world.folk[who] = {"node": s, "home": pos, "role": str(p.role), "town": str(t.id), "town_name": str(t.name),
 		"inside": str(p.get("inside", ""))}
-	world.walkers.append({"node": s, "home": pos, "kind": "folk", "dir": Vector3.BACK, "t": randf() * 4.0})
+	var role := str(p.get("role", ""))
+	var roam := 5.0 if role == "tips" else (2.0 if role.begins_with("ask:") else 0.0)
+	world.walkers.append({"node": s, "home": pos, "kind": "folk", "dir": Vector3.BACK, "t": randf() * 4.0, "target": pos, "wander": roam})
 
 
 func cat(parent: Node3D, coat: String, pos: Vector3) -> void:

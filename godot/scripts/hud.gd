@@ -4,10 +4,53 @@ extends CanvasLayer
 ## the fight meters, the catch card, toasts and the banner when you reach a new place.
 
 const UI := preload("res://scripts/ui_kit.gd")
+const Glyphs := preload("res://scripts/input_glyphs.gd")
 const DayNight := preload("res://scripts/day_night.gd")
 
 const SKY_NAMES := {"calm": "Calm", "windy": "Windy", "rain": "Rain", "fog": "Fog", "storm": "Storm"}
 const TIDE_NAMES := {"high": "High tide", "low": "Low tide", "rising": "Rising tide", "falling": "Falling tide"}
+
+
+## The reel bar for tough fish: a tall track with your green zone and the fish in it,
+## and a meter beside it that fills while the fish stays in the zone.
+class ReelGame extends Control:
+	var zone := 0.0
+	var zone_h := 0.22
+	var fish := 0.5
+	var fill := 0.25
+	var inside := true
+	var icon: Texture2D
+	var tint := Color.WHITE
+
+	func _draw() -> void:
+		var track := Rect2(Vector2(0.0, 0.0), Vector2(70.0, size.y))
+		draw_rect(track, Color(0.04, 0.08, 0.16, 0.94))
+		var inner := track.grow(-5.0)
+		# water shading
+		for i in 6:
+			var y := inner.position.y + inner.size.y * i / 6.0
+			draw_rect(Rect2(inner.position.x, y, inner.size.x, inner.size.y / 6.0), Color(0.1, 0.25 + i * 0.04, 0.42 + i * 0.03, 0.5))
+		var zh := inner.size.y * zone_h
+		var zy := inner.end.y - inner.size.y * zone - zh
+		var zc := Color(0.45, 0.95, 0.5, 0.55) if inside else Color(0.95, 0.85, 0.4, 0.45)
+		draw_rect(Rect2(inner.position.x, zy, inner.size.x, zh), zc)
+		draw_rect(Rect2(inner.position.x, zy, inner.size.x, zh), Color(0.8, 1.0, 0.8, 0.9), false, 2.0)
+		var fy := inner.end.y - inner.size.y * fish
+		if icon:
+			var w := 52.0
+			var h := w * float(icon.get_height()) / maxf(1.0, float(icon.get_width()))
+			draw_texture_rect(icon, Rect2(inner.get_center().x - w * 0.5, fy - h * 0.5, w, h), false, tint)
+		else:
+			draw_circle(Vector2(inner.get_center().x, fy), 10.0, Color(0.9, 0.95, 1.0))
+		draw_rect(track, Color(0.96, 0.86, 0.62), false, 3.0)
+		# the meter
+		var meter := Rect2(Vector2(84.0, 0.0), Vector2(22.0, size.y))
+		draw_rect(meter, Color(0.04, 0.05, 0.1, 0.95))
+		var m := meter.grow(-3.0)
+		var fh := m.size.y * clampf(fill, 0.0, 1.0)
+		var mc := Color(1.0, 0.45, 0.4) if fill < 0.2 else Color(0.5, 0.95, 0.6)
+		draw_rect(Rect2(m.position.x, m.end.y - fh, m.size.x, fh), mc)
+		draw_rect(meter, Color(0.96, 0.86, 0.62), false, 2.0)
 
 
 ## A flat pixel-style meter.
@@ -43,7 +86,12 @@ var log_label: Label
 var requests_panel: PanelContainer
 var requests_list: VBoxContainer
 var bait_label: Label
-var prompt_label: Label
+var prompt_label: RichTextLabel
+var controls_label: RichTextLabel
+var _prompt_raw := ""
+var _controls_raw: Array = []
+var _glyph_device := ""
+var _controls_device := ""
 var toast_panel: PanelContainer
 var toast_label: Label
 var power_box: Control
@@ -75,6 +123,13 @@ var _target_shells := 0.0
 var _block_until := 0
 var modal := false  # a mode (arranging furniture) has the controls
 var mats_label: Label
+var reel_game: ReelGame
+var _tension_row: Control
+var level_label: Label
+var xp_bar: Bar
+var objective_panel: PanelContainer
+var objective_title: Label
+var objective_label: Label
 
 
 func setup(s: Node, sv: Dictionary) -> void:
@@ -101,6 +156,15 @@ func setup(s: Node, sv: Dictionary) -> void:
 	money.add_child(shells_label)
 	money.add_child(streak_label)
 	col.add_child(money)
+	var lv_row := HBoxContainer.new()
+	lv_row.add_theme_constant_override("separation", 8)
+	level_label = UI.label("Fisher Lv 1", 18, UI.GOOD, true)
+	lv_row.add_child(level_label)
+	xp_bar = Bar.new()
+	xp_bar.custom_minimum_size = Vector2(130.0, 14.0)
+	xp_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	lv_row.add_child(xp_bar)
+	col.add_child(lv_row)
 	clock_label = UI.label("9:00 am", 22, UI.CREAM)
 	env_label = UI.label("", 18, UI.SKY)
 	log_label = UI.label("Logbook  0", 18, UI.SKY)
@@ -113,7 +177,7 @@ func setup(s: Node, sv: Dictionary) -> void:
 	area_label = UI.label("", 18, UI.CREAM)
 	col.add_child(area_label)
 
-	# Top right: what the townsfolk want.
+	# Top right: the story's next step, then what the townsfolk want.
 	var right := VBoxContainer.new()
 	right.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	right.grow_horizontal = Control.GROW_DIRECTION_BEGIN
@@ -121,7 +185,20 @@ func setup(s: Node, sv: Dictionary) -> void:
 	right.offset_right = -20.0
 	right.offset_top = 18.0
 	right.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	right.add_theme_constant_override("separation", 8)
 	root.add_child(right)
+	objective_panel = UI.panel()
+	var ocol := VBoxContainer.new()
+	ocol.add_theme_constant_override("separation", 2)
+	objective_panel.add_child(ocol)
+	objective_title = UI.label("", 18, UI.GOLD, true)
+	ocol.add_child(objective_title)
+	objective_label = UI.label("", 20, UI.CREAM)
+	objective_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	objective_label.custom_minimum_size = Vector2(340.0, 0.0)
+	ocol.add_child(objective_label)
+	objective_panel.visible = false
+	right.add_child(objective_panel)
 	requests_panel = UI.panel()
 	right.add_child(requests_panel)
 	var rcol := VBoxContainer.new()
@@ -145,7 +222,9 @@ func setup(s: Node, sv: Dictionary) -> void:
 	bait_label = UI.label("Bait: Bread dough", 20, UI.CREAM)
 	bait_panel.add_child(bait_label)
 	bottom_left.add_child(bait_panel)
-	bottom_left.add_child(UI.label("Space cast, talk   Q/E turn camera   Wheel zoom   R bait   L Logbook   T skip hour   F2 quality", 16, UI.DIM))
+	controls_label = _rich(17)
+	controls_label.custom_minimum_size = Vector2(900.0, 0.0)
+	bottom_left.add_child(controls_label)
 
 	# Top centre: toasts.
 	var toast_row := _centered(root, Control.PRESET_TOP_WIDE, 20.0, 70.0)
@@ -170,7 +249,8 @@ func setup(s: Node, sv: Dictionary) -> void:
 
 	# Bottom centre: the context prompt.
 	var prompt_row := _centered(root, Control.PRESET_BOTTOM_WIDE, -70.0, -30.0)
-	prompt_label = UI.label("", 24, UI.CREAM)
+	prompt_label = _rich(24)
+	prompt_label.custom_minimum_size = Vector2(1000.0, 0.0)
 	prompt_row.add_child(prompt_label)
 
 	# Cast power.
@@ -194,9 +274,21 @@ func setup(s: Node, sv: Dictionary) -> void:
 	tension_bar = Bar.new()
 	tension_bar.marks = [0.75, 0.9]
 	reel_bar = Bar.new()
-	fcol.add_child(_meter_row("Tension", tension_bar))
+	_tension_row = _meter_row("Tension", tension_bar)
+	fcol.add_child(_tension_row)
 	fcol.add_child(_meter_row("Reel", reel_bar))
 	fight_box.visible = false
+
+	# The reel bar, right of centre.
+	reel_game = ReelGame.new()
+	reel_game.set_anchors_preset(Control.PRESET_CENTER_RIGHT)
+	reel_game.offset_left = -360.0
+	reel_game.offset_right = -250.0
+	reel_game.offset_top = -230.0
+	reel_game.offset_bottom = 230.0
+	reel_game.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	reel_game.visible = false
+	root.add_child(reel_game)
 
 	# The catch card.
 	card_box = CenterContainer.new()
@@ -224,7 +316,7 @@ func setup(s: Node, sv: Dictionary) -> void:
 	card_note = UI.label("", 20, UI.GOOD)
 	card_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	card_note.custom_minimum_size = Vector2(420.0, 0.0)
-	var hint := UI.label("Press Space to continue", 18, UI.DIM)
+	var hint := Glyphs.bind(UI.label("", 18, UI.DIM), "{action} to continue")
 	for c in [card_title, card_name, card_rarity, card_icon, card_size, card_tier, card_reward, card_note, hint]:
 		ccol.add_child(c)
 		if c is Label:
@@ -266,6 +358,28 @@ func show_area(title: String, subtitle := "", announce := true) -> void:
 	_banner_t = 4.0
 	banner.modulate.a = 0.0
 	banner.visible = true
+
+
+## A big announcement across the top (a new level, a new chapter).
+func banner(title: String, subtitle := "") -> void:
+	banner_title.text = title
+	banner_sub.text = subtitle
+	banner_sub.visible = subtitle != ""
+	_banner_t = 4.0
+	banner.modulate.a = 0.0
+	banner.visible = true
+
+
+func set_level(lv: int, frac: float) -> void:
+	level_label.text = "Fisher Lv %d" % lv
+	xp_bar.set_value(frac, Color(0.5, 0.95, 0.6))
+
+
+## The story's current step in the top-right corner ("" hides it).
+func set_objective(heading: String, text: String) -> void:
+	objective_panel.visible = text != ""
+	objective_title.text = heading
+	objective_label.text = Glyphs.plain(text)
 
 
 ## Ignore gameplay presses for a moment (after closing a menu with the same key).
@@ -364,12 +478,46 @@ func refresh_bait() -> void:
 
 
 func set_prompt(text: String) -> void:
-	if prompt_label.text != text:
-		prompt_label.text = text
+	var stamp := "%s%d" % [Glyphs.device, Glyphs.version]
+	if _prompt_raw == text and _glyph_device == stamp:
+		return
+	_prompt_raw = text
+	_glyph_device = stamp
+	prompt_label.text = "[center]%s[/center]" % Glyphs.fmt(text) if text != "" else ""
+
+
+## The strip of what you can do right now: [[action, "what it does"], ...].
+func set_controls(pairs: Array) -> void:
+	var stamp := "%s%d" % [Glyphs.device, Glyphs.version]
+	if pairs == _controls_raw and _controls_device == stamp:
+		return
+	_controls_raw = pairs
+	_controls_device = stamp
+	var parts: Array[String] = []
+	for p in pairs:
+		parts.append("%s [color=#c8ccd8]%s[/color]" % [Glyphs.cap(str(p[0])), str(p[1])])
+	controls_label.text = "   ".join(parts)
+
+
+func _rich(size: int) -> RichTextLabel:
+	var r := RichTextLabel.new()
+	r.bbcode_enabled = true
+	r.fit_content = true
+	r.scroll_active = false
+	r.autowrap_mode = TextServer.AUTOWRAP_OFF
+	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	r.add_theme_font_override("normal_font", UI.font(false))
+	r.add_theme_font_override("bold_font", UI.font(true))
+	r.add_theme_font_size_override("normal_font_size", size)
+	r.add_theme_font_size_override("bold_font_size", size)
+	r.add_theme_color_override("default_color", UI.CREAM)
+	r.add_theme_constant_override("outline_size", 6)
+	r.add_theme_color_override("font_outline_color", Color(0.04, 0.05, 0.1))
+	return r
 
 
 func toast(text: String) -> void:
-	_toasts.append(text)
+	_toasts.append(Glyphs.plain(text))
 	if _toast_t <= 0.0:
 		_next_toast()
 
@@ -396,7 +544,7 @@ func show_fight(tension: float, progress: float, text: String, urgent: bool) -> 
 		tc = Color(1.0, 0.8, 0.3)
 	tension_bar.set_value(tension, tc)
 	reel_bar.set_value(progress, Color(1.0, 0.45, 0.4) if progress < 0.15 else UI.SKY)
-	fight_label.text = text
+	fight_label.text = Glyphs.plain(text)
 	var flash := urgent and (Time.get_ticks_msec() / 150) % 2 == 0
 	fight_label.add_theme_color_override("font_color", UI.GOLD if flash else UI.CREAM)
 
@@ -405,25 +553,52 @@ func hide_fight() -> void:
 	fight_box.visible = false
 
 
+func show_reel_game(on: bool, icon: Texture2D = null, tint := Color.WHITE) -> void:
+	reel_game.visible = on
+	_tension_row.visible = not on
+	if on:
+		reel_game.icon = icon
+		reel_game.tint = tint
+		reel_game.queue_redraw()
+
+
+func update_reel_game(zone: float, zone_h: float, fish: float, fill: float, inside: bool) -> void:
+	reel_game.zone = zone
+	reel_game.zone_h = zone_h
+	reel_game.fish = fish
+	reel_game.fill = fill
+	reel_game.inside = inside
+	reel_game.queue_redraw()
+
+
 func show_catch(info: Dictionary) -> void:
 	card_name.text = info.get("name", "")
 	var r := int(info.get("rarity", 0))
 	card_rarity.text = info.get("rarity_name", "")
-	var style := str(info.get("style", ""))
-	if style != "":
-		card_rarity.text += "   Fights like %s" % style
+	var diff := int(info.get("difficulty", 0))
+	if diff > 0:
+		card_rarity.text += "   %s fight (%d/5)" % [["", "Easy", "Steady", "Tricky", "Tough", "Fearsome"][clampi(diff, 0, 5)], diff]
 	card_rarity.add_theme_color_override("font_color", UI.RARITY_COLORS[clampi(r, 0, UI.RARITY_COLORS.size() - 1)])
 	card_icon.texture = info.get("icon")
 	card_icon.modulate = info.get("tint", Color.WHITE)
 	var cm := float(info.get("size", 0.0))
 	card_size.text = "%.1f cm" % cm
+	var style := str(info.get("style", ""))
+	if style != "":
+		card_size.text += ", fought like %s" % style
 	card_size.visible = cm > 0.0
 	var tier := str(info.get("tier", ""))
 	card_tier.text = "%s catch!" % tier
 	card_tier.visible = tier != ""
 	var shells := int(info.get("shells", 0))
-	card_reward.text = "+%d Shells" % shells
-	card_reward.visible = shells > 0
+	var xp := int(info.get("xp", 0))
+	var bits: Array[String] = []
+	if shells > 0:
+		bits.append("+%d Shells" % shells)
+	if xp > 0:
+		bits.append("+%d XP" % xp)
+	card_reward.text = "   ".join(bits)
+	card_reward.visible = not bits.is_empty()
 	var note := str(info.get("note", ""))
 	card_note.text = note
 	card_note.visible = note != ""

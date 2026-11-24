@@ -4,6 +4,7 @@ extends CanvasLayer
 ## Marks you, your boat, your hut, every town you've found, and what's still locked.
 
 const UI := preload("res://scripts/ui_kit.gd")
+const Glyphs := preload("res://scripts/input_glyphs.gd")
 const SaveGame := preload("res://scripts/save_game.gd")
 
 const CELL := 32.0  # metres per fog cell
@@ -37,6 +38,16 @@ class Marks extends Control:
 		var b: Dictionary = s.world.meta.bridge
 		if not s.world.permits.has("bridge") and s.seen_at(float(b.x), float(b.z)):
 			_cross(s.to_map(float(b.x), float(b.z)), Color(0.9, 0.3, 0.25))
+		# where the story wants you
+		var pin: Vector2 = s.story_pin
+		if pin != Vector2.INF:
+			var sp: Vector2 = s.to_map(pin.x, pin.y)
+			var k := 1.0 + 0.25 * sin(Time.get_ticks_msec() * 0.006)
+			var gem := PackedVector2Array([sp + Vector2(0, -11) * k, sp + Vector2(8, 0) * k, sp + Vector2(0, 11) * k, sp + Vector2(-8, 0) * k])
+			draw_colored_polygon(gem, Color(1.0, 0.82, 0.3))
+			var outline := gem.duplicate()
+			outline.append(gem[0])
+			draw_polyline(outline, Color(0.3, 0.18, 0.05), 2.0)
 		# your hut
 		var hut: Dictionary = s.world.meta.hut
 		var hp: Vector2 = s.to_map(float(hut.x), float(hut.z))
@@ -74,6 +85,7 @@ var interiors: Node3D
 var hud: CanvasLayer
 var audio: Node
 var save: Dictionary
+var story_pin := Vector2.INF  # the story's next step (x, z)
 var is_open := false
 var _cols := 40
 var _rows := 32
@@ -144,7 +156,7 @@ func setup(w: Node3D, p: CharacterBody3D, h: CanvasLayer, a: Node, sv: Dictionar
 	_marks = Marks.new()
 	_marks.screen = self
 	_frame.add_child(_marks)
-	col.add_child(UI.label("Yellow arrow: you   Blue: your boat   Orange: your hut   Red cross: locked   M or Esc to close", 17, UI.DIM))
+	col.add_child(Glyphs.bind(UI.label("", 17, UI.DIM), "Yellow arrow: you   Gold: your story   Blue: your boat   Orange: your hut   Red cross: locked   {map} or {cancel} to close"))
 
 
 func _layout() -> void:
@@ -199,13 +211,17 @@ func mark(at: Vector3) -> void:
 		save.seen = s
 
 
-func open() -> void:
-	_layout()
-	_update_fog()
+func explored_pct() -> int:
 	var n := 0
 	for v in _seen:
 		n += int(v)
-	_count.text = "%d%% explored" % int(round(100.0 * n / maxf(1.0, float(_seen.size()))))
+	return int(round(100.0 * n / maxf(1.0, float(_seen.size()))))
+
+
+func open() -> void:
+	_layout()
+	_update_fog()
+	_count.text = "%d%% explored" % explored_pct()
 	is_open = true
 	visible = true
 	get_tree().paused = true

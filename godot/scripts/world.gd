@@ -8,6 +8,7 @@ extends Node3D
 const Billboard := preload("res://scripts/billboard.gd")
 const TownBuilder := preload("res://scripts/town_builder.gd")
 
+const PLANT_SHADER := preload("res://shaders/plant.gdshader")
 const CHUNK := 32
 const VIEW_CHUNKS := 4
 const KEEP_CHUNKS := 6
@@ -48,6 +49,10 @@ var permits := {}  # unlocks from the save: permit_ranger, permit_ember, bridge
 var hut_tier := 0
 var focus: Node3D
 var indoor := false  # the world is hidden while you're inside a building
+var golden := false  # the Gull's Eye is back in the lighthouse lamp
+var wind := 0.3  # 0 still to 1 gale, from the weather; plants sway with it
+var _plant_mats: Array[ShaderMaterial] = []
+var mill_fixed := true  # Willowford's mill sails turn (they're cracked until you mend them)
 var bridge_node: Node3D
 var gate_nodes: Array[Node3D] = []
 var hut_node: Node3D
@@ -112,6 +117,15 @@ func build() -> void:
 	_update_vegetation(spawn_point)
 
 
+## The Gull's Eye is back: the lighthouse burns gold and reaches further.
+func restore_light() -> void:
+	golden = true
+	if beam:
+		beam.light_color = Color(1.0, 0.8, 0.38)
+		beam.spot_range = 120.0
+		beam.spot_angle = 11.0
+
+
 ## Hide (or show again) everything outdoors while you're inside a building.
 func set_indoor(on: bool) -> void:
 	indoor = on
@@ -159,10 +173,13 @@ func _process(delta: float) -> void:
 	_update_vegetation(at)
 	if indoor:
 		return
+	for m in _plant_mats:
+		m.set_shader_parameter("wind", wind)
 	for w in walkers:
 		_update_walker(w, delta, cam)
-	for s in spinners:
-		s.rotation.z += delta * 0.6
+	if mill_fixed:
+		for s in spinners:
+			s.rotation.z += delta * 0.6
 
 
 # --- questions about a spot --------------------------------------------------------
@@ -276,6 +293,21 @@ func surface_at(x: float, z: float) -> String:
 	return "stone"
 
 
+## The ground's material here: grass, sand, rock, dirt, cobble, forest, mud or pebble.
+func mat_at(x: float, z: float) -> String:
+	var names: Array = meta.materials
+	return str(names[clampi(_byte(mats, x, z), 0, names.size() - 1)])
+
+
+## Which island you're on (or just off), or "" on the mainland.
+func island_at(x: float, z: float) -> String:
+	for i in meta.islands:
+		var r: float = 60.0 if i.r == null else float(i.r) * 1.5 + 6.0
+		if Vector2(x - float(i.x), z - float(i.z)).length() < r:
+			return str(i.id)
+	return ""
+
+
 ## A place name for where you are: a town, a landmark or nothing.
 func area_name(x: float, z: float) -> String:
 	for t in meta.towns:
@@ -303,6 +335,7 @@ func folk_face(who: String, toward: Vector3) -> void:
 			if d.length() > 0.01:
 				w.dir = d.normalized()
 			w.t = 4.0
+			w.target = node.position  # stop and listen
 
 
 # --- terrain -----------------------------------------------------------------------
@@ -510,15 +543,21 @@ func _plant_mesh(kind: String) -> Mesh:
 	var q := QuadMesh.new()
 	q.size = size
 	q.center_offset = Vector3(0.0, size.y * 0.5 - 2.0 * px, 0.0)
-	var m := StandardMaterial3D.new()
-	m.albedo_texture = tex
-	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
-	m.alpha_scissor_threshold = 0.5
-	m.billboard_mode = BaseMaterial3D.BILLBOARD_FIXED_Y
-	m.billboard_keep_scale = true
-	m.cull_mode = BaseMaterial3D.CULL_DISABLED
-	m.roughness = 1.0
+	var m := ShaderMaterial.new()
+	m.shader = PLANT_SHADER
+	m.set_shader_parameter("tex", tex)
+	m.set_shader_parameter("texel", px)
+	var sway := 0.0
+	if kind.begins_with("rock") or kind.begins_with("boulder"):
+		sway = 0.0
+	elif kind.begins_with("bush"):
+		sway = 0.55
+	elif kind in SMALL_PLANTS or kind.begins_with("reeds") or kind.begins_with("fern") or kind.begins_with("flowers"):
+		sway = 1.0
+	else:
+		sway = 0.3  # trees: the canopy moves, the trunk doesn't
+	m.set_shader_parameter("sway", sway)
+	_plant_mats.append(m)
 	q.material = m
 	_plant_meshes[kind] = q
 	return q
@@ -631,10 +670,28 @@ func _update_walker(w: Dictionary, delta: float, cam: Camera3D) -> void:
 		return
 	w.t -= delta
 	if w.kind == "folk":
-		# townsfolk stand about and glance around now and then
+		# townsfolk stroll about near home, stop, and glance around
+		var goal: Vector3 = w.get("target", s.position)
+		var gap := goal - s.position
+		gap.y = 0.0
+		if gap.length() > 0.15:
+			var walk := gap.normalized() * minf(gap.length(), 1.1 * delta)
+			s.position += walk
+			s.position.y = stand_height(s.position.x, s.position.z)
+			w.dir = walk.normalized()
+			s.frame = Billboard.row_for(w.dir, cam) * 5 + [0, 1, 0, 2][int(_t * 7.0) % 4]
+			return
 		if w.t <= 0.0:
-			w.t = randf_range(2.0, 5.0)
-			w.dir = [Vector3.BACK, Vector3.BACK, Vector3.LEFT, Vector3.RIGHT, Vector3.FORWARD][randi() % 5]
+			w.t = randf_range(2.5, 6.0)
+			var roam := float(w.get("wander", 0.0))
+			if roam > 0.0 and randf() < 0.55:
+				var home: Vector3 = w.home
+				var cand := home + Vector3(randf_range(-roam, roam), 0.0, randf_range(-roam, roam))
+				if stand_height(cand.x, cand.z) > sea_level + 0.1 and walkable(cand.x, cand.z):
+					cand.y = stand_height(cand.x, cand.z)
+					w.target = cand
+			else:
+				w.dir = [Vector3.BACK, Vector3.BACK, Vector3.LEFT, Vector3.RIGHT, Vector3.FORWARD][randi() % 5]
 		s.frame = Billboard.row_for(w.dir, cam) * 5
 		return
 	# cats potter between spots near home, and sometimes sit or nap
