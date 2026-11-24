@@ -14,19 +14,20 @@ catalogue) and uses its own synthesized music and sound.
 
 ## Controls
 
-| Action                         | Keyboard / mouse            | Gamepad            |
-|--------------------------------|-----------------------------|--------------------|
-| Walk                           | WASD or arrow keys          | Left stick         |
-| Cast (hold, release)           | E, Space or left click      | A                  |
-| Strike on the "!" / reel (hold)| E, Space or left click      | A                  |
-| Steer against a run            | A/D or left/right           | Left stick         |
-| Talk, shop, pet a cat, dig     | E (while facing them)       | A                  |
-| Change bait                    | R                           | Y                  |
-| Logbook                        | L or Tab                    | Back               |
-| Reel in early / close a menu   | Q or Esc                    | B                  |
-| Skip an hour                   | T                           |                    |
-| Quality high/low               | F2                          |                    |
-| Hide the HUD (photo mode)      | P                           |                    |
+| Action                                  | Keyboard / mouse                 | Gamepad              |
+|-----------------------------------------|----------------------------------|----------------------|
+| Walk (relative to the camera)           | WASD or arrow keys               | Left stick           |
+| Turn the camera                         | Q / E, or drag with right mouse  | Bumpers, right stick |
+| Zoom                                    | Mouse wheel, - / =               | Right stick up/down  |
+| Cast (hold, release), strike, reel      | Space, F or left click           | A                    |
+| Talk, shop, pet a cat, dig              | Space or F (while facing them)   | A                    |
+| Steer against a run                     | A/D or left/right                | Left stick           |
+| Change bait                             | R                                | Y                    |
+| Logbook                                 | L or Tab                         | Back                 |
+| Reel in early / close a menu            | Esc                              | B                    |
+| Skip an hour                            | T                                |                      |
+| Quality high/low                        | F2                               |                      |
+| Hide the HUD (photo mode)               | P                                |                      |
 
 ## How it plays
 

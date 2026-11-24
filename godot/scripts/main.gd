@@ -68,6 +68,7 @@ func _ready() -> void:
 	cam.name = "Camera"
 	add_child(cam)
 	cam.setup(player, world_env.camera_attributes)
+	player.cam = cam
 
 	school = FishSchool.new()
 	school.name = "FishShadows"
@@ -104,7 +105,7 @@ func _ready() -> void:
 	add_child(fishing)
 	fishing.setup(player, school, hud, cam, harbour, save, sea, audio, town)
 
-	hud.toast("Welcome to Gullhaven! Walk with WASD. Face the water and hold E to cast.")
+	hud.toast("Welcome to Gullhaven! Walk with WASD, turn the camera with Q and E. Hold Space to cast.")
 	hud.toast("Hale's stall on the quay sells bait and better gear. Townsfolk have requests.")
 
 

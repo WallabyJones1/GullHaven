@@ -85,7 +85,7 @@ func setup(s: Node, sv: Dictionary, a: Node, h: CanvasLayer) -> void:
 
 	_message = UI.label("", 20, UI.GOOD)
 	col.add_child(_message)
-	col.add_child(UI.label("Up/down choose   E buy   Left/right change tab   Q leave", 18, UI.DIM))
+	col.add_child(UI.label("Up/down choose   Space buy   Left/right change tab   Esc leave", 18, UI.DIM))
 
 
 func open() -> void:

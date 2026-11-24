@@ -111,7 +111,7 @@ func nearest(pos: Vector3, facing := Vector3.ZERO) -> Dictionary:
 	var stall: Vector3 = harbour.stall_point
 	var to_stall := Vector2(pos.x - stall.x, pos.z - stall.z).length()
 	if to_stall < TALK_RANGE and _facing(pos, stall, facing):
-		best = {"kind": "shop", "who": "Hale", "text": "E: Shop at Hale's Tackle"}
+		best = {"kind": "shop", "who": "Hale", "text": "Space: Shop at Hale's Tackle"}
 		best_d = to_stall
 	for who in harbour.folk:
 		var node: Sprite3D = harbour.folk[who].node
@@ -119,23 +119,23 @@ func nearest(pos: Vector3, facing := Vector3.ZERO) -> Dictionary:
 		if d < TALK_RANGE and d < best_d and _facing(pos, node.position, facing):
 			best_d = d
 			if who == "Hale":
-				best = {"kind": "shop", "who": who, "text": "E: Shop at Hale's Tackle"}
+				best = {"kind": "shop", "who": who, "text": "Space: Shop at Hale's Tackle"}
 			else:
 				var req := _request_of(who)
-				var text := "E: Talk to %s" % who
+				var text := "Space: Talk to %s" % who
 				if not req.is_empty() and req.held:
-					text = "E: Give %s the %s" % [who, _name_of(req.id)]
+					text = "Space: Give %s the %s" % [who, _name_of(req.id)]
 				best = {"kind": "folk", "who": who, "text": text}
 	for c in harbour.cats:
 		var d := Vector2(pos.x - c.position.x, pos.z - c.position.z).length()
 		if d < CAT_RANGE and d < best_d and _facing(pos, c.position, facing):
 			best_d = d
-			best = {"kind": "cat", "node": c, "text": "E: Pet the cat"}
+			best = {"kind": "cat", "node": c, "text": "Space: Pet the cat"}
 	for spot in _comb:
 		var d := Vector2(pos.x - spot.position.x, pos.z - spot.position.z).length()
 		if d < COMB_RANGE and d < best_d and _facing(pos, spot.position, facing):
 			best_d = d
-			best = {"kind": "comb", "node": spot, "text": "E: Dig in the sand"}
+			best = {"kind": "comb", "node": spot, "text": "Space: Dig in the sand"}
 	return best
 
 

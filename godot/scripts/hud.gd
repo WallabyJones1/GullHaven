@@ -133,7 +133,7 @@ func setup(s: Node, sv: Dictionary) -> void:
 	bait_label = UI.label("Bait: Bread dough", 20, UI.CREAM)
 	bait_panel.add_child(bait_label)
 	bottom_left.add_child(bait_panel)
-	bottom_left.add_child(UI.label("E cast, talk   R bait   L Logbook   T skip hour   P hide HUD", 16, UI.DIM))
+	bottom_left.add_child(UI.label("Space cast, talk   Q/E turn camera   Wheel zoom   R bait   L Logbook   T skip hour", 16, UI.DIM))
 
 	# Top centre: toasts.
 	var toast_row := _centered(root, Control.PRESET_TOP_WIDE, 20.0, 70.0)
@@ -163,7 +163,7 @@ func setup(s: Node, sv: Dictionary) -> void:
 	var fcol := VBoxContainer.new()
 	fcol.add_theme_constant_override("separation", 6)
 	fight_panel.add_child(fcol)
-	fight_label = UI.label("Hold E to reel in", 24, UI.CREAM, true)
+	fight_label = UI.label("Hold Space to reel in", 24, UI.CREAM, true)
 	fight_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	fcol.add_child(fight_label)
 	tension_bar = Bar.new()
@@ -199,7 +199,7 @@ func setup(s: Node, sv: Dictionary) -> void:
 	card_note = UI.label("", 20, UI.GOOD)
 	card_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	card_note.custom_minimum_size = Vector2(420.0, 0.0)
-	var hint := UI.label("Press E to continue", 18, UI.DIM)
+	var hint := UI.label("Press Space to continue", 18, UI.DIM)
 	for c in [card_title, card_name, card_rarity, card_icon, card_size, card_tier, card_reward, card_note, hint]:
 		ccol.add_child(c)
 		if c is Label:

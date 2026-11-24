@@ -98,7 +98,7 @@ func setup(s: Node, sv: Dictionary, a: Node, h: CanvasLayer) -> void:
 	for c in [_d_name, _d_kind, _d_now, _d_stats, _d_hint]:
 		c.custom_minimum_size = Vector2(300.0, 0.0)
 		dcol.add_child(c)
-	col.add_child(UI.label("Arrows choose   R next page   L or Q close", 18, UI.DIM))
+	col.add_child(UI.label("Arrows choose   R next page   L or Esc close", 18, UI.DIM))
 
 
 func open() -> void:
@@ -241,5 +241,7 @@ func _short(n: String) -> String:
 
 
 func _icon(id: String) -> Texture2D:
-	var path := "res://art/fish/%s.png" % id
+	var path := "res://art/fish2/%s.png" % id
+	if not ResourceLoader.exists(path):
+		path = "res://art/fish/%s.png" % id
 	return load(path) if ResourceLoader.exists(path) else null

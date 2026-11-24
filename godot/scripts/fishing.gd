@@ -1,6 +1,6 @@
 extends Node
 ## The fishing loop.
-##   Cast: hold E (or click / pad A) to charge, release near the top for distance. Your rod
+##   Cast: hold Space (or click / pad A) to charge, release near the top for distance. Your rod
 ##     sets how far you can cast. The bait on your hook (R to change) shifts what bites.
 ##   Wait: a shadow comes over and nibbles. Striking early spooks it.
 ##   Bite: the "!" gives you 0.9 s to strike. What's on the line is rolled from the web
@@ -217,11 +217,12 @@ func _idle() -> void:
 	var f: Vector3 = player.facing
 	var pos: Vector3 = player.global_position
 	var near_water: bool = harbour.is_water(pos.x + f.x * 3.0, pos.z + f.z * 3.0) or harbour.is_water(pos.x + f.x * 6.0, pos.z + f.z * 6.0)
-	hud.set_prompt("Hold E to cast" if near_water else "")
+	hud.set_prompt("Hold Space to cast" if near_water else "")
 	if near_water and Input.is_action_just_pressed("action"):
 		power = 0.0
 		_power_dir = 1.0
 		_cast_dir = Vector3(f.x, 0.0, f.z).normalized()
+		player.face(_cast_dir)
 		_set_state(State.CHARGING)
 
 
@@ -281,7 +282,7 @@ func _casting(delta: float) -> void:
 		_use_bait()
 		school.lure_landed(Vector2(_cast_to.x, _cast_to.z))
 		var where := "the Sandy Shallows" if zone == "shallows" else "the harbour"
-		hud.set_prompt("Fishing %s...   Q to reel in" % where)
+		hud.set_prompt("Fishing %s...   Esc to reel in" % where)
 		_set_state(State.WAITING)
 
 
@@ -310,7 +311,7 @@ func _biting(_delta: float) -> void:
 		audio.play("miss", -4.0)
 		_break_streak()
 		school.bite_missed()
-		hud.set_prompt("Waiting for another bite...   Q to reel in")
+		hud.set_prompt("Waiting for another bite...   Esc to reel in")
 		_set_state(State.WAITING)
 
 
@@ -468,7 +469,7 @@ func _begin_phase(p: String, st: Dictionary, r: float) -> void:
 			_jump_t = 0.0
 			jumper.texture = _icon(str(catch_e.id))
 			jumper.modulate = _tint()
-			jumper.pixel_size = (1.0 / 26.0) * (0.8 + Sea.size_class(catch_e) * 0.35)
+			jumper.pixel_size = (1.0 / 44.0) * (0.8 + Sea.size_class(catch_e) * 0.35)
 			jumper.visible = true
 			audio.play("jump", -1.0, 1.0, 0.1)
 	cam.shake(0.25)
@@ -512,7 +513,7 @@ func _move_bobber(delta: float) -> void:
 
 
 func _fight_hud() -> void:
-	var text := "Hold E to reel in"
+	var text := "Hold Space to reel in"
 	if _state_t < 1.4:
 		text = "Hooked! Feels like %s." % STYLE_NAME.get(style, "a fish")
 	elif style == "junk":
@@ -727,7 +728,7 @@ func _on_bite(cls: int) -> void:
 	_splash(bobber.global_position)
 	audio.play("bite")
 	cam.shake(0.3)
-	hud.set_prompt("Strike! Press E")
+	hud.set_prompt("Strike! Press Space")
 	_set_state(State.BITE)
 
 
@@ -764,7 +765,9 @@ func _total_here() -> int:
 
 
 func _icon(id: String) -> Texture2D:
-	var path := "res://art/fish/%s.png" % id
+	var path := "res://art/fish2/%s.png" % id
+	if not ResourceLoader.exists(path):
+		path = "res://art/fish/%s.png" % id
 	return load(path) if ResourceLoader.exists(path) else null
 
 
@@ -962,3 +965,8 @@ func _set_state(s: State) -> void:
 	state = s
 	_state_t = 0.0
 	player.can_move = s == State.IDLE
+	if s == State.IDLE:
+		if player.pose == "cast":
+			player.pose = ""
+	elif s != State.LANDED:
+		player.pose = "cast"

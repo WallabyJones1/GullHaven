@@ -10,6 +10,7 @@ extends Node3D
 ## the sea is to the south, toward the camera. 16 texture pixels = 1 metre.
 
 const PIXEL := 1.0 / 16.0
+const Billboard := preload("res://scripts/billboard.gd")
 const LAND_TOP := 0.6
 
 var spawn_point := Vector3(0.0, LAND_TOP + 0.1, -2.5)
@@ -290,12 +291,10 @@ func _lamp(at: Vector3) -> void:
 func _build_scenery() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 2026
-	var tree_tex := []
-	for i in 5:
-		tree_tex.append(load("res://art/props/tree%d.png" % i))
+	var trees := ["oak0", "oak1", "oak2", "oak0", "oak1", "birch0", "birch1", "pine0", "pine1", "autumn0"]
 	var use_tree_model := ResourceLoader.exists("res://models/tree.glb")
 	var spots := 0
-	while spots < 46:
+	while spots < 40:
 		var x := rng.randf_range(-34.0, 33.0)
 		var z := rng.randf_range(-33.0, -20.0)
 		if absf(x - 1.0) < 2.5:
@@ -305,21 +304,34 @@ func _build_scenery() -> void:
 		if use_tree_model:
 			_use_model("tree", at)
 		else:
-			var weights := [0, 0, 0, 3, 3, 4, 1, 2]
-			var tree := _sprite(tree_tex[weights[rng.randi() % weights.size()]], at)
-			tree.pixel_size = PIXEL * 1.5  # trees tower over the townsfolk
-	for i in 14:
-		var x := rng.randf_range(-30.0, 30.0)
-		_sprite(load("res://art/props/bush_flower.png" if i % 3 == 0 else "res://art/props/bush.png"), Vector3(x, LAND_TOP, rng.randf_range(-9.2, -8.2)))
-	for i in 6:
-		var rz := rng.randf_range(-4.0, -2.5)
-		_sprite(load("res://art/props/reeds.png"), Vector3(rng.randf_range(-33.0, -14.0), beach_y(rz), rz))
+			_plant(trees[rng.randi() % trees.size()], at, 1.0 / 16.0)
+	var bushes := ["bush0", "bush1", "bush2", "bush_pink", "bush_white", "bush_yellow"]
+	for i in 16:
+		_plant(bushes[rng.randi() % bushes.size()], Vector3(rng.randf_range(-30.0, 30.0), LAND_TOP, rng.randf_range(-9.2, -8.2)), 1.0 / 20.0)
+	for i in 26:
+		var fx := rng.randf_range(-34.0, 32.0)
+		var fz := rng.randf_range(-19.0, -5.0)
+		if absf(fx - 1.0) < 2.0 or absf(fz + 10.5) < 1.4:
+			continue
+		_plant("flowers%d" % (rng.randi() % 5), Vector3(fx, LAND_TOP, fz), 1.0 / 20.0)
+	for i in 10:
+		var rz := rng.randf_range(-4.0, -1.5)
+		_plant("reeds%d" % (i % 2), Vector3(rng.randf_range(-34.0, -14.0), beach_y(rz), rz), 1.0 / 20.0)
+	for p in [Vector3(-34.0, LAND_TOP, -6.0), Vector3(32.5, LAND_TOP, -1.2), Vector3(-13.0, beach_y(-3.6), -3.6)]:
+		_plant("boulder%d" % (int(p.x) % 2 if p.x > 0 else 1), p, 1.0 / 16.0)
 	# Fish crates and barrels by the dock.
 	var planks := _mat("planks")
 	for p in [Vector3(6.2, LAND_TOP, -1.4), Vector3(6.9, LAND_TOP, -1.5), Vector3(6.5, LAND_TOP + 0.7, -1.45)]:
 		_box(Vector3(0.7, 0.7, 0.7), p + Vector3(0.0, 0.35, 0.0), planks)
 	for p in [Vector3(-0.6, LAND_TOP, -1.3), Vector3(0.1, LAND_TOP, -1.6)]:
 		_cylinder(0.33, 0.9, p + Vector3(0.0, 0.45, 0.0), _mat("timber"))
+
+
+func _plant(id: String, at: Vector3, pixel: float) -> Sprite3D:
+	var s := Billboard.sprite(load("res://art/plants/%s.png" % id), pixel)
+	s.position = at
+	add_child(s)
+	return s
 
 
 func _build_boat() -> void:
@@ -349,26 +361,30 @@ func _build_boat() -> void:
 func _build_people() -> void:
 	# name, sprite sheet, where they stand, which way they face
 	var people := [
-		["Juniper", "folk0", Vector3(-4.0, LAND_TOP, -9.6), 0],
-		["Hale", "folk2", Vector3(12.0, LAND_TOP, -3.6), 0],
-		["Old Marlo", "folk4", Vector3(4.6, 0.55, 12.4), 2],
-		["Pip", "folk6", Vector3(-20.0, beach_y(-2.0), -2.0), 3],
+		["Juniper", "juniper", Vector3(-4.0, LAND_TOP, -9.6), Vector3.BACK],
+		["Hale", "hale", Vector3(12.0, LAND_TOP, -3.6), Vector3.BACK],
+		["Old Marlo", "marlo", Vector3(4.6, 0.55, 12.4), Vector3.LEFT],
+		["Pip", "pip", Vector3(-20.0, beach_y(-2.0), -2.0), Vector3.RIGHT],
 	]
 	for f in people:
-		var s := _sprite(load("res://art/chars/%s.png" % f[1]), f[2], 3, 4)
-		s.frame = f[3] * 3
+		var s := Billboard.sprite(load("res://art/chars2/%s.png" % f[1]), 1.0 / 26.0, 5, 4, 46.0)
+		s.position = f[2]
+		add_child(s)
 		folk[f[0]] = {"node": s, "home": f[2]}
-		_walkers.append({"node": s, "home": f[2], "kind": "folk", "row": f[3], "t": randf() * 4.0, "frames": 3})
-	var coats := ["ginger", "black", "tabby", "calico"]
-	var cat_spots := [Vector3(8.6, LAND_TOP, -3.4), Vector3(-2.0, LAND_TOP, -2.0), Vector3(3.5, 0.55, 4.0), Vector3(-12.0, LAND_TOP, -10.0)]
+		_walkers.append({"node": s, "home": f[2], "kind": "folk", "dir": f[3], "t": randf() * 4.0})
+	var coats := ["ginger", "black", "tabby", "calico", "tux", "siamese"]
+	var cat_spots := [Vector3(8.6, LAND_TOP, -3.4), Vector3(-2.0, LAND_TOP, -2.0), Vector3(3.5, 0.55, 4.0),
+		Vector3(-12.0, LAND_TOP, -10.0), Vector3(18.0, LAND_TOP, -6.0), Vector3(-24.0, LAND_TOP, -8.0)]
 	for i in coats.size():
-		var path: String = "res://art/cats/%s.png" % coats[i]
+		var path: String = "res://art/cats2/%s.png" % coats[i]
 		if not ResourceLoader.exists(path):
 			continue
-		var c := _sprite(load(path), cat_spots[i], 2, 4)
-		c.pixel_size = PIXEL * 0.75
+		var c := Billboard.sprite(load(path), 1.0 / 40.0, 5, 4, 29.0)
+		c.position = cat_spots[i]
+		add_child(c)
 		cats.append(c)
-		_walkers.append({"node": c, "home": cat_spots[i], "kind": "cat", "row": 0, "t": randf() * 3.0, "frames": 2, "target": cat_spots[i]})
+		_walkers.append({"node": c, "home": cat_spots[i], "kind": "cat", "dir": Vector3.BACK, "t": randf() * 3.0,
+			"target": cat_spots[i], "rest": ""})
 
 
 ## Turn a townsperson to face a point (someone talking to them) for a few seconds.
@@ -379,45 +395,48 @@ func folk_face(who: String, toward: Vector3) -> void:
 	for w in _walkers:
 		if w.node == node:
 			var d := toward - node.position
-			if absf(d.x) > absf(d.z):
-				w.row = 2 if d.x < 0.0 else 3
-			else:
-				w.row = 1 if d.z < 0.0 else 0
+			d.y = 0.0
+			if d.length() > 0.01:
+				w.dir = d.normalized()
 			w.t = 4.0
-			node.frame = int(w.row) * 3
 
 
 func _update_walker(w: Dictionary, delta: float) -> void:
 	var s: Sprite3D = w.node
+	var cam := get_viewport().get_camera_3d()
 	w.t -= delta
 	if w.kind == "folk":
 		# Townsfolk stand about and glance around now and then.
 		if w.t <= 0.0:
 			w.t = randf_range(2.0, 5.0)
-			w.row = [0, 0, 2, 3][randi() % 4]
-		s.frame = int(w.row) * 3
+			w.dir = [Vector3.BACK, Vector3.BACK, Vector3.LEFT, Vector3.RIGHT, Vector3.FORWARD][randi() % 5]
+		s.frame = Billboard.row_for(w.dir, cam) * 5
 		return
-	# Cats potter between spots near home.
+	# Cats potter between spots near home, and sometimes sit or nap.
 	var target: Vector3 = w.target
 	var to := target - s.position
 	to.y = 0.0
 	if to.length() < 0.1 or w.t <= 0.0:
 		if w.t <= 0.0:
-			w.t = randf_range(2.5, 6.0)
-			var home: Vector3 = w.home
-			var cand := home + Vector3(randf_range(-2.0, 2.0), 0.0, randf_range(-1.5, 1.5))
-			w.target = cand if not is_water(cand.x, cand.z) else home
-		s.frame = 0
+			w.t = randf_range(2.5, 7.0)
+			var roll := randf()
+			if roll < 0.25:
+				w.rest = "sit"
+			elif roll < 0.4:
+				w.rest = "sleep"
+				w.t *= 2.0
+			else:
+				w.rest = ""
+				var home: Vector3 = w.home
+				var cand := home + Vector3(randf_range(-2.5, 2.5), 0.0, randf_range(-2.0, 2.0))
+				w.target = cand if not is_water(cand.x, cand.z) else home
+		var col := 3 if w.rest == "sit" else (4 if w.rest == "sleep" else 0)
+		s.frame = Billboard.row_for(w.dir, cam) * 5 + col
 		return
 	var step := to.normalized() * minf(to.length(), 0.9 * delta)
 	s.position += step
-	# Cat sheets run down, left, right, up (one row each, two walk frames).
-	var row := 0
-	if absf(step.x) >= absf(step.z):
-		row = 1 if step.x < 0.0 else 2
-	else:
-		row = 3 if step.z < 0.0 else 0
-	s.frame = row * 2 + (int(_t * 6.0) % 2)
+	w.dir = step.normalized()
+	s.frame = Billboard.row_for(w.dir, cam) * 5 + 1 + (int(_t * 6.0) % 2)
 
 
 # --- helpers -------------------------------------------------------------------

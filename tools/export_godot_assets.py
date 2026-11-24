@@ -35,7 +35,7 @@ const looks={player:12};
 for(const[k,id]of Object.entries(looks))out['art/chars/'+k+'.png']=png(sheet(id));
 // everything that can be caught, hooked, snagged or combed: catalogue art (the Logbook pictures) and rules
 const items=[];for(const e of CAT){if(e.how==='gift'||e.how==='oyster')continue;const im=catArt(e.id);if(!im)continue;out['art/fish/'+e.id+'.png']=png(im);
-  items.push({id:e.id,n:e.n,cat:e.cat,z:e.z,r:e.r,c:e.c,cp:e.cp,sz:e.sz||null,price:e.price,how:e.how||'',art:String(e.art||'').split('|')[0],release:!!e.release,hint:e.hint||'',what:e.what||''})}
+  items.push({id:e.id,n:e.n,cat:e.cat,z:e.z,r:e.r,c:e.c,cp:e.cp,sz:e.sz||null,price:e.price,how:e.how||'',art:String(e.art||'').split('|')[0],look:String(e.art||''),release:!!e.release,hint:e.hint||'',what:e.what||''})}
 out['data/catalog.json']=JSON.stringify({zones:ZONES,order:ZONE_ORDER,rarity:RAR,rarw:RARW,bait:BAIT,bait_order:BAIT_ORDER,
   gear:{rod:GEAR.rod,reel:GEAR.reel,line:GEAR.line},epoch:T_EPOCH,items},null,1);
 // scenery sprites for the diorama (billboards)
