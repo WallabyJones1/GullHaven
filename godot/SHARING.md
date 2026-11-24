@@ -10,7 +10,9 @@ for a beta) and Steam (later; it takes a few weeks to set up).
 The game also builds for the web. On every push to `hd2d`, once the smoke test passes with
 no failures and the web build plays in a real browser (Chromium), the web files go to the
 `godot-web` branch. Railway's **gullhaven-3d** service (in the Gullhaven project) deploys
-that branch automatically, so the site always has the latest build that passed.
+that branch automatically, so the site always has the latest build that passed:
+
+**https://gullhaven-3d-production.up.railway.app**
 
 - It plays in desktop browsers (Chrome, Edge, Firefox, Safari) with a keyboard, mouse or
   controller. Phones and tablets load it but there are no touch controls yet.

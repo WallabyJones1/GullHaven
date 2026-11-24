@@ -8,7 +8,17 @@ downloads it (`.github/workflows/gullhaven-beta.yml`, job **export**):
 2. **Smoke test**: `godot --headless --fixed-fps 60 -- --smoke` runs
    `scripts/smoke_test.gd`, which plays the game with nobody at the controls and checks
    that things actually work, by pressing the same inputs a player would.
-3. **Export** Windows, macOS and Linux, and zip them.
+3. **Export** Windows, macOS, Linux and the web, and zip them.
+4. **Play the web build in a browser**: `.github/scripts/web_check.mjs` serves it and opens
+   it in headless Chromium (software WebGL 2), once as a visitor (to the title menu) and
+   once with `?ci-check`, which runs a short smoke test (new game, make a fisher, Gran's
+   letter, look round the harbour). It prints the browser console and saves screenshots.
+5. **Publish the site**: if the smoke test had no failures and the browser check passed,
+   the web build goes to the `godot-web` branch (screenshots in `ci/`), which Railway
+   serves at https://gullhaven-3d-production.up.railway.app.
+
+The browser check runs at about 1 frame a second on GitHub's machines (no graphics card),
+so it's a check that the game loads and plays, not of speed.
 
 The run's log shows "N checks passed", then any `SMOKE CHECK FAIL` lines and engine errors
 (with the line before each). Engine noise from running headless (no keyboard layout to ask)
