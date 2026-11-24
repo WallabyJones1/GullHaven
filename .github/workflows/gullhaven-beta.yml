@@ -78,9 +78,11 @@ jobs:
         run: |
           timeout 600 ./godot-bin --headless --fixed-fps 60 --path godot -- --smoke > smoke.log 2>&1 || true
           echo "$(grep -c 'SMOKE CHECK ok' smoke.log) checks passed"
-          grep -E "SMOKE CHECK FAIL|SCRIPT ERROR|ERROR|   at: |SMOKE DONE" smoke.log | head -400 || true
+          # (headless Godot can't name keys from the keyboard layout: that noise is dropped)
+          grep -v -E "Not supported by this display server|keyboard_get_keycode_from_physical" smoke.log > smoke-clean.log || true
+          grep -B1 -E "SMOKE CHECK FAIL|SCRIPT ERROR|ERROR|WARNING|   at: |SMOKE DONE" smoke-clean.log | head -400 || true
           if grep -q "SMOKE DONE" smoke.log; then echo "Smoke test finished."; else echo "Smoke test did not finish."; fi
-          if grep -E "SCRIPT ERROR|ERROR" smoke.log > smoke-problems.log; then
+          if grep -E "SMOKE CHECK FAIL|SCRIPT ERROR|ERROR" smoke-clean.log > smoke-problems.log; then
             echo "## Smoke test problems" >> "$GITHUB_STEP_SUMMARY"
             head -100 smoke-problems.log | sed 's/^/    /' >> "$GITHUB_STEP_SUMMARY"
           fi

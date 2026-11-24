@@ -642,7 +642,11 @@ func _tour_walk() -> void:
 func _tour_leave(name: String) -> void:
 	_release_all()
 	var moved: float = (main.player.global_position as Vector3).distance_to(_mark)
-	_check(moved > 0.4, "can walk about inside %s (%.1f m)" % [name, moved])
+	var pl: Node = main.player
+	var pp: Vector3 = pl.global_position
+	_check(moved > 0.4, "can walk about inside %s (%.1f m; can_move %s, swimming %s, riding %s, floor %s, hud blocked %s, paused %s, walkable %s, y %.2f)" % [
+		name, moved, pl.can_move, pl.swimming, pl.riding, pl.is_on_floor(), main.hud.input_blocked(), get_tree().paused,
+		main.harbour.walkable(pp.x, pp.z), pp.y - float(main.interiors.origin().y)])
 	main.interiors.leave()
 
 
@@ -666,8 +670,8 @@ func _fall_in() -> void:
 		for k in 24:
 			var a := TAU * k / 24.0
 			var q: Vector3 = main.player.global_position + Vector3(cos(a), 0.0, sin(a)) * r
-			if not bool(w.is_water(q.x, q.z)):
-				continue
+			if not bool(w.is_water(q.x, q.z)) or float(w.water_depth(q.x, q.z)) < 1.6:
+				continue  # dry, or shallow enough to wade
 			# land within 8 m of this water spot?
 			for k2 in 16:
 				var a2 := TAU * k2 / 16.0

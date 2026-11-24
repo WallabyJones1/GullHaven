@@ -257,6 +257,8 @@ func water_depth(x: float, z: float) -> float:
 
 ## Can you walk here? (Locked places stay closed until you have the permit.)
 func walkable(x: float, z: float) -> bool:
+	if indoor:
+		return true  # rooms float high above the map: the gates outside don't apply in them
 	var fl := flags_at(x, z)
 	if fl & int(F.highland) and not permits.has("permit_ranger"):
 		return false
