@@ -26,7 +26,7 @@ function boot(){
   document.addEventListener('visibilitychange',()=>{if(document.hidden){saveLocal();if(NET.db)remoteSave()}});
 }
 // a small test and debugging handle
-window.RT={state:()=>S,setState:fn=>{fn(S);refreshAll()},env:t=>envAt(t),cat:()=>CAT,catArt,panel:(n,t,c)=>openPanel(n,t,c),book:()=>toggleBook(true),open:()=>openGacha(),pull:i=>pull(i),mach:()=>MACH,
+window.RT={hd:()=>HD,state:()=>S,setState:fn=>{fn(S);refreshAll()},env:t=>envAt(t),cat:()=>CAT,catArt,panel:(n,t,c)=>openPanel(n,t,c),book:()=>toggleBook(true),open:()=>openGacha(),pull:i=>pull(i),mach:()=>MACH,
   tp:(x,y,d)=>{player.x=x;player.y=y;if(d)player.dir=d;cancelPath()},tap:(wx,wy)=>tapWorld(wx,wy),player:()=>player,scene:()=>scene,world:()=>WORLD,go:k=>k==='world'?goWorld():goInside(k),
   board:()=>boardBoat(),fish:()=>{const w=waterAhead();if(w)startFishing({x:w.x,y:w.y,zone:w.zone,shore:true});return!!w},mg:()=>MG,net:()=>NET,cup:()=>({pools:cupPools(),rows:cupStandings()}),
   hook:ctx=>rollHook(Object.assign({zone:'harbour',bait:'dough',gear:gearCtx(),env:envAt(),near:{}},ctx||{}))};

@@ -8,7 +8,7 @@ window.addEventListener('keyup',e=>{const k=e.key.toLowerCase();keys.delete(k);i
 window.addEventListener('blur',()=>{keys.clear();actUp()});
 cv.addEventListener('pointerdown',e=>{if(joy)return;cv.setPointerCapture(e.pointerId);joy={id:e.pointerId,x0:e.clientX,y0:e.clientY,x:e.clientX,y:e.clientY,t:performance.now(),moved:false}});
 cv.addEventListener('pointermove',e=>{if(!joy||e.pointerId!==joy.id)return;joy.x=e.clientX;joy.y=e.clientY;const d=Math.hypot(joy.x-joy.x0,joy.y-joy.y0);if(d>10&&!joy.moved){joy.moved=true;cancelPath();if(player.boat)player.boat.tgt=null;const j=$('joy');j.hidden=false;j.style.left=joy.x0+'px';j.style.top=joy.y0+'px';$('joyBase').classList.add('hide')}if(joy.moved){const dx=clamp(joy.x-joy.x0,-38,38),dy=clamp(joy.y-joy.y0,-38,38);$('knob').style.transform=`translate(${dx}px,${dy}px)`}});
-function endJoy(e){if(!joy||e.pointerId!==joy.id)return;if(!joy.moved&&performance.now()-joy.t<350){const wx=e.clientX/SCALE+camX,wy=e.clientY/SCALE+camY;tapWorld(wx,wy)}joy=null;$('joy').hidden=true;$('knob').style.transform='';$('joyBase').classList.remove('hide')}
+function endJoy(e){if(!joy||e.pointerId!==joy.id)return;if(!joy.moved&&performance.now()-joy.t<350){if(HD.on&&HD.ready&&scene===WORLD)HD.tap(e.clientX,e.clientY);else{const wx=e.clientX/SCALE+camX,wy=e.clientY/SCALE+camY;tapWorld(wx,wy)}}joy=null;$('joy').hidden=true;$('knob').style.transform='';$('joyBase').classList.remove('hide')}
 cv.addEventListener('pointerup',endJoy);cv.addEventListener('pointercancel',endJoy);
 document.addEventListener('gesturestart',e=>e.preventDefault());document.addEventListener('dblclick',e=>e.preventDefault());
 function doorBump(){if(doorBump.t>performance.now())return;for(const a of scene.acts){if(a.icon!=='door'||a.exit)continue;if(Math.abs(a.x-player.x)<12&&a.y-player.y>-4&&a.y-player.y<14){doorBump.t=performance.now()+800;a.act();return}}}
@@ -45,4 +45,4 @@ function update(dt){gameT+=dt;
   const a=scene?nearestAct():null;if(!MG&&(a!==curAct||(a&&a.label!==$('actLabel').textContent))){curAct=a;setActButton(a)}
   sendPresence(false);miniT+=dt;if(miniT>.25){miniT=0;drawMini()}hudT+=dt;if(hudT>1){hudT=0;updEnvHUD();upd2Button();updChips();if(NET.db)pushMyDoc()}
   if(dirty&&performance.now()-lastSave>5000){lastSave=performance.now();dirty=false;saveLocal();if(NET.db)remoteSave();if(NET.mode==='ws')cloudSave()}}
-function loop(now){const dt=Math.min(.05,(now-lastT)/1000);lastT=now;if(scene&&WORLD){update(dt);if(!gachaOpen&&$('book').hidden)render(gameT)}if(gachaOpen)gachaFrame(dt);requestAnimationFrame(loop)}
+function loop(now){const dt=Math.min(.05,(now-lastT)/1000);lastT=now;if(scene&&WORLD){update(dt);if(!gachaOpen&&$('book').hidden)HD.frame(gameT)}if(gachaOpen)gachaFrame(dt);requestAnimationFrame(loop)}

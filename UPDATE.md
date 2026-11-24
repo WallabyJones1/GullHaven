@@ -1,3 +1,11 @@
+# HD-2D update
+
+- **The harbour, the town and the islands are now 3D**, in the HD-2D style: a diorama world with real lighting, shadows, a tilt-shift focus band and a soft vignette, while every character, cat, boat, tree and prop stays pixel art.
+- **Buildings are Blender models** (`assets/hd2d/gullhaven_kit.glb`) that wear the game's own pixel facades, roofs and signs, with 3D awnings, chimneys, columns and sign boards. The lighthouse, lamp posts, jetty pilings, the quay wall, breakwall boulders and sea stacks are modelled too.
+- **The coast is a landscape:** beaches slope into clear water that rises and falls with the tide, the promenade sits on a stone quay, and hills roll up in the wild corners.
+- **Day and night:** the sun and moon follow the game clock, windows glow after dark, the nearest street lamps light the paths, the lighthouse sweeps its beam and your boat carries a lantern.
+- **Interiors, dives, panels and the minigames are unchanged** (still 2D). Press **V** or tap the **2D/3D** button under the minimap to switch views; the choice is remembered. If a device can't run the 3D view it falls back to the flat view, and slow phones step down resolution, shadows and blur automatically.
+
 # Islands update
 
 - **A much bigger sea:** the ocean is now about twice the size, with lots more room between islands. The mainland ends in a south coast, and the open sea beyond it has **Seagrass Meadows** along the shore (9 new fish, any boat but a rowboat) and a coral atoll holding the **Turquoise Lagoon** (8 new fish, dinghy or better), plus reef, kelp, wreck and blue water further out.

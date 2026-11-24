@@ -1,5 +1,5 @@
 /* ================= rendering: the coast, the sea, boats, people, weather and light ================= */
-const cv=$('cv');const ctx=cv.getContext('2d');let VW=320,VH=240,SCALE=2,camX=0,camY=0;
+const cv=$('cv');let ctx=cv.getContext('2d');let VW=320,VH=240,SCALE=2,camX=0,camY=0;
 const lightCv=document.createElement('canvas');const lctx=lightCv.getContext('2d');
 let ZOOM=0;try{ZOOM=+(localStorage.getItem('gullhaven.zoom')||0)}catch(e){}
 function resize(){const w=window.innerWidth,h=window.innerHeight,dpr=Math.min(3,window.devicePixelRatio||1);const W=w*dpr,H=h*dpr;

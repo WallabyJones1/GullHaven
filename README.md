@@ -39,6 +39,10 @@ The server shares player presence, chat, public discoveries, co-op scores, the d
 
 This is a small social multiplayer update with individual RPG progression. The included Node server does not provide personal account storage, cross-device cloud saves or a fully authoritative economy. Friends fish from their own boats in the same world; shared boat passengers are not part of this update. House visits show the owner's latest shared customisation snapshot.
 
+## HD-2D view
+
+`src/js/m13z_hd2d.js` renders the outdoor world with three.js (loaded from jsDelivr as an ES module) on top of the existing game logic: the flat renderer's sprites are redrawn into a texture atlas each frame and stood up in the 3D scene, the ground reuses the lazily painted 512px chunks as terrain textures, and buildings, the lighthouse and harbour pieces come from the Blender kit in `assets/hd2d/gullhaven_kit.glb`, which `build.py` embeds as `src/js/m13y_hd2dkit.js`. Interiors, dives and panels still use the 2D renderer. Press V to switch views.
+
 ## Source
 
 - `m00*`–`m04*`: configuration, collection traits, existing pixel art and shared fishing rules.

@@ -250,7 +250,7 @@ input.amt,input.txt,select.txt{width:100%;font:inherit;font-size:17px;padding:8p
 </style>
 
 <div id="app">
-  <canvas id="cv" aria-label="Gullhaven"></canvas>
+  <canvas id="cv" aria-label="Gullhaven"></canvas><style>#hdBtn{position:absolute;z-index:6;right:calc(10px + env(safe-area-inset-right,0px));top:calc(186px + env(safe-area-inset-top,0px));font:12px var(--f-pixel,monospace);padding:5px 9px;border-radius:6px;border:2px solid #0e1626;background:#1d2b46;color:#fbf1dc;box-shadow:0 2px 0 #0e1626;cursor:pointer}#hdBtn:active{transform:translateY(1px)}</style><button id="hdBtn" class="px" onclick="HD.toggle()" title="Switch view (V)">2D</button>
   <div id="hud">
     <button id="who" class="who px" aria-label="You"><canvas id="avatar" width="16" height="16"></canvas><div><b id="whoName">Fisher</b><small id="whoSub"><i></i><span>No co-op</span></small></div></button>
     <div class="hudR">
@@ -309,6 +309,8 @@ input.amt,input.txt,select.txt{width:100%;font:inherit;font-size:17px;padding:8p
     </div>
   </section>
 </div>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+<script type="module">import * as THREE from "three";import {GLTFLoader} from "three/addons/loaders/GLTFLoader.js";window.THREE=THREE;window.GLTFLoader=GLTFLoader;window.dispatchEvent(new Event("three-ready"));</script>
 <script>
 /*@@JS@@*/
 </script>
