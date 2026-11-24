@@ -30,6 +30,7 @@ var sea: Node
 var audio: Node
 var focus: Node3D  # the rain follows this (the player)
 var indoor := false  # inside a building: no sun, no rain, muffled weather
+var music_base := "day"  # day, night or storm
 var sea_near := 1.0  # how close the open sea is (0 far inland), for the sound of waves
 var _beam_angle := 0.0
 var _sky_t := 0.0
@@ -241,12 +242,13 @@ func _update_lightning(delta: float, sky_kind: String) -> void:
 func _update_sound(delta: float, E: Dictionary, night: float) -> void:
 	var sky_kind := str(E.sky)
 	var wind := float(E.wind)
+	# the music director (music.gd) picks the track; this is just the time and weather
 	if sky_kind == "storm":
-		audio.set_music("storm")
+		music_base = "storm"
 	elif period(hour) == "dawn" or period(hour) == "day":
-		audio.set_music("day")
+		music_base = "day"
 	else:
-		audio.set_music("night")
+		music_base = "night"
 	harbour.wind = clampf(0.25 + wind * 0.9, 0.15, 1.2)
 	var muffle := 0.25 if indoor else 1.0
 	audio.set_amb("waves", (0.75 + wind * 0.4) * sea_near * muffle)

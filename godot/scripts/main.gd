@@ -42,6 +42,7 @@ const Kit := preload("res://scripts/kit.gd")
 const Spearfishing := preload("res://scripts/spearfishing.gd")
 const Story := preload("res://scripts/story.gd")
 const Wardrobe := preload("res://scripts/wardrobe.gd")
+const Music := preload("res://scripts/music.gd")
 
 var env: Environment
 var world_env: WorldEnvironment
@@ -81,6 +82,7 @@ var kit: Node3D
 var spear: CanvasLayer
 var story: Node3D
 var wardrobe: CanvasLayer
+var music: Node
 var _first_time := false
 var skip_save := false  # starting a new game: don't write the old save back on the way out
 var save: Dictionary
@@ -325,6 +327,11 @@ func _ready() -> void:
 	add_child(menus)
 	menus.setup(self, hud, audio, player, cam)
 	set_quality(bool(menus.settings.quality), false)
+
+	music = Music.new()
+	music.name = "Music"
+	add_child(music)
+	music.setup(self, audio)
 
 	_first_time = save.visited.is_empty()
 	_update_area(true)

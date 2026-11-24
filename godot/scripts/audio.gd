@@ -69,7 +69,8 @@ func play(sound: String, volume_db := 0.0, pitch := 1.0, pitch_spread := 0.0) ->
 	p.play()
 
 
-## Crossfade to a music loop ("day", "night", "storm"), or "" for silence.
+## Crossfade to a music loop (music.gd picks: day, night, storm, title, town, river, islands,
+## lake, sailing, mystery, tavern, fight, dive, home), or "" for silence.
 func set_music(track: String) -> void:
 	if track == _music_name:
 		return
