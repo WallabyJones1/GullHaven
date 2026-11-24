@@ -131,7 +131,7 @@ func _apply(delta: float) -> void:
 	if beam:
 		_beam_angle += delta * 0.7
 		beam.rotation = Vector3(deg_to_rad(-5.0), _beam_angle, 0.0)
-		beam.light_energy = lamps_on * 8.0
+		beam.light_energy = lamps_on * (16.0 if harbour.golden else 8.0)
 		beam.visible = lamps_on > 0.01
 
 	# The tide: high at midnight and noon, low at six.

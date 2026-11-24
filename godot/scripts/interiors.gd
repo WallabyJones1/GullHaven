@@ -32,6 +32,8 @@ var save: Dictionary
 var day_night: Node
 var hut_build: Node  # arranging furniture in your hut
 var map_screen: CanvasLayer  # the lighthouse shows you the bay
+var mystery: Node3D  # the Gull's Eye
+var minigames: Node3D  # darts in the tavern
 var inside := {}  # the building you're in ({} outdoors)
 var _room: Node3D
 var _target: Node3D  # where new pieces go (the room, or one piece of furniture)
@@ -145,6 +147,11 @@ func use(it: Dictionary) -> void:
 				hut_build.begin()
 		"climb":
 			_climb()
+		"keeper_stone":
+			_keeper_stone()
+		"darts":
+			if minigames:
+				minigames.start_darts()
 
 
 func enter(b: Dictionary) -> void:
@@ -388,6 +395,10 @@ func _build_room(b: Dictionary) -> void:
 				_trophy("left", 0.0)
 			else:
 				_stand("clock", Vector3(_w * 0.42, 0.0, -_d * 0.5 + 0.5), true)
+			if key == "tavern":
+				_wall("dartboard", "back", _w * 0.3, 1.25)
+				_things.append({"pos": _to_world(Vector3(_w * 0.3, 0.0, -_d * 0.5 + 2.3)), "text": "Space: Play darts",
+					"kind": "darts", "data": 0})
 			_bed_for_hire(key)
 		"boatyard", "boatworks":
 			_shell("wood", "wall_wood", "wall_wood_light")
@@ -509,6 +520,8 @@ func _build_room(b: Dictionary) -> void:
 			_box(Vector3(-1.4, 0.0, -_d * 0.5 + 1.0), Vector3(1.8, 0.85, 0.9), "timber")
 			_things.append({"pos": _to_world(Vector3(-1.4, 0.0, -_d * 0.5 + 1.8)), "text": "Space: Read the keeper's log",
 				"kind": "look", "data": "The keeper's log: \"Fog again. Three boats home safe by the light. A great shadow seen off the Deep, bigger than any boat.\""})
+			_things.append({"pos": _to_world(Vector3(-_w * 0.5 + 0.9, 0.0, _d * 0.15)), "text": "Space: Look at the loose stone by the stair",
+				"kind": "keeper_stone", "data": 0})
 			_stand("telescope", Vector3(1.6, 0.0, -_d * 0.5 + 1.2))
 			_things.append({"pos": _to_world(Vector3(_w * 0.32 - 0.9, 0.0, -_d * 0.5 + 2.0)), "text": "Space: Climb up to the lamp",
 				"kind": "climb", "data": 0})
@@ -1060,7 +1073,18 @@ func _sleep(cost: int) -> void:
 
 
 ## From the lamp room you can see the whole bay: it fills in on your map.
+func _keeper_stone() -> void:
+	audio.play("thud", -8.0)
+	if mystery and int(mystery.step()) == 0:
+		hud.toast("The stone pulls free. Behind it, rolled tight in oilcloth: a page in the old keeper's hand.")
+		mystery.advance(1)
+	else:
+		hud.toast("Just a loose stone, and the hollow behind it.")
+
+
 func _climb() -> void:
+	if mystery and mystery.restore_light():
+		return
 	audio.play("step_wood", -4.0)
 	audio.play("whoosh", -10.0)
 	var door: Vector3 = inside.door

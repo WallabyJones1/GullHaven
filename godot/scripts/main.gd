@@ -27,6 +27,11 @@ const Trade := preload("res://scripts/trade.gd")
 const HutBuild := preload("res://scripts/hut_build.gd")
 const Quests := preload("res://scripts/quests.gd")
 const MapScreen := preload("res://scripts/map_screen.gd")
+const Mystery := preload("res://scripts/mystery.gd")
+const SideQuests := preload("res://scripts/sidequests.gd")
+const Companion := preload("res://scripts/companion.gd")
+const Minigames := preload("res://scripts/minigames.gd")
+const Journal := preload("res://scripts/journal.gd")
 
 var env: Environment
 var world_env: WorldEnvironment
@@ -52,6 +57,11 @@ var trade: CanvasLayer
 var hut_build: Node3D
 var quests: Node
 var map_screen: CanvasLayer
+var mystery: Node3D
+var sidequests: Node3D
+var companion: Node3D
+var minigames: Node3D
+var journal: CanvasLayer
 var save: Dictionary
 var quality_high := true
 var _area := ""
@@ -178,6 +188,47 @@ func _ready() -> void:
 	fishing.boats = boats
 	boats.fishing = fishing
 
+	mystery = Mystery.new()
+	mystery.name = "Mystery"
+	add_child(mystery)
+	mystery.setup(harbour, player, hud, audio, sea, save, town)
+	interiors.mystery = mystery
+	fishing.specials.append(mystery.special_catch)
+	fishing.catch_hooks.append(mystery.on_catch)
+	if bool(save.mystery.get("restored", false)):
+		harbour.restore_light()
+
+	sidequests = SideQuests.new()
+	sidequests.name = "SideQuests"
+	add_child(sidequests)
+	sidequests.setup(harbour, player, hud, audio, save, town)
+
+	companion = Companion.new()
+	companion.name = "Companion"
+	add_child(companion)
+	companion.setup(harbour, player, cam, hud, audio, sea, save, town)
+	companion.fishing = fishing
+	companion.boats = boats
+	town.companion = companion
+
+	minigames = Minigames.new()
+	minigames.name = "Minigames"
+	add_child(minigames)
+	minigames.setup(harbour, player, hud, audio, save, boats, interiors)
+	interiors.minigames = minigames
+
+	for prov in [boats, mystery, sidequests, companion, minigames]:
+		town.providers.append(prov)
+
+	journal = Journal.new()
+	journal.name = "Journal"
+	add_child(journal)
+	journal.setup(save, sea, hud, audio)
+	journal.mystery = mystery
+	journal.sidequests = sidequests
+	journal.minigames = minigames
+	journal.companion = companion
+
 	if save.visited.is_empty():
 		hud.toast("Welcome to Gullhaven! Walk with WASD, turn the camera with Q and E. Hold Space to cast.")
 		hud.toast("Hale's Tackle on the quay sells bait and better gear. Townsfolk have requests.")
@@ -203,6 +254,8 @@ func _process(delta: float) -> void:
 		logbook.open()
 	if Input.is_action_just_pressed("map") and not hud.input_blocked() and fishing.state == 0:
 		map_screen.open()
+	if Input.is_action_just_pressed("journal") and not hud.input_blocked() and fishing.state == 0:
+		journal.open()
 	# Hear a feeding frenzy bubbling as you get close to it.
 	var near := 0.0
 	if school.frenzy_on:

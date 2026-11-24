@@ -4,10 +4,11 @@ extends RefCounted
 ##   WASD / arrows walk (relative to the camera), Q / E turn the camera (or drag with the
 ##   right mouse button), mouse wheel or - / = zooms.
 ##   Space, F or left click: cast, reel, talk, open doors, board boats, dig.
-##   Esc: reel in early, close menus. R bait, Tab or L Logbook, M map, B build, I bag.
+##   Esc: reel in early, close menus (or open the pause menu). R bait, Tab or L Logbook,
+##   J Journal, M map, B build, I bag.
 ## Gamepad:
 ##   Left stick walks, right stick turns and zooms the camera, bumpers turn in steps.
-##   A acts, B cancels, Y bait, X build, Back Logbook, Start map.
+##   A acts, B cancels, Y bait, X build, Back Logbook, Start map, left stick click Journal.
 
 const KEYS := {
 	"move_left": [KEY_A, KEY_LEFT],
@@ -26,6 +27,7 @@ const KEYS := {
 	"bait": [KEY_R],
 	"logbook": [KEY_L, KEY_TAB],
 	"map": [KEY_M],
+	"journal": [KEY_J],
 	"build": [KEY_B],
 	"bag": [KEY_I],
 }
@@ -54,6 +56,7 @@ static func setup() -> void:
 	_pad_button("build", JOY_BUTTON_X)
 	_pad_button("logbook", JOY_BUTTON_BACK)
 	_pad_button("map", JOY_BUTTON_START)
+	_pad_button("journal", JOY_BUTTON_LEFT_STICK)
 	_pad_button("rotate_left", JOY_BUTTON_LEFT_SHOULDER)
 	_pad_button("rotate_right", JOY_BUTTON_RIGHT_SHOULDER)
 	_pad_axis("move_left", JOY_AXIS_LEFT_X, -1.0)

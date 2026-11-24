@@ -64,6 +64,9 @@ var shop: CanvasLayer
 var interiors: Node  # doors, and things to use inside
 var boats: Node3D  # your boat, to board
 var services := {}  # shop kind -> Callable(keeper: String, title: String, kind: String)
+var talk_hooks: Array[Callable] = []  # (who) -> true if they had something to say about a quest
+var providers: Array[Node] = []  # other things to use: each has near(pos, facing) and use(it)
+var companion: Node3D  # cat taming
 var _bubbles := {}  # name -> Label3D
 var _bubble_t := {}
 var _heart_tex: ImageTexture
@@ -149,17 +152,21 @@ func nearest(pos: Vector3, facing := Vector3.ZERO) -> Dictionary:
 				text = "Space: Give %s the %s" % [who, _name_of(req.id)]
 			best = {"kind": "folk", "who": who, "text": text}
 	for c: Sprite3D in harbour.cats:
+		if not c.visible:
+			continue
 		var cp := c.global_position
 		var d := Vector2(pos.x - cp.x, pos.z - cp.z).length()
 		if d < CAT_RANGE and d < best_d and absf(pos.y - cp.y) < 2.0 and _facing(pos, cp, facing):
 			best_d = d
-			best = {"kind": "cat", "node": c, "text": "Space: Pet the cat"}
+			var text: String = companion.cat_prompt(c) if companion else "Space: Pet the cat"
+			best = {"kind": "cat", "node": c, "text": text}
 	for spot in _comb:
 		var sp := spot.global_position
 		var d := Vector2(pos.x - sp.x, pos.z - sp.z).length()
 		if d < COMB_RANGE and d < best_d and absf(pos.y - sp.y) < 2.0 and _facing(pos, sp, facing):
 			best_d = d
-			best = {"kind": "comb", "node": spot, "text": "Space: Dig in the sand"}
+			var rock: bool = harbour.mat_at(sp.x, sp.z) in ["rock", "pebble"]
+			best = {"kind": "comb", "node": spot, "text": "Space: Search the rock pool" if rock else "Space: Dig in the sand"}
 	for pile in _drift:
 		var dp := pile.global_position
 		var d := Vector2(pos.x - dp.x, pos.z - dp.z).length()
@@ -168,32 +175,36 @@ func nearest(pos: Vector3, facing := Vector3.ZERO) -> Dictionary:
 			best = {"kind": "drift", "node": pile, "text": "Space: Gather driftwood"}
 	var more: Array = []
 	if interiors:
-		more.append(interiors.door_near(pos, facing))
-		more.append(interiors.thing_near(pos, facing))
-	if boats:
-		more.append(boats.near(pos, facing))
-	for it: Dictionary in more:
+		more.append([interiors.door_near(pos, facing), interiors])
+		more.append([interiors.thing_near(pos, facing), interiors])
+	for prov in providers:
+		more.append([prov.near(pos, facing), prov])
+	for pair: Array in more:
+		var it: Dictionary = pair[0]
 		if not it.is_empty() and float(it.dist) < best_d:
 			best_d = float(it.dist)
 			best = it
+			best["src"] = pair[1]
 	return best
 
 
 func interact(it: Dictionary) -> void:
 	match str(it.get("kind", "")):
 		"cat":
-			_pet(it.node)
+			if companion:
+				companion.cat_use(it.node)
+			else:
+				_pet(it.node)
 		"comb":
 			_dig(it.node)
 		"drift":
 			_gather(it.node)
 		"folk":
 			_talk(str(it.who))
-		"board":
-			boats.use(it)
 		_:
-			if interiors:
-				interiors.use(it)
+			var src: Object = it.get("src")
+			if src:
+				src.use(it)
 
 
 ## Called when you land something. If it fills a request, it's kept for that person and
@@ -235,6 +246,9 @@ func _talk(who: String) -> void:
 	if not req.is_empty() and req.held:
 		_deliver(who, req)
 		return
+	for h in talk_hooks:
+		if h.call(who):
+			return
 	if role.begins_with("shop:"):
 		var kind := role.substr(5)
 		var title := _shop_title(who, f)
@@ -485,10 +499,11 @@ func _update_comb(delta: float) -> void:
 		var r := _rng.randf_range(6.0, 26.0)
 		var x := here.x + cos(a) * r
 		var z := here.z + sin(a) * r
-		if not (harbour.flags_at(x, z) & comb_flag):
-			continue
 		var h: float = harbour.height_at(x, z)
-		if h < float(harbour.sea_level) + 0.12:
+		var rocky: bool = harbour.mat_at(x, z) in ["rock", "pebble"] and h < float(harbour.sea_level) + 1.2
+		if not (harbour.flags_at(x, z) & comb_flag) and not rocky:
+			continue
+		if h < float(harbour.sea_level) + 0.12 or not harbour.walkable(x, z):
 			continue
 		var spot := Sprite3D.new()
 		spot.texture = _sparkle_tex
@@ -499,6 +514,18 @@ func _update_comb(delta: float) -> void:
 		spot.global_position = Vector3(x, h + 0.15, z)
 		_comb.append(spot)
 		return
+
+
+## A dig spot right here (your cat found something).
+func add_comb_at(at: Vector3) -> void:
+	var spot := Sprite3D.new()
+	spot.texture = _sparkle_tex
+	spot.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	spot.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	spot.shaded = false
+	add_child(spot)
+	spot.global_position = Vector3(at.x, float(harbour.height_at(at.x, at.z)) + 0.15, at.z)
+	_comb.append(spot)
 
 
 # --- materials -----------------------------------------------------------------------
@@ -611,11 +638,21 @@ func _dig(spot: Sprite3D) -> void:
 	spot.queue_free()
 	var E: Dictionary = sea.env
 	var low: bool = float(E.tide) < 0.1
+	var at := spot.global_position
+	var ground: String = harbour.mat_at(at.x, at.z)
+	var shore := "rocks" if ground == "rock" or ground == "pebble" else "beach"
+	var isle: String = harbour.island_at(at.x, at.z)
 	var table: Array = []
 	for e in sea.items:
-		if e.how != "comb" or e.z != "beach" or not sea.cond_ok(e, E):
+		if e.how != "comb" or e.z != shore or not sea.cond_ok(e, E):
 			continue
-		table.append([e, float(COMB_W[mini(int(e.r), 4)]) * (1.0 if low else 0.35)])
+		var only := str(e.get("isle", ""))
+		if only != "" and only != isle:
+			continue  # this one only washes up on a particular island
+		var w := float(COMB_W[mini(int(e.r), 4)]) * (1.0 if low else 0.35)
+		if only != "":
+			w *= 2.5  # an island's own finds turn up often there
+		table.append([e, w])
 	if sea.by_id.has("seaweed_clump"):
 		table.append([sea.by_id.seaweed_clump, 4.0])
 	var found: Variant = Sea.pick_w(table, _rng.randf())

@@ -63,6 +63,8 @@ var sea: Node
 var audio: Node
 var town: Node
 var boats: Node3D  # when you're aboard, you cast off the side
+var specials: Array[Callable] = []  # (zone) -> an entry to hook instead, or {}
+var catch_hooks: Array[Callable] = []  # (id, cm, variant) told whenever you land something
 
 var power := 0.0
 var catch_e: Dictionary = {}
@@ -579,6 +581,8 @@ func _break_streak() -> void:
 func _land() -> void:
 	var e := catch_e
 	var id: String = e.id
+	for h in catch_hooks:
+		h.call(id, size_cm, variant)
 	var cat: String = e.cat
 	var is_fish := cat == "fish" or cat == "legend"
 	var tier := "Clean"
@@ -591,7 +595,7 @@ func _land() -> void:
 		hud.set_streak(streak)
 		if streak > int(save.best_streak):
 			save.best_streak = streak
-	var vmult := 3.0 if variant == "g" else (2.0 if variant == "a" else 1.0)
+	var vmult := float(Sea.VARIANTS[variant].mult) if variant != "" else 1.0
 	var smult := 1.0 + minf(streak, 10) * 0.05
 	var value := int(e.price)
 	if is_fish:
@@ -639,10 +643,8 @@ func _land() -> void:
 		_float_text("+%d Shells" % value, player.global_position + Vector3(0.0, 2.9, 0.0))
 
 	var title := str(e.get("n", "Something"))
-	if variant == "g":
-		title = "Golden " + title
-	elif variant == "a":
-		title = "Albino " + title
+	if variant != "":
+		title = "%s %s" % [Sea.VARIANTS[variant].n, title]
 	var r := int(e.r)
 	var kind := ""
 	if cat == "junk":
@@ -667,7 +669,7 @@ func _land() -> void:
 	elif size_cm > best and size_cm > 0.0:
 		note = "Biggest one yet!"
 	elif variant != "":
-		note = "A one in %d catch!" % (400 if variant == "g" else 250)
+		note = "A one in %d catch!" % int(Sea.VARIANTS[variant].odds)
 	hud.show_catch({
 		"name": title,
 		"rarity": r,
@@ -744,11 +746,16 @@ func _on_bite(cls: int) -> void:
 	var boost: float = school.frenzy_boost(at)
 	var table: Array = sea.hook_table(zone, bait_key(), rod_tier(), cls, boost)
 	var e: Variant = Sea.pick_w(table, _rng.randf())
+	for sp in specials:
+		var got: Dictionary = sp.call(zone)
+		if not got.is_empty():
+			e = got
+			break
 	if e == null:
 		e = sea.by_id.get("seaweed_clump", {"id": "seaweed_clump", "n": "Seaweed", "cat": "junk", "r": 0, "price": 1, "art": "", "sz": null})
 	catch_e = e
 	size_cm = Sea.roll_size(catch_e, _rng.randf())
-	variant = Sea.roll_variant(catch_e, _rng.randf())
+	variant = Sea.roll_variant(catch_e, _rng.randf(), sea.env)
 	_splash(bobber.global_position)
 	audio.play("bite")
 	cam.shake(0.3)
@@ -796,10 +803,19 @@ func _icon(id: String) -> Texture2D:
 
 
 func _tint() -> Color:
-	if variant == "g":
-		return GOLD_TINT
-	if variant == "a":
-		return ALBINO_TINT
+	match variant:
+		"g":
+			return GOLD_TINT
+		"a":
+			return ALBINO_TINT
+		"m":
+			return Color(0.65, 0.8, 1.35)
+		"s":
+			return Color(0.85, 0.7, 1.3)
+		"p":
+			return Color(1.2, 1.25, 1.3, 0.7)
+		"r":
+			return Color.from_hsv(fmod(Time.get_ticks_msec() * 0.0004, 1.0), 0.45, 1.35)
 	return Color.WHITE
 
 

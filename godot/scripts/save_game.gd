@@ -34,6 +34,11 @@ static func defaults() -> Dictionary:
 		"furniture": [],  # placed in your hut: {id, x, z, rot} or {id, side, along}
 		"furniture_inv": {"crates": 1, "net_wall": 1},  # owned but not placed: id -> count
 		"seen": "",  # the map: one 0/1 per 32 m square, row by row
+		"mystery": {"step": 0, "stones": [0, 0, 0], "eye": false, "restored": false},  # the Gull's Eye
+		"quests": {},  # side quests: id -> {state, ...}
+		"records": {},  # mini-game bests and prizes paid
+		"cats": {},  # cat id -> {trust, fed}
+		"companion": "",  # your cat's id
 	}
 
 
@@ -50,7 +55,7 @@ static func load_save() -> Dictionary:
 	for key in parsed:
 		var have: Variant = data.get(key)
 		var got: Variant = parsed[key]
-		if have is Dictionary and got is Dictionary and key not in ["log", "bait", "thanks", "visited", "permits", "furniture_inv"]:
+		if have is Dictionary and got is Dictionary and key not in ["log", "bait", "thanks", "visited", "permits", "furniture_inv", "quests", "records", "cats"]:
 			for sub in got:
 				have[sub] = got[sub]
 		elif have == null or typeof(have) == typeof(got) or (have is float and got is int) or (have is int and got is float):

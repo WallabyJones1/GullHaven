@@ -720,6 +720,109 @@ def driftwood():
     return p.outline()
 
 
+def mark_stone():
+    """A weathered standing stone with the keeper's mark: a gull with one wing."""
+    p = Pix(28, 36)
+    stone = '#8a8a86'
+    p.ellipse(14, 20, 12, 16, stone)
+    p.rect(3, 22, 24, 35, stone)
+    n = hashmap(28, 36, 71, 2)
+    for y in range(36):
+        for x in range(28):
+            if p.a[y, x, 3] and n[y, x] > 0.86:
+                p.px(x, y, shift(hx(stone), -0.12))
+            if p.a[y, x, 3] and n[y, x] < 0.05:
+                p.px(x, y, '#5a7a4a')  # moss
+    carve = '#34343c'
+    lit = '#c4c4bc'
+    # the gull: a body, a head, a tail, and only one wing raised
+    for x0, y0, x1, y1 in ((6, 20, 20, 20), (6, 21, 19, 21)):
+        p.line(x0, y0, x1, y1, carve)
+    p.rect(20, 18, 22, 20, carve)  # head
+    p.px(23, 19, '#d8a040')  # beak
+    for i in range(7):  # the wing, sweeping up and back
+        p.line(9 + i, 19 - i, 14 + i // 2, 19 - i, carve)
+    p.line(4, 19, 6, 21, carve)  # tail
+    p.line(4, 22, 6, 21, carve)
+    for x in range(6, 21):
+        p.px(x, 22, lit)
+    p.px(21, 21, lit)
+    for x in range(4, 24):
+        p.px(x, 35, shift(hx(stone), -0.3))
+    return p.outline()
+
+
+def bottle():
+    p = Pix(12, 22)
+    p.rect(4, 0, 7, 2, '#a87a4a')  # cork
+    p.rect(4, 3, 7, 6, '#7ab8a0')
+    p.ellipse(5.5, 14, 5, 8, '#7ab8a0')
+    p.rect(3, 9, 8, 18, '#f0e6c8')  # the letter rolled inside
+    p.rect(3, 12, 8, 12, '#c84a3a')
+    p.px(3, 7, '#e8fff4')
+    p.px(2, 10, '#e8fff4')
+    return p.outline()
+
+
+def gulls_eye():
+    """The lost lens: a faceted crystal that holds the light."""
+    p = Pix(28, 28)
+    p.ellipse(14, 14, 12, 12, '#c8a040')  # brass ring
+    p.ellipse(14, 14, 10, 10, '#bfefff')
+    p.ellipse(14, 14, 7, 7, '#8ad8f8')
+    p.ellipse(14, 14, 4, 4, '#fff8d8')
+    for k in range(8):
+        a = k * np.pi / 4
+        p.line(14 + np.cos(a) * 4, 14 + np.sin(a) * 4, 14 + np.cos(a) * 9, 14 + np.sin(a) * 9, '#e8fbff')
+    p.px(10, 9, '#ffffff')
+    p.px(11, 9, '#ffffff')
+    return p.outline()
+
+
+def cave_mouth():
+    p = Pix(48, 40)
+    rock = '#5a4a48'
+    p.ellipse(24, 26, 24, 22, rock)
+    p.ellipse(24, 30, 13, 14, '#140a0a')
+    p.ellipse(24, 36, 9, 5, '#3a1810')
+    p.ellipse(24, 37, 5, 2.5, '#e86a2a')  # a glow from deep inside
+    n = hashmap(48, 40, 81, 2)
+    for y in range(40):
+        for x in range(48):
+            if p.a[y, x, 3] and n[y, x] > 0.85 and tuple(p.a[y, x, :3]) == hx(rock):
+                p.px(x, y, shift(hx(rock), 0.18))
+    p.a[39:, :, 3] = 0
+    return p.outline()
+
+
+def dartboard():
+    p = Pix(34, 34)
+    p.ellipse(17, 17, 16, 16, '#2a2020')
+    for i, (r, c) in enumerate(((14, '#e8dcc0'), (11, '#2a2a2a'), (8, '#e8dcc0'), (5, '#3a8a4a'), (2.5, '#c83a3a'))):
+        p.ellipse(17, 17, r, r, c)
+    for k in range(10):
+        a = k * np.pi / 5
+        p.line(17 + np.cos(a) * 5, 17 + np.sin(a) * 5, 17 + np.cos(a) * 14, 17 + np.sin(a) * 14, '#8a7a6a')
+    p.ellipse(17, 17, 1.2, 1.2, '#ffd24d')
+    return p.outline()
+
+
+def skip_stone():
+    p = Pix(8, 6)
+    p.ellipse(4, 3, 3.6, 2.4, '#9a9690')
+    p.px(3, 2, '#c8c4bc')
+    return p.outline()
+
+
+def eye_carving():
+    p = Pix(16, 12)
+    p.ellipse(8, 6, 7, 4, '#3a3a40')
+    p.ellipse(8, 6, 5, 3, '#c8c0a0')
+    p.ellipse(8, 6, 2.2, 2.2, '#2a2a30')
+    p.px(7, 5, '#f0f0e0')
+    return p
+
+
 def bed_frame_texture():
     return quilt()
 
@@ -736,6 +839,8 @@ DECOR = {
     'quilt_red': lambda: quilt('#c84a4a'), 'quilt_blue': lambda: quilt('#4a6ac8'), 'stove': stove, 'anvil': anvil,
     'furnace': furnace, 'gears': gears, 'sacks': sacks, 'tea_set': tea_set, 'telescope': telescope,
     'trophy_board': trophy_board, 'crates': crate_stack, 'boat_model': boat_model, 'driftwood': driftwood,
+    'mark_stone': mark_stone, 'bottle': bottle, 'gulls_eye': gulls_eye, 'cave_mouth': cave_mouth,
+    'dartboard': dartboard, 'skip_stone': skip_stone, 'eye_carving': eye_carving,
 }
 TEX = {
     'floor_wood': lambda: floor_wood(), 'floor_wood_dark': lambda: floor_wood('#7a5030', 2),

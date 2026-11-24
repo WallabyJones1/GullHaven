@@ -48,6 +48,8 @@ var permits := {}  # unlocks from the save: permit_ranger, permit_ember, bridge
 var hut_tier := 0
 var focus: Node3D
 var indoor := false  # the world is hidden while you're inside a building
+var golden := false  # the Gull's Eye is back in the lighthouse lamp
+var mill_fixed := true  # Willowford's mill sails turn (they're cracked until you mend them)
 var bridge_node: Node3D
 var gate_nodes: Array[Node3D] = []
 var hut_node: Node3D
@@ -112,6 +114,15 @@ func build() -> void:
 	_update_vegetation(spawn_point)
 
 
+## The Gull's Eye is back: the lighthouse burns gold and reaches further.
+func restore_light() -> void:
+	golden = true
+	if beam:
+		beam.light_color = Color(1.0, 0.8, 0.38)
+		beam.spot_range = 120.0
+		beam.spot_angle = 11.0
+
+
 ## Hide (or show again) everything outdoors while you're inside a building.
 func set_indoor(on: bool) -> void:
 	indoor = on
@@ -161,8 +172,9 @@ func _process(delta: float) -> void:
 		return
 	for w in walkers:
 		_update_walker(w, delta, cam)
-	for s in spinners:
-		s.rotation.z += delta * 0.6
+	if mill_fixed:
+		for s in spinners:
+			s.rotation.z += delta * 0.6
 
 
 # --- questions about a spot --------------------------------------------------------
@@ -274,6 +286,21 @@ func surface_at(x: float, z: float) -> String:
 		1, 3, 6:
 			return "sand"
 	return "stone"
+
+
+## The ground's material here: grass, sand, rock, dirt, cobble, forest, mud or pebble.
+func mat_at(x: float, z: float) -> String:
+	var names: Array = meta.materials
+	return str(names[clampi(_byte(mats, x, z), 0, names.size() - 1)])
+
+
+## Which island you're on (or just off), or "" on the mainland.
+func island_at(x: float, z: float) -> String:
+	for i in meta.islands:
+		var r: float = 60.0 if i.r == null else float(i.r) * 1.5 + 6.0
+		if Vector2(x - float(i.x), z - float(i.z)).length() < r:
+			return str(i.id)
+	return ""
 
 
 ## A place name for where you are: a town, a landmark or nothing.
