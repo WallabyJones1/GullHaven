@@ -579,11 +579,11 @@ func _button(text: String, action: Callable) -> void:
 func _focus_first() -> void:
 	await get_tree().process_frame
 	for c in _box.get_children():
-		if c is Control and (c as Control).focus_mode != Control.FOCUS_NONE:
+		if c is Control and (c as Control).focus_mode != Control.FOCUS_NONE and (c as Control).is_visible_in_tree():
 			(c as Control).grab_focus()
 			return
 		for cc in c.get_children():
-			if cc is Control and (cc as Control).focus_mode != Control.FOCUS_NONE:
+			if cc is Control and (cc as Control).focus_mode != Control.FOCUS_NONE and (cc as Control).is_visible_in_tree():
 				(cc as Control).grab_focus()
 				return
 

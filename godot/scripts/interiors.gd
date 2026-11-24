@@ -544,8 +544,8 @@ func _build_room(b: Dictionary) -> void:
 			_barrels(Vector3(_w * 0.38, 0.0, _d * 0.15))
 		"lighthouse":
 			_shell("stone", "wall_stone", "wall_plaster")
-			_box(Vector3(-1.4, 0.0, -_d * 0.5 + 1.0), Vector3(1.8, 0.85, 0.9), "timber")
-			_things.append({"pos": _to_world(Vector3(-1.4, 0.0, -_d * 0.5 + 1.8)), "text": "Space: Read the keeper's log",
+			_box(Vector3(-_w * 0.5 + 0.75, 0.0, -_d * 0.5 + 1.9), Vector3(0.9, 0.85, 1.6), "timber")
+			_things.append({"pos": _to_world(Vector3(-_w * 0.5 + 1.6, 0.0, -_d * 0.5 + 1.9)), "text": "Space: Read the keeper's log",
 				"kind": "look", "data": "The keeper's log: \"Fog again. Three boats home safe by the light. A great shadow seen off the Deep, bigger than any boat.\""})
 			_things.append({"pos": _to_world(Vector3(-_w * 0.5 + 0.9, 0.0, _d * 0.15)), "text": "Space: Look at the loose stone by the stair",
 				"kind": "keeper_stone", "data": 0})
@@ -563,7 +563,7 @@ func _build_room(b: Dictionary) -> void:
 ## The stair up to the lamp, along the back wall: walk up it and you come out on the
 ## gallery at the top (or press the action button at the bottom).
 func _lighthouse_stair() -> void:
-	var x0 := -0.3
+	var x0 := -1.1
 	var x1 := _w * 0.5 - 0.55
 	var rise := 2.1
 	var depth := 0.9

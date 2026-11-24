@@ -77,7 +77,8 @@ jobs:
       - name: Play through the game with no one at the controls (smoke test)
         run: |
           timeout 600 ./godot-bin --headless --fixed-fps 60 --path godot -- --smoke > smoke.log 2>&1 || true
-          grep -E "SMOKE|SCRIPT ERROR|ERROR|   at: " smoke.log | head -600 || true
+          echo "$(grep -c 'SMOKE CHECK ok' smoke.log) checks passed"
+          grep -E "SMOKE CHECK FAIL|SCRIPT ERROR|ERROR|   at: |SMOKE DONE" smoke.log | head -400 || true
           if grep -q "SMOKE DONE" smoke.log; then echo "Smoke test finished."; else echo "Smoke test did not finish."; fi
           if grep -E "SCRIPT ERROR|ERROR" smoke.log > smoke-problems.log; then
             echo "## Smoke test problems" >> "$GITHUB_STEP_SUMMARY"

@@ -77,8 +77,11 @@ func setup(m: Node) -> void:
 		["check we're back inside", _down_check, 5],
 		["leave the lighthouse", _leave, 50],
 		["sail a rowboat", _boat, 20],
-		["steer it", _steer, 150],
+		["steer it", _steer, 300],
 		["check it moved", _steer_check, 5],
+		["fall in the water", _fall_in, 30],
+		["swim back to shore", _swim, 600],
+		["check we climbed out", _swim_check, 5],
 		["plan a tour of every building", _plan_tour, 5],
 		["watch the opening again", _replay, 60],
 		["skip it", _skip_opening, 10],
@@ -409,7 +412,7 @@ func _stairs() -> void:
 	if top == Vector3.INF:
 		return
 	var origin: Vector3 = it.origin()
-	main.player.global_position = origin + Vector3(-0.9, 0.1, top.z)
+	main.player.global_position = origin + Vector3(-1.3, 0.1, top.z)
 	main.player.velocity = Vector3.ZERO
 	Input.action_press("move_right")
 
@@ -462,7 +465,7 @@ func _steer() -> void:
 func _steer_check() -> void:
 	_release_all()
 	var moved: float = (main.boats.boat.global_position as Vector3).distance_to(_mark)
-	_check(moved > 1.0, "the rowboat moves when you steer (%.1f m)" % moved)
+	_check(moved > 3.0, "the rowboat moves when you steer (%.1f m, speed %.1f)" % [moved, float(main.boats.speed)])
 	if bool(main.boats.can_land()):
 		main.boats.go_ashore()
 	else:
@@ -508,3 +511,65 @@ func _tour_out(name: String) -> void:
 	var ground := maxf(float(main.harbour.height_at(p.x, p.z)), float(main.harbour.stand_height(p.x, p.z)))
 	_check(not bool(main.interiors.is_inside()), "came back out of " + name)
 	_check(p.y > ground - 1.0 and p.y < ground + 3.0, "standing on the ground outside %s (y %.1f, ground %.1f)" % [name, p.y, ground])
+
+
+var _shore_dir := Vector3.ZERO
+
+
+## Drop into the harbour a few metres off the beach, then swim for the nearest dry land.
+func _fall_in() -> void:
+	_release_all()
+	var w: Node = main.harbour
+	var best := Vector3.INF
+	var best_land := Vector3.INF
+	for r in range(6, 160, 3):
+		for k in 24:
+			var a := TAU * k / 24.0
+			var q: Vector3 = main.player.global_position + Vector3(cos(a), 0.0, sin(a)) * r
+			if not bool(w.is_water(q.x, q.z)):
+				continue
+			# land within 8 m of this water spot?
+			for k2 in 16:
+				var a2 := TAU * k2 / 16.0
+				for d in [4.0, 6.0, 8.0]:
+					var l := q + Vector3(cos(a2), 0.0, sin(a2)) * d
+					if not bool(w.is_water(l.x, l.z)) and float(w.height_at(l.x, l.z)) < float(w.sea_level) + 2.5:
+						best = q
+						best_land = l
+						break
+				if best != Vector3.INF:
+					break
+			if best != Vector3.INF:
+				break
+		if best != Vector3.INF:
+			break
+	_check(best != Vector3.INF, "found a stretch of water by a beach")
+	if best == Vector3.INF:
+		return
+	_shore_dir = (best_land - best).normalized()
+	main.player.global_position = Vector3(best.x, float(w.sea_level) + 0.2, best.z)
+	main.player.velocity = Vector3.ZERO
+	main.player.can_move = true
+
+
+func _swim() -> void:
+	_check(bool(main.player.swimming), "swimming after falling in")
+	# hold the stick toward the shore, as seen from the camera
+	var right: Vector3 = main.cam.ground_right()
+	var fwd: Vector3 = main.cam.ground_forward()
+	var x := _shore_dir.dot(right)
+	var y := -_shore_dir.dot(fwd)
+	if x > 0.2:
+		Input.action_press("move_right", minf(1.0, x * 1.5))
+	elif x < -0.2:
+		Input.action_press("move_left", minf(1.0, -x * 1.5))
+	if y < -0.2:
+		Input.action_press("move_up", minf(1.0, -y * 1.5))
+	elif y > 0.2:
+		Input.action_press("move_down", minf(1.0, y * 1.5))
+
+
+func _swim_check() -> void:
+	_release_all()
+	var p: Vector3 = main.player.global_position
+	_check(not bool(main.player.swimming), "climbed out of the water onto the shore (at %.0f, %.0f)" % [p.x, p.z])
