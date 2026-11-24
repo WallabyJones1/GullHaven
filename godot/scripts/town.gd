@@ -19,6 +19,8 @@ const COMB_RANGE := 1.3
 const COMB_SPOTS := 3
 const COMB_W := [30.0, 12.0, 4.5, 1.2, 0.2]
 const DRIFT_SPOTS := 2
+# Shops with a counter and a menu (the rest just talk).
+const MENU_SHOPS := ["tackle", "general", "baittea", "kelptea", "boatyard", "boatworks", "carpenter", "home", "salvager"]
 # Junk you fish up is worth something to a builder.
 const JUNK_MATS := {"tangled_line": {"rope": 2}, "tin_can": {"scrap": 1}, "broken_rod": {"wood": 1, "scrap": 1},
 	"car_tyre": {"scrap": 2}, "shopping_trolley": {"scrap": 3}, "bicycle": {"scrap": 3}, "old_boot": {"rope": 1}}
@@ -113,6 +115,9 @@ func _process(delta: float) -> void:
 		if not harbour.folk.has(who):
 			continue
 		var node: Sprite3D = harbour.folk[who].node
+		if not is_instance_valid(node) or not node.is_inside_tree() or not node.visible:
+			b.visible = false
+			continue
 		b.global_position = node.global_position + Vector3(0.0, 2.25, 0.0)
 		b.visible = float(_bubble_t[who]) > 0.0
 		var fade := clampf(float(_bubble_t[who]) / 0.3, 0.0, 1.0)
@@ -137,7 +142,7 @@ func nearest(pos: Vector3, facing := Vector3.ZERO) -> Dictionary:
 			var role := str(f.role)
 			var text := "Space: Talk to %s" % who
 			if role.begins_with("shop:"):
-				if services.has(role.substr(5)):
+				if role.substr(5) in MENU_SHOPS:
 					text = "Space: Shop with %s" % who
 			var req := _request_of(who)
 			if not req.is_empty() and req.held:
