@@ -21,6 +21,8 @@ const Shop := preload("res://scripts/shop.gd")
 const Town := preload("res://scripts/town.gd")
 const Logbook := preload("res://scripts/logbook.gd")
 const Interiors := preload("res://scripts/interiors.gd")
+const Boats := preload("res://scripts/boats.gd")
+const Boatyard := preload("res://scripts/boatyard.gd")
 
 var env: Environment
 var world_env: WorldEnvironment
@@ -40,6 +42,8 @@ var shop: CanvasLayer
 var town: Node
 var logbook: CanvasLayer
 var interiors: Node3D
+var boats: Node3D
+var boatyard: CanvasLayer
 var save: Dictionary
 var quality_high := true
 var _area := ""
@@ -119,10 +123,25 @@ func _ready() -> void:
 	interiors.setup(harbour, player, cam, hud, audio, sea, save, day_night)
 	town.interiors = interiors
 
+	boats = Boats.new()
+	boats.name = "Boats"
+	add_child(boats)
+	boats.setup(harbour, player, cam, hud, audio, save, sea)
+	town.boats = boats
+
+	boatyard = Boatyard.new()
+	boatyard.name = "Boatyard"
+	add_child(boatyard)
+	boatyard.setup(save, audio, hud, boats, player)
+	town.register_service("boatyard", boatyard.open)
+	town.register_service("boatworks", boatyard.open)
+
 	fishing = Fishing.new()
 	fishing.name = "Fishing"
 	add_child(fishing)
 	fishing.setup(player, school, hud, cam, harbour, save, sea, audio, town)
+	fishing.boats = boats
+	boats.fishing = fishing
 
 	if save.visited.is_empty():
 		hud.toast("Welcome to Gullhaven! Walk with WASD, turn the camera with Q and E. Hold Space to cast.")
@@ -163,6 +182,11 @@ func _notification(what: int) -> void:
 		if interiors and interiors.is_inside():
 			var door: Vector3 = interiors.inside.door
 			save.pos = [door.x, door.y, door.z]
+		elif boats and boats.aboard:
+			boats.remember()
+			var spot: Vector3 = boats.landing_spot()
+			if spot != Vector3.INF:
+				save.pos = [spot.x, spot.y, spot.z]
 		elif player and player.is_on_floor():
 			var p := player.global_position
 			save.pos = [p.x, p.y, p.z]

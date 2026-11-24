@@ -62,6 +62,7 @@ var save: Dictionary
 var sea: Node
 var audio: Node
 var town: Node
+var boats: Node3D  # when you're aboard, you cast off the side
 
 var power := 0.0
 var catch_e: Dictionary = {}
@@ -220,7 +221,10 @@ func _idle() -> void:
 	var f: Vector3 = player.facing
 	var pos: Vector3 = player.global_position
 	var near_water: bool = harbour.is_water(pos.x + f.x * 3.0, pos.z + f.z * 3.0) or harbour.is_water(pos.x + f.x * 6.0, pos.z + f.z * 6.0)
-	hud.set_prompt("Hold Space to cast" if near_water else "")
+	var hint := "Hold Space to cast" if near_water else ""
+	if boats and boats.aboard:
+		hint = "Hold Space to cast   Esc: step ashore" if boats.can_land() else "Hold Space to cast"
+	hud.set_prompt(hint)
 	if near_water and Input.is_action_just_pressed("action"):
 		power = 0.0
 		_power_dir = 1.0

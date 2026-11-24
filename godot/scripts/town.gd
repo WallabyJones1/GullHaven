@@ -55,6 +55,7 @@ var sea: Node
 var save: Dictionary
 var shop: CanvasLayer
 var interiors: Node  # doors, and things to use inside
+var boats: Node3D  # your boat, to board
 var services := {}  # shop kind -> Callable(keeper: String, title: String, kind: String)
 var _bubbles := {}  # name -> Label3D
 var _bubble_t := {}
@@ -140,11 +141,16 @@ func nearest(pos: Vector3, facing := Vector3.ZERO) -> Dictionary:
 		if d < COMB_RANGE and d < best_d and absf(pos.y - sp.y) < 2.0 and _facing(pos, sp, facing):
 			best_d = d
 			best = {"kind": "comb", "node": spot, "text": "Space: Dig in the sand"}
+	var more: Array = []
 	if interiors:
-		for it: Dictionary in [interiors.door_near(pos, facing), interiors.thing_near(pos, facing)]:
-			if not it.is_empty() and float(it.dist) < best_d:
-				best_d = float(it.dist)
-				best = it
+		more.append(interiors.door_near(pos, facing))
+		more.append(interiors.thing_near(pos, facing))
+	if boats:
+		more.append(boats.near(pos, facing))
+	for it: Dictionary in more:
+		if not it.is_empty() and float(it.dist) < best_d:
+			best_d = float(it.dist)
+			best = it
 	return best
 
 
@@ -156,6 +162,8 @@ func interact(it: Dictionary) -> void:
 			_dig(it.node)
 		"folk":
 			_talk(str(it.who))
+		"board":
+			boats.use(it)
 		_:
 			if interiors:
 				interiors.use(it)

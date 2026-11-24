@@ -16,6 +16,7 @@ signal gate_blocked(text: String)  # walked into somewhere locked (with why)
 
 var facing := Vector3(0.0, 0.0, -1.0)  # world direction you last walked or turned to
 var can_move := true
+var riding := false  # aboard a boat: the boat carries you, so no walking physics
 var pose := ""  # "" walks and stands; "cast" or "cheer" hold a pose
 var harbour: Node3D  # the world: waterline and what's underfoot
 var audio: Node
@@ -54,6 +55,11 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	_gate_t = maxf(0.0, _gate_t - delta)
+	if riding:
+		velocity = Vector3.ZERO
+		_moving = false
+		_walk_t = 0.0
+		return
 	var input := Vector2.ZERO
 	if can_move:
 		input = Input.get_vector("move_left", "move_right", "move_up", "move_down")

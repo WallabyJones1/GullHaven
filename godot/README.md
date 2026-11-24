@@ -22,6 +22,8 @@ catalogue) and uses its own synthesized music and sound.
 | Cast (hold, release), strike, reel      | Space, F or left click           | A                    |
 | Talk, shop, pet a cat, dig              | Space or F (while facing them)   | A                    |
 | Go inside (facing a door)               | Space or F; walk out to leave    | A                    |
+| Board your boat / steer it              | Space by the boat / move keys    | A / left stick       |
+| Step ashore (beside a dock or beach)    | Esc                              | B                    |
 | Steer against a run                     | A/D or left/right                | Left stick           |
 | Change bait                             | R                                | Y                    |
 | Logbook                                 | L or Tab                         | Back                 |
@@ -50,9 +52,17 @@ catalogue) and uses its own synthesized music and sound.
   The aquarium's tanks fill with the fish you've caught, your hut's trophy board shows
   your biggest catch, and you can sleep in your hut (or rent a bed at the inn or the
   lodge) to skip to dawn. The harbourmaster's notice board says what's locked and why.
+- **Boats.** Buy one at the Boatyard in Gullhaven (Rowboat, Dinghy, Skiff) or at Lantern
+  Boatworks out east (Trawler, Deep-sea Cutter). Walk up to her at the dock, press Space
+  to board, steer with the move keys (she turns toward the way you push), and fish off
+  the side. Esc beside a dock or a beach steps you ashore, and she stays where you left
+  her. Each hull reaches rougher water: the Rowboat keeps to the bay, the river and
+  Tideglass Cay; the Dinghy reaches Mossbank and Kelpwood; the Skiff, Lantern Key and the
+  Atoll; the Trawler gets through the breakers to Wrecker's Cove; only the Cutter goes out
+  to the Deep. Kelpwood hides in a fog bank you can only find with a deck lamp. Paint the
+  hull any of ten colours.
 - **Locked places.** The hills past the ranger gate need a permit from Ranger Hollis in
   Willowford, the bridge over the estuary is broken, and Ember Isle is off limits for now.
-  (Boats, unlock quests and the islands' ferries are the next update.)
 - **The clock is shared with the web game.** One real second is one town minute. The
   tide turns every 6 town hours (you can watch the water climb the beach), the weather
   every 4 (calm, windy, rain, fog, storm), the moon each real week, and the season too.
@@ -97,6 +107,8 @@ godot/
     world.gd              the big map: terrain streaming, collision, sea, lake, plants, queries
     town_builder.gd       towns, buildings, docks, lamps, folk, the hut and the bridge
     interiors.gd          doors and the furnished room inside every building
+    boats.gd              boats: buying, boarding, steering, sea limits, fog, wake
+    boatyard.gd           the Boatyard and Lantern Boatworks menus
     player.gd             the fisher and footsteps
     fishing.gd            cast, bite, fight styles, catch
     fish_school.gd        fish shadows and feeding frenzies

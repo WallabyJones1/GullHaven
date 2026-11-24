@@ -25,6 +25,11 @@ static func defaults() -> Dictionary:
 		"permits": {},  # unlocks: bridge, permit_ranger, permit_ember...
 		"hut_tier": 0,
 		"pos": [],  # where you were standing when you quit
+		"boats": [],  # boats you own (keys from boats.gd)
+		"boat": "",  # the one you're using
+		"boat_pos": [],  # where she's moored: x, z, heading
+		"boat_paint": -1,  # -1 is her own colours
+		"boat_parts": {},  # deck lamp...
 	}
 
 
