@@ -66,6 +66,20 @@ func setup(m: Node) -> void:
 		["run the story to the end", _story_to_end, 10],
 		["skip the story notes", _skip_talk, 5],
 		["summaries", _summaries, 5],
+		["zoom with the wheel, a trackpad and keys", _zoom, 30],
+		["check the zoom", _zoom_check, 5],
+		["into the lighthouse", _into_lighthouse, 45],
+		["walk up the stairs", _stairs, 240],
+		["check we reached the gallery", _stairs_check, 60],
+		["walk round the gallery", _gallery_walk, 120],
+		["check we're still up there", _gallery_check, 5],
+		["climb back down", _climb_down, 50],
+		["check we're back inside", _down_check, 5],
+		["leave the lighthouse", _leave, 50],
+		["sail a rowboat", _boat, 20],
+		["steer it", _steer, 150],
+		["check it moved", _steer_check, 5],
+		["plan a tour of every building", _plan_tour, 5],
 		["watch the opening again", _replay, 60],
 		["skip it", _skip_opening, 10],
 		["start again", _start, 10],
@@ -77,7 +91,7 @@ func _process(_delta: float) -> void:
 		_wait -= 1
 		return
 	if _i >= _steps.size():
-		print("SMOKE DONE")
+		print("SMOKE DONE, %d checks failed" % _fails)
 		get_tree().quit()
 		set_process(false)
 		return
@@ -328,3 +342,169 @@ func _summaries() -> void:
 func _replay() -> void:
 	main.menus.show_title()
 	main.menus._replay_opening()
+
+
+# --- moving about (these check that you can actually get places) ------------------------
+
+var _mark := Vector3.ZERO
+var _mark_f := 0.0
+var _fails := 0
+
+
+func _check(ok: bool, what: String) -> void:
+	if ok:
+		print("SMOKE CHECK ok: ", what)
+	else:
+		_fails += 1
+		print("SMOKE CHECK FAIL: ", what)
+
+
+func _release_all() -> void:
+	for a in ["move_up", "move_down", "move_left", "move_right", "zoom_in", "zoom_out"]:
+		Input.action_release(a)
+
+
+func _zoom() -> void:
+	var cam: Node = main.cam
+	_mark_f = float(cam._dist_goal)
+	var wheel := InputEventMouseButton.new()
+	wheel.button_index = MOUSE_BUTTON_WHEEL_UP
+	wheel.pressed = true
+	wheel.factor = 1.0
+	Input.parse_input_event(wheel)
+	var pinch := InputEventMagnifyGesture.new()
+	pinch.factor = 1.3
+	Input.parse_input_event(pinch)
+
+
+func _zoom_check() -> void:
+	var cam: Node = main.cam
+	var after := float(cam._dist_goal)
+	_check(after < _mark_f, "the wheel and a pinch zoom in (%.1f -> %.1f m)" % [_mark_f, after])
+	cam.zoom_by(3.0)
+	_check(float(cam._dist_goal) > after, "zooming out works")
+
+
+func _building(kind: String) -> Dictionary:
+	for b: Dictionary in main.harbour.buildings:
+		if str(b.get("role", "")) == kind or str(b.get("kind", "")) == kind:
+			return b
+	return {}
+
+
+func _into_lighthouse() -> void:
+	_release_all()
+	main.fishing._set_state(0)
+	var b := _building("lighthouse")
+	_check(not b.is_empty(), "there's a lighthouse")
+	if not b.is_empty():
+		main.interiors.enter(b)
+
+
+func _stairs() -> void:
+	var it: Node = main.interiors
+	_check(bool(it.is_inside()), "inside the lighthouse")
+	var top: Vector3 = it._stair_top
+	_check(top != Vector3.INF, "the lighthouse has a stair")
+	if top == Vector3.INF:
+		return
+	var origin: Vector3 = it.origin()
+	main.player.global_position = origin + Vector3(-0.9, 0.1, top.z)
+	main.player.velocity = Vector3.ZERO
+	Input.action_press("move_right")
+
+
+func _stairs_check() -> void:
+	_release_all()
+	_check(bool(main.interiors.on_gallery), "walking up the lighthouse stair reaches the lamp gallery")
+
+
+func _gallery_walk() -> void:
+	_mark = main.player.global_position
+	Input.action_press("move_left")
+	Input.action_press("move_up")
+
+
+func _gallery_check() -> void:
+	_release_all()
+	var p: Vector3 = main.player.global_position
+	_check(p.y > _mark.y - 0.6, "still on the gallery after walking round (%.1f m up)" % p.y)
+	_check(p.distance_to(_mark) > 0.3, "you can walk on the gallery (moved %.1f m)" % p.distance_to(_mark))
+
+
+func _climb_down() -> void:
+	main.interiors.use({"kind": "descend"})
+
+
+func _down_check() -> void:
+	_check(bool(main.interiors.is_inside()) and not bool(main.interiors.on_gallery), "climbing down puts you back inside")
+
+
+func _leave() -> void:
+	_release_all()
+	if bool(main.interiors.is_inside()):
+		main.interiors.leave()
+
+
+func _boat() -> void:
+	_check(not bool(main.interiors.is_inside()), "back outside")
+	(main.save.boats as Array).append("row")
+	main.save.boat = "row"
+	main.boats.spawn_at_dock(main.player.global_position)
+	main.boats.board()
+	_mark = main.boats.boat.global_position
+
+
+func _steer() -> void:
+	Input.action_press("move_up")
+
+
+func _steer_check() -> void:
+	_release_all()
+	var moved: float = (main.boats.boat.global_position as Vector3).distance_to(_mark)
+	_check(moved > 1.0, "the rowboat moves when you steer (%.1f m)" % moved)
+	if bool(main.boats.can_land()):
+		main.boats.go_ashore()
+	else:
+		main.boats.aboard = false
+		main.player.riding = false
+		main.player.global_position = Vector3(436.0, float(main.harbour.height_at(436.0, 566.0)) + 0.5, 566.0)
+	main.player.can_move = true
+
+
+## Go into every building, walk into the room, and come back out.
+func _plan_tour() -> void:
+	var at := _i
+	for b: Dictionary in main.harbour.buildings:
+		var name := str(b.get("name", "?"))
+		_steps.insert(at, ["enter " + name, _tour_enter.bind(b), 45])
+		_steps.insert(at + 1, ["walk about in " + name, _tour_walk, 45])
+		_steps.insert(at + 2, ["leave " + name, _tour_leave.bind(name), 45])
+		_steps.insert(at + 3, ["check outside " + name, _tour_out.bind(name), 3])
+		at += 4
+
+
+func _tour_enter(b: Dictionary) -> void:
+	_release_all()
+	main.player.can_move = true
+	main.interiors.enter(b)
+
+
+func _tour_walk() -> void:
+	_check(bool(main.interiors.is_inside()), "went inside")
+	_mark = main.player.global_position
+	Input.action_press("move_up")
+
+
+func _tour_leave(name: String) -> void:
+	_release_all()
+	var moved: float = (main.player.global_position as Vector3).distance_to(_mark)
+	_check(moved > 0.4, "can walk about inside %s (%.1f m)" % [name, moved])
+	main.interiors.leave()
+
+
+func _tour_out(name: String) -> void:
+	var p: Vector3 = main.player.global_position
+	var ground := maxf(float(main.harbour.height_at(p.x, p.z)), float(main.harbour.stand_height(p.x, p.z)))
+	_check(not bool(main.interiors.is_inside()), "came back out of " + name)
+	_check(p.y > ground - 1.0 and p.y < ground + 3.0, "standing on the ground outside %s (y %.1f, ground %.1f)" % [name, p.y, ground])

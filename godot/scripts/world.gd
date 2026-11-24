@@ -302,7 +302,8 @@ func mat_at(x: float, z: float) -> String:
 ## Which island you're on (or just off), or "" on the mainland.
 func island_at(x: float, z: float) -> String:
 	for i in meta.islands:
-		var r: float = 60.0 if i.r == null else float(i.r) * 1.5 + 6.0
+		var rv: Variant = i.get("r")
+		var r: float = 60.0 if rv == null else float(rv) * 1.5 + 6.0
 		if Vector2(x - float(i.x), z - float(i.z)).length() < r:
 			return str(i.id)
 	return ""

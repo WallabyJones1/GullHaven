@@ -7,8 +7,9 @@ extends Camera3D
 
 const PITCH := deg_to_rad(36.0)
 const LOOK_HEIGHT := 0.8
-const DIST_MIN := 7.0
-const DIST_MAX := 34.0
+const DIST_MIN := 5.0
+const DIST_MAX := 60.0
+const ZOOM_STEP := 0.86  # one notch of the mouse wheel
 const TURN_SPEED := 2.2  # radians per second when held
 const DRAG_SPEED := 0.006  # radians per pixel of right-mouse drag
 
@@ -104,6 +105,31 @@ func _unhandled_input(event: InputEvent) -> void:
 			_yaw_goal = clampf(_yaw_goal, -0.55, 0.55)
 
 
+## Zooming: the mouse wheel, a trackpad (two-finger scroll or pinch), handled here so it
+## works even with the pointer over the HUD. Keys and the right stick are in _process.
+func _input(event: InputEvent) -> void:
+	if cinematic or not target or get_tree().paused:
+		return
+	if event is InputEventMouseButton and event.is_pressed():
+		var mb := event as InputEventMouseButton
+		var notches := maxf(mb.factor, 1.0) if mb.factor > 0.0 else 1.0
+		if mb.button_index == MOUSE_BUTTON_WHEEL_UP:
+			zoom_by(pow(ZOOM_STEP, notches))
+		elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			zoom_by(pow(1.0 / ZOOM_STEP, notches))
+	elif event is InputEventPanGesture:
+		zoom_by(1.0 + clampf((event as InputEventPanGesture).delta.y * 0.05, -0.3, 0.3))
+	elif event is InputEventMagnifyGesture:
+		var f := (event as InputEventMagnifyGesture).factor
+		if f > 0.0:
+			zoom_by(1.0 / f)
+
+
+## Zoom out (more than 1) or in (less than 1).
+func zoom_by(k: float) -> void:
+	_dist_goal = clampf(_dist_goal * k, DIST_MIN, DIST_MAX * (0.6 if indoor else 1.0))
+
+
 func _process(delta: float) -> void:
 	if not target or cinematic:
 		return
@@ -111,14 +137,10 @@ func _process(delta: float) -> void:
 	_yaw_goal += turn * TURN_SPEED * delta
 	if indoor:
 		_yaw_goal = clampf(_yaw_goal, -0.55, 0.55)  # rooms are open only at the front
-	if Input.is_action_just_pressed("zoom_in"):
-		_dist_goal = maxf(DIST_MIN, _dist_goal * 0.88)
-	if Input.is_action_just_pressed("zoom_out"):
-		_dist_goal = minf(DIST_MAX, _dist_goal / 0.88)
-	# Held stick zoom.
-	var stick := Input.get_joy_axis(0, JOY_AXIS_RIGHT_Y)
-	if absf(stick) > 0.3:
-		_dist_goal = clampf(_dist_goal * (1.0 + stick * delta * 1.2), DIST_MIN, DIST_MAX)
+	# held keys (- and =) and the right stick zoom smoothly
+	var held := Input.get_action_strength("zoom_out") - Input.get_action_strength("zoom_in")
+	if absf(held) > 0.05:
+		zoom_by(1.0 + held * delta * 1.6)
 	_place(delta)
 
 

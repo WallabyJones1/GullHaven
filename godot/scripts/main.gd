@@ -416,6 +416,9 @@ func save_now() -> void:
 	if interiors and interiors.is_inside():
 		var door: Vector3 = interiors.inside.door
 		save.pos = [door.x, door.y, door.z]
+	elif interiors and bool(interiors.on_gallery):
+		var ldoor: Vector3 = interiors._lighthouse.door
+		save.pos = [ldoor.x, ldoor.y, ldoor.z]
 	elif boats and boats.aboard:
 		boats.remember()
 		var spot: Vector3 = boats.landing_spot()
@@ -449,7 +452,7 @@ func _update_controls() -> void:
 				if interiors.in_hut():
 					pairs.insert(2, ["build", "Arrange"])
 			else:
-				pairs = [["move", "Walk"], ["camera", "Camera"], ["action", "Cast / use"], ["bait", "Bait"]]
+				pairs = [["move", "Walk"], ["camera", "Camera"], ["zoom", "Zoom"], ["action", "Cast / use"], ["bait", "Bait"]]
 				if kit.has_any():
 					pairs.append(["tool", "Kit"])
 				pairs.append_array([["bag", "Bag"], ["journal", "Journal"], ["map", "Map"], ["menu", "Menu"]])

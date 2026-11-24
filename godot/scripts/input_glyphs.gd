@@ -26,7 +26,7 @@ const PAD := {
 const PAD_COLOURS := {"A": "#3aa84a", "B": "#d0453a", "X": "#3a7ad8", "Y": "#e0b030", "Cross": "#5a8ad8", "Circle": "#d0453a",
 	"Square": "#c86ab8", "Triangle": "#3aa88a"}
 # words that aren't single actions
-const PSEUDO_KEYS := {"move": "WASD", "camera": "Q/E", "zoom": "Wheel", "updown": "Up/Down", "leftright": "Left/Right", "arrows": "Arrows"}
+const PSEUDO_KEYS := {"move": "WASD", "camera": "Q/E", "zoom": "Wheel or - / =", "updown": "Up/Down", "leftright": "Left/Right", "arrows": "Arrows"}
 const PSEUDO_PAD := {"move": "Left stick", "camera": "Right stick", "zoom": "Right stick", "updown": "D-pad", "leftright": "D-pad", "arrows": "D-pad"}
 # old prompt wording -> tokens (order matters)
 const LEGACY := [

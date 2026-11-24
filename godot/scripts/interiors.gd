@@ -54,6 +54,10 @@ var _busy := false
 var _settle := 0.0
 var _out_yaw := 0.0
 var _t := 0.0
+var on_gallery := false  # up on the lighthouse's lamp gallery, outdoors
+var _gallery: Node3D
+var _lighthouse := {}  # the lighthouse building, while you're up top
+var _stair_top := Vector3.INF  # the top of the lighthouse stair (room space): walk up and you climb
 
 
 func setup(w: Node3D, p: CharacterBody3D, c: Camera3D, h: CanvasLayer, a: Node, s: Node, sv: Dictionary, dn: Node) -> void:
@@ -109,6 +113,8 @@ func door_near(pos: Vector3, facing: Vector3) -> Dictionary:
 
 ## Something in this room you could use (a bed, the notice board, a tank), or {}.
 func thing_near(pos: Vector3, facing: Vector3) -> Dictionary:
+	if on_gallery and not _busy:
+		return {"kind": "descend", "text": "{action} Climb back down", "dist": 1.0, "pos": pos}
 	if not is_inside() or _busy:
 		return {}
 	var best := {}
@@ -147,6 +153,8 @@ func use(it: Dictionary) -> void:
 				hut_build.begin()
 		"climb":
 			_climb()
+		"descend":
+			_descend()
 		"keeper_stone":
 			_keeper_stone()
 		"darts":
@@ -191,6 +199,10 @@ func _process(delta: float) -> void:
 	if not is_inside():
 		return
 	_settle = maxf(0.0, _settle - delta)
+	if _stair_top != Vector3.INF and not _busy and _settle <= 0.0:
+		var local := player.global_position - _origin
+		if local.y > _stair_top.y - 0.45 and local.x > _stair_top.x - 0.6:
+			_climb()
 	for f in _fires:
 		f.frame = int(_t * 8.0) % 4
 	for s in _swimmers:
@@ -270,6 +282,7 @@ func _clear_room() -> void:
 	if _room:
 		_room.queue_free()
 		_room = null
+	_stair_top = Vector3.INF
 	_target = null
 	_things.clear()
 	_fires.clear()
@@ -536,20 +549,53 @@ func _build_room(b: Dictionary) -> void:
 				"kind": "look", "data": "The keeper's log: \"Fog again. Three boats home safe by the light. A great shadow seen off the Deep, bigger than any boat.\""})
 			_things.append({"pos": _to_world(Vector3(-_w * 0.5 + 0.9, 0.0, _d * 0.15)), "text": "Space: Look at the loose stone by the stair",
 				"kind": "keeper_stone", "data": 0})
-			_stand("telescope", Vector3(1.6, 0.0, -_d * 0.5 + 1.2))
-			_things.append({"pos": _to_world(Vector3(_w * 0.32 - 0.9, 0.0, -_d * 0.5 + 2.0)), "text": "Space: Climb up to the lamp",
-				"kind": "climb", "data": 0})
-			_wall("window", "back", 0.4, 1.0)
+			_stand("telescope", Vector3(1.4, 0.0, -_d * 0.5 + 1.7))
 			_wall("chart", "left", 0.0, 1.3)
 			_stand("clock", Vector3(_w * 0.4, 0.0, _d * 0.1), true)
-			for i in 6:  # the bottom of the spiral stair
-				var a := i * 0.5
-				_box(Vector3(_w * 0.32 + cos(a) * 0.8, i * 0.22, -_d * 0.5 + 1.2 + sin(a) * 0.8), Vector3(0.7, 0.2, 0.5), "stone")
+			_lighthouse_stair()
 		"hut":
 			_hut_room()
 		_:  # a cottage
 			_cottage(b)
 	_rebuild_sky()
+
+
+## The stair up to the lamp, along the back wall: walk up it and you come out on the
+## gallery at the top (or press the action button at the bottom).
+func _lighthouse_stair() -> void:
+	var x0 := -0.3
+	var x1 := _w * 0.5 - 0.55
+	var rise := 2.1
+	var depth := 0.9
+	var zc := -_d * 0.5 + 0.1 + depth * 0.5
+	var steps := 8
+	var run := x1 - x0
+	var stone := _tex("wall_stone", 0.5)
+	for i in steps:
+		var h := rise * (i + 1) / steps
+		_vis_box(Vector3(x0 + run * (i + 0.5) / steps, 0.0, zc), Vector3(run / steps + 0.01, h, depth), stone)
+	# a smooth slope under the steps to walk on
+	var ang := atan2(rise, run)
+	var body := StaticBody3D.new()
+	var col := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	var length := sqrt(run * run + rise * rise) + 0.3
+	shape.size = Vector3(length, 0.2, depth)
+	col.shape = shape
+	body.add_child(col)
+	var normal := Vector3(-sin(ang), cos(ang), 0.0)
+	body.position = Vector3(x0 + run * 0.5, rise * 0.5, zc) - normal * 0.1
+	body.rotation = Vector3(0.0, 0.0, ang)
+	_into().add_child(body)
+	_collider(Vector3(x1 + 0.25, rise - 0.2, zc), Vector3(0.5, 0.2, depth))  # the landing
+	# a rope rail along the open side
+	var rail := _flat(Color(0.55, 0.38, 0.22))
+	for i in 5:
+		var t := float(i) / 4.0
+		_vis_box(Vector3(x0 + run * t, rise * t, zc + depth * 0.5), Vector3(0.06, 0.9, 0.06), rail)
+	_stair_top = Vector3(x1, rise, zc)
+	_things.append({"pos": _to_world(Vector3(x0 - 0.5, 0.0, zc + 0.9)), "text": "Space: Climb the stairs to the lamp",
+		"kind": "climb", "data": 0})
 
 
 ## Floor, walls, wainscot, the cut-away front wall and the door mat.
@@ -1097,15 +1143,151 @@ func _keeper_stone() -> void:
 
 
 func _climb() -> void:
-	if mystery and mystery.restore_light():
+	if _busy or not is_inside():
 		return
+	_busy = true
+	player.can_move = false
 	audio.play("step_wood", -4.0)
-	audio.play("whoosh", -10.0)
-	var door: Vector3 = inside.door
+	audio.play("step_wood", -6.0, 1.1)
+	var tw := create_tween()
+	tw.tween_property(_fade, "color:a", 1.0, FADE * 1.5)
+	tw.tween_callback(_go_up)
+	tw.tween_property(_fade, "color:a", 0.0, FADE * 2.5)
+	tw.tween_callback(_done)
+
+
+## Out onto the gallery round the lamp, high over the harbour.
+func _go_up() -> void:
+	var b := inside
+	_lighthouse = b
+	for who in _swapped:
+		if world.folk.has(who):
+			world.folk[who].node = _swapped[who]
+	_swapped.clear()
+	_clear_room()
+	inside = {}
+	on_gallery = true
+	var tower: Node3D = b.node
+	_tower_collision(tower, false)
+	var top := tower.global_position + Vector3(0.0, 9.3, 0.0)
+	_build_gallery(top)
+	var door: Vector3 = b.door
+	var out := Vector3(door.x - top.x, 0.0, door.z - top.z).normalized()
+	player.global_position = top + out * 1.6 + Vector3(0.0, 0.2, 0.0)
+	player.velocity = Vector3.ZERO
+	player.face(out)
+	world.set_indoor(false)
+	day_night.indoor = false
+	cam.indoor = false
+	cam.set_yaw(_out_yaw)
+	cam.snap()
+	audio.play("whoosh", -8.0)
 	if map_screen:
-		map_screen.reveal(door.x, door.z, 300.0)
-		map_screen.mark(door)
-	hud.toast("You climb the spiral stair to the lamp. The whole bay spreads out below; your map fills in (M).")
+		map_screen.reveal(top.x, top.z, 300.0)
+		map_screen.mark(top)
+	hud.show_area("The lamp gallery", "", false)
+	if not (mystery and mystery.restore_light()):
+		hud.toast("The whole bay spreads out below, and your map fills in ({map}). Walk round the lamp, and zoom out for the view.")
+
+
+func _descend() -> void:
+	if _busy or not on_gallery:
+		return
+	_busy = true
+	player.can_move = false
+	audio.play("step_wood", -4.0)
+	var tw := create_tween()
+	tw.tween_property(_fade, "color:a", 1.0, FADE * 1.5)
+	tw.tween_callback(_go_down)
+	tw.tween_property(_fade, "color:a", 0.0, FADE * 2.0)
+	tw.tween_callback(_done)
+
+
+## Back down the stair into the lighthouse.
+func _go_down() -> void:
+	on_gallery = false
+	if _gallery:
+		_gallery.queue_free()
+		_gallery = null
+	var b := _lighthouse
+	_lighthouse = {}
+	if b.is_empty():
+		return
+	_tower_collision(b.node, true)
+	_go_in(b)
+	if _stair_top != Vector3.INF:
+		player.global_position = _origin + Vector3(_stair_top.x - 3.2, 0.05, _stair_top.z + 1.1)
+	_settle = 1.0
+
+
+func _tower_collision(tower: Node, on: bool) -> void:
+	for c in tower.get_children():
+		if c is CollisionShape3D:
+			(c as CollisionShape3D).disabled = not on
+
+
+## The walkway round the lamp: a stone floor, a railing all round, and the lamp house.
+func _build_gallery(top: Vector3) -> void:
+	_gallery = Node3D.new()
+	_gallery.name = "LampGallery"
+	add_child(_gallery)
+	_gallery.global_position = top
+	var body := StaticBody3D.new()
+	_gallery.add_child(body)
+	var floor_col := CollisionShape3D.new()
+	var floor_shape := CylinderShape3D.new()
+	floor_shape.radius = 2.3
+	floor_shape.height = 0.3
+	floor_col.shape = floor_shape
+	floor_col.position = Vector3(0.0, -0.15, 0.0)
+	body.add_child(floor_col)
+	var lamp_col := CollisionShape3D.new()
+	var lamp_shape := CylinderShape3D.new()
+	lamp_shape.radius = 1.0
+	lamp_shape.height = 3.0
+	lamp_col.shape = lamp_shape
+	lamp_col.position = Vector3(0.0, 1.5, 0.0)
+	body.add_child(lamp_col)
+	var floor_mesh := MeshInstance3D.new()
+	var disc := CylinderMesh.new()
+	disc.top_radius = 2.3
+	disc.bottom_radius = 2.1
+	disc.height = 0.25
+	floor_mesh.mesh = disc
+	floor_mesh.material_override = _tex("wall_stone", 0.5)
+	floor_mesh.position = Vector3(0.0, -0.13, 0.0)
+	_gallery.add_child(floor_mesh)
+	var iron := _flat(Color(0.18, 0.17, 0.2))
+	var posts := 20
+	for i in posts:
+		var a := TAU * i / posts
+		var p := Vector3(cos(a) * 2.2, 0.0, sin(a) * 2.2)
+		var post := MeshInstance3D.new()
+		var pm := CylinderMesh.new()
+		pm.top_radius = 0.035
+		pm.bottom_radius = 0.035
+		pm.height = 1.0
+		post.mesh = pm
+		post.material_override = iron
+		post.position = p + Vector3(0.0, 0.5, 0.0)
+		_gallery.add_child(post)
+		var rc := CollisionShape3D.new()
+		var rs := BoxShape3D.new()
+		rs.size = Vector3(0.12, 1.6, 2.2 * TAU / posts + 0.1)
+		rc.shape = rs
+		rc.position = p + Vector3(0.0, 0.8, 0.0)
+		rc.rotation.y = -a
+		body.add_child(rc)
+	var ring := MeshInstance3D.new()
+	var torus := TorusMesh.new()
+	torus.inner_radius = 2.16
+	torus.outer_radius = 2.24
+	torus.rings = 40
+	torus.ring_segments = 6
+	ring.mesh = torus
+	ring.material_override = iron
+	ring.position = Vector3(0.0, 1.0, 0.0)
+	_gallery.add_child(ring)
 
 
 func _skip_night(hours: float) -> void:
