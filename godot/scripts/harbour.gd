@@ -13,6 +13,11 @@ const PIXEL := 1.0 / 16.0
 const LAND_TOP := 0.6
 
 var spawn_point := Vector3(0.0, LAND_TOP + 0.1, -2.5)
+var sea_level := 0.0  # moves with the tide (DayNight sets it)
+var stall_point := Vector3(10.0, LAND_TOP, -3.4)  # where you stand to shop
+var folk := {}  # name -> {node: Sprite3D, home: Vector3}
+var cats: Array[Sprite3D] = []
+var _sea: MeshInstance3D
 var water_material: ShaderMaterial
 var lamps: Array[OmniLight3D] = []
 var glow_mats: Array[StandardMaterial3D] = []
@@ -39,6 +44,8 @@ func build() -> void:
 
 func _process(delta: float) -> void:
 	_t += delta
+	if _sea:
+		_sea.position.y = sea_level
 	if boat:
 		boat.position.y = sin(_t * 1.4) * 0.05 - 0.05
 		boat.rotation.z = sin(_t * 1.1) * 0.03
@@ -55,12 +62,40 @@ func is_water(x: float, z: float) -> bool:
 		return false
 	if z < 0.2 and x > -12.0 and x < 34.0:
 		return false  # the town block and its quay
-	if x <= -12.0 and z < 2.0:
-		return false  # the beach, above the waterline
+	if x <= -12.0 and beach_y(z) > sea_level - 0.05:
+		return false  # the beach, above the waterline (it moves with the tide)
 	for r in _solid:
 		if r.has_point(Vector2(x, z)):
 			return false
 	return true
+
+
+## How deep the water is at (x, z); 0 on land.
+func water_depth(x: float, z: float) -> float:
+	if not is_water(x, z):
+		return 0.0
+	if x <= -12.0 and z < 6.1:
+		return sea_level - beach_y(z)
+	return sea_level + 2.4
+
+
+## The two fishing grounds: the beach side is the Sandy Shallows.
+func zone_at(x: float, _z: float) -> String:
+	return "shallows" if x < -12.0 else "harbour"
+
+
+## What's underfoot, for footstep sounds: wood, sand, stone or grass.
+func surface_at(x: float, z: float) -> String:
+	for r in _solid:
+		if r.has_point(Vector2(x, z)):
+			return "wood"
+	if x <= -12.0 and z > -4.2:
+		return "sand"
+	if x > -12.0 and x < 34.0 and z > -3.95:
+		return "stone"
+	if (absf(x - 1.0) < 1.5 and z > -11.0) or (absf(z + 10.5) < 1.1 and x > -10.0 and x < 20.0):
+		return "sand"
+	return "grass"
 
 
 ## Height of the beach surface at z (it slopes from the grass down under the sea).
@@ -84,6 +119,7 @@ func _build_sea() -> void:
 	sea.position = Vector3(0.0, 0.0, 10.0)
 	sea.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(sea)
+	_sea = sea
 	# The seabed shows through the shallows and darkens with depth.
 	_box(Vector3(200.0, 0.4, 160.0), Vector3(0.0, -2.6, 10.0), _mat("seabed"), false)
 
@@ -311,16 +347,18 @@ func _build_boat() -> void:
 
 
 func _build_people() -> void:
-	var folk := [
-		["folk0", Vector3(-4.0, LAND_TOP, -9.6), 0],
-		["folk2", Vector3(12.0, LAND_TOP, -3.6), 0],
-		["folk4", Vector3(4.6, 0.55, 12.4), 2],
-		["folk6", Vector3(-20.0, beach_y(-2.0), -2.0), 3],
+	# name, sprite sheet, where they stand, which way they face
+	var people := [
+		["Juniper", "folk0", Vector3(-4.0, LAND_TOP, -9.6), 0],
+		["Hale", "folk2", Vector3(12.0, LAND_TOP, -3.6), 0],
+		["Old Marlo", "folk4", Vector3(4.6, 0.55, 12.4), 2],
+		["Pip", "folk6", Vector3(-20.0, beach_y(-2.0), -2.0), 3],
 	]
-	for f in folk:
-		var s := _sprite(load("res://art/chars/%s.png" % f[0]), f[1], 3, 4)
-		s.frame = f[2] * 3
-		_walkers.append({"node": s, "home": f[1], "kind": "folk", "row": f[2], "t": randf() * 4.0, "frames": 3})
+	for f in people:
+		var s := _sprite(load("res://art/chars/%s.png" % f[1]), f[2], 3, 4)
+		s.frame = f[3] * 3
+		folk[f[0]] = {"node": s, "home": f[2]}
+		_walkers.append({"node": s, "home": f[2], "kind": "folk", "row": f[3], "t": randf() * 4.0, "frames": 3})
 	var coats := ["ginger", "black", "tabby", "calico"]
 	var cat_spots := [Vector3(8.6, LAND_TOP, -3.4), Vector3(-2.0, LAND_TOP, -2.0), Vector3(3.5, 0.55, 4.0), Vector3(-12.0, LAND_TOP, -10.0)]
 	for i in coats.size():
@@ -329,7 +367,24 @@ func _build_people() -> void:
 			continue
 		var c := _sprite(load(path), cat_spots[i], 2, 4)
 		c.pixel_size = PIXEL * 0.75
+		cats.append(c)
 		_walkers.append({"node": c, "home": cat_spots[i], "kind": "cat", "row": 0, "t": randf() * 3.0, "frames": 2, "target": cat_spots[i]})
+
+
+## Turn a townsperson to face a point (someone talking to them) for a few seconds.
+func folk_face(who: String, toward: Vector3) -> void:
+	if not folk.has(who):
+		return
+	var node: Sprite3D = folk[who].node
+	for w in _walkers:
+		if w.node == node:
+			var d := toward - node.position
+			if absf(d.x) > absf(d.z):
+				w.row = 2 if d.x < 0.0 else 3
+			else:
+				w.row = 1 if d.z < 0.0 else 0
+			w.t = 4.0
+			node.frame = int(w.row) * 3
 
 
 func _update_walker(w: Dictionary, delta: float) -> void:

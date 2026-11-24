@@ -1,5 +1,6 @@
 extends Node3D
-## Gullhaven HD-2D, Phase 0: one harbour, one fisher, the cast and the fight.
+## Gullhaven HD-2D: a harbour and a beach to fish, townsfolk, a tackle shop, weather,
+## tides and feeding frenzies, all on the web game's rules and sounds.
 ## Everything is assembled here in code so placeholder shapes can be swapped for
 ## Blender models (see res://models/README.md) without touching the scene file.
 
@@ -12,6 +13,11 @@ const FishSchool := preload("res://scripts/fish_school.gd")
 const Fishing := preload("res://scripts/fishing.gd")
 const Hud := preload("res://scripts/hud.gd")
 const SaveGame := preload("res://scripts/save_game.gd")
+const Sea := preload("res://scripts/sea.gd")
+const Audio := preload("res://scripts/audio.gd")
+const Shop := preload("res://scripts/shop.gd")
+const Town := preload("res://scripts/town.gd")
+const Logbook := preload("res://scripts/logbook.gd")
 
 var env: Environment
 var world_env: WorldEnvironment
@@ -25,6 +31,11 @@ var cam: Camera3D
 var school: Node3D
 var fishing: Node
 var hud: CanvasLayer
+var sea: Node
+var audio: Node
+var shop: CanvasLayer
+var town: Node
+var logbook: CanvasLayer
 var save: Dictionary
 var quality_high := true
 
@@ -32,6 +43,13 @@ var quality_high := true
 func _ready() -> void:
 	InputSetup.setup()
 	save = SaveGame.load_save()
+	sea = Sea.new()
+	sea.name = "Sea"
+	add_child(sea)
+	sea.setup(float(save.get("clock_offset", 0.0)))
+	audio = Audio.new()
+	audio.name = "Audio"
+	add_child(audio)
 	_build_environment()
 
 	harbour = Harbour.new()
@@ -41,6 +59,8 @@ func _ready() -> void:
 
 	player = Player.new()
 	player.name = "Player"
+	player.harbour = harbour
+	player.audio = audio
 	add_child(player)
 	player.global_position = harbour.spawn_point
 
@@ -57,35 +77,62 @@ func _ready() -> void:
 	hud = Hud.new()
 	hud.name = "HUD"
 	add_child(hud)
+	hud.setup(sea, save)
+
+	shop = Shop.new()
+	shop.name = "Shop"
+	add_child(shop)
+	shop.setup(sea, save, audio, hud)
+
+	logbook = Logbook.new()
+	logbook.name = "Logbook"
+	add_child(logbook)
+	logbook.setup(sea, save, audio, hud)
+
+	town = Town.new()
+	town.name = "Town"
+	add_child(town)
+	town.setup(harbour, player, hud, audio, sea, save, shop)
 
 	day_night = DayNight.new()
 	day_night.name = "DayNight"
 	add_child(day_night)
-	day_night.setup(sun, moon, env, sky_mat, harbour, save.get("hour", 9.0))
+	day_night.setup(sun, moon, env, sky_mat, harbour, sea, audio, player)
 
 	fishing = Fishing.new()
 	fishing.name = "Fishing"
 	add_child(fishing)
-	fishing.setup(player, school, hud, cam, harbour, save)
+	fishing.setup(player, school, hud, cam, harbour, save, sea, audio, town)
 
-	hud.set_shells(save.shells)
-	hud.set_catches(save.log.size())
-	hud.toast("Welcome to Gullhaven. Walk with WASD, face the water and hold E to cast.")
+	hud.toast("Welcome to Gullhaven! Walk with WASD. Face the water and hold E to cast.")
+	hud.toast("Hale's stall on the quay sells bait and better gear. Townsfolk have requests.")
 
 
 func _process(_delta: float) -> void:
 	hud.set_clock(day_night.hour)
 	if Input.is_action_just_pressed("time_skip"):
-		day_night.hour = fmod(day_night.hour + 1.0, 24.0)
+		sea.skip_hours(1.0)
+		save.clock_offset = sea.offset
+		hud.toast("An hour passes...")
 	if Input.is_action_just_pressed("quality"):
 		_set_quality(not quality_high)
 	if Input.is_action_just_pressed("photo"):
 		hud.visible = not hud.visible
+	if Input.is_action_just_pressed("logbook") and not hud.input_blocked() and fishing.state == 0:
+		logbook.open()
+	# Hear a feeding frenzy bubbling as you get close to it.
+	var near := 0.0
+	if school.frenzy_on:
+		var at: Vector2 = school.frenzy_at
+		var d := Vector2(player.global_position.x, player.global_position.z).distance_to(at)
+		near = clampf(1.0 - d / 16.0, 0.0, 1.0)
+	audio.set_amb("bubbles", near)
 
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_APPLICATION_PAUSED:
-		save.hour = day_night.hour if day_night else 9.0
+		if sea:
+			save.clock_offset = sea.offset
 		SaveGame.write(save)
 
 

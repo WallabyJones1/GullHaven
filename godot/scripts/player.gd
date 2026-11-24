@@ -13,6 +13,9 @@ const WALK := [0, 1, 0, 2]  # stand, step, stand, other step
 
 var facing := Vector3(0.0, 0.0, 1.0)  # last walking direction (8-way), used for casting
 var can_move := true
+var harbour: Node3D  # for the waterline and what's underfoot
+var audio: Node
+var _last_step := 0
 var sprite: Sprite3D
 var _row := ROW_DOWN
 var _saved_row := ROW_DOWN
@@ -75,6 +78,10 @@ func _physics_process(delta: float) -> void:
 		velocity = Vector3.ZERO
 	var step: int = WALK[int(_walk_t) % 4] if moving else 0
 	sprite.frame = _row * 3 + step
+	if step != 0 and step != _last_step and audio and harbour:
+		var surface: String = harbour.surface_at(global_position.x, global_position.z)
+		audio.play("step_" + surface, -10.0, 1.0, 0.12)
+	_last_step = step
 
 
 func _process(delta: float) -> void:
@@ -94,11 +101,12 @@ func face(dir: Vector3) -> void:
 
 
 ## Hold a catch up over your head, facing the camera.
-func show_off(tex: Texture2D) -> void:
+func show_off(tex: Texture2D, tint := Color.WHITE) -> void:
 	_saved_row = _row
 	_row = ROW_DOWN
 	sprite.frame = ROW_DOWN * 3
 	_held.texture = tex
+	_held.modulate = tint
 	_held.visible = tex != null
 	_held_t = 0.0
 
@@ -137,7 +145,8 @@ func _ground_at(p: Vector3) -> bool:
 	if hit.is_empty():
 		return false
 	var at: Vector3 = hit.position
-	return at.y > 0.05
+	var water: float = harbour.sea_level if harbour else 0.0
+	return at.y > water + 0.05
 
 
 func _make_sprite(tex: Texture2D) -> Sprite3D:

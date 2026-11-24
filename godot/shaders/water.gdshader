@@ -15,6 +15,8 @@ uniform vec3 glow_color : source_color = vec3(0.35, 0.95, 0.85);
 uniform float pixels_per_metre = 16.0;
 uniform float clarity : hint_range(0.0, 1.0) = 0.82;
 uniform float night : hint_range(0.0, 1.0) = 0.0;
+uniform float wind : hint_range(0.0, 1.0) = 0.2;
+uniform float rain : hint_range(0.0, 1.0) = 0.0;
 
 // Fish shadows: x, z, length (m), heading (radians; direction = cos, sin in x, z).
 uniform vec4 fish[8];
@@ -40,7 +42,7 @@ vec3 view_from_depth(vec2 uv, float raw, mat4 inv_proj) {
 
 void vertex() {
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
-	VERTEX.y += swell(world_pos.xz, TIME) * 0.035;
+	VERTEX.y += swell(world_pos.xz, TIME * (0.8 + wind * 0.6)) * (0.025 + wind * 0.07);
 }
 
 void fragment() {
@@ -60,7 +62,7 @@ void fragment() {
 	// Pixel-snapped ripples tilt the normal, so sun, moon and lamps glint off the surface.
 	vec2 g = vec2(
 		cos(p.x * 2.3 + t * 1.4) + cos((p.x + p.y) * 1.6 - t * 1.1),
-		cos(p.y * 2.7 + t * 1.7) + cos((p.x - p.y) * 1.3 + t * 0.8)) * 0.06;
+		cos(p.y * 2.7 + t * 1.7) + cos((p.x - p.y) * 1.3 + t * 0.8)) * (0.04 + wind * 0.06);
 	NORMAL = normalize((VIEW_MATRIX * vec4(-g.x, 1.0, -g.y, 0.0)).xyz);
 
 	// The seabed seen through the shallows, wobbling a little. If the wobbled sample
@@ -104,8 +106,22 @@ void fragment() {
 	float band = 0.48 + 0.12 * sin(t * 1.2 + p.x * 1.3 - p.y * 0.7);
 	foam = max(foam, step(abs(depth - band), 0.035) * step(0.45, hash(floor(p * 4.0))));
 
+	// Whitecaps when it's windy, out where the water is deep.
+	float caps = step(0.995 - wind * 0.025, hash(floor(p * 2.0) + floor(t * 0.8 + hash(floor(p * 2.0)) * 3.0)));
+	foam = max(foam, caps * step(0.55, wind) * step(0.4, shade));
+
+	// Rain: little rings opening on the surface.
+	if (rain > 0.01) {
+		vec2 cell = floor(p * 1.6);
+		float seed = hash(cell);
+		float age = fract(t * 1.4 + seed * 7.0);
+		vec2 centre = (cell + 0.25 + 0.5 * vec2(hash(cell + 3.1), hash(cell + 7.7))) / 1.6;
+		float ring = abs(length(p - centre) - age * 0.28);
+		foam = max(foam, step(ring, 0.022) * (1.0 - age) * step(1.0 - rain, seed) * 0.8);
+	}
+
 	// Sparkles: sun glitter by day, a few moon flecks at night.
-	float spark = step(0.9972, hash(p + floor(t * 3.0) * 0.371)) * (1.0 - foam);
+	float spark = step(0.9972, hash(p + floor(t * 3.0) * 0.371)) * (1.0 - foam) * (1.0 - rain);
 
 	ALBEDO = mix(water * (1.0 - see), foam_color, foam);
 	EMISSION = behind * mix(vec3(1.0), shallow_color * 1.25, 0.5) * see * (1.0 - foam)
