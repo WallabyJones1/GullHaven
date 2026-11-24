@@ -48,6 +48,10 @@ Journal, Map, Controls, Settings, and Save and quit. Screens opened from it come
 
 ## How it plays
 
+- **An opening and a main menu.** The first time the game starts, a short flight round
+  Gullhaven at dawn sets up the mystery (any key skips it; the menu can play it again).
+  The main menu sits over the harbour with Continue (showing where your story's got to),
+  New game, Settings, Controls, Watch the opening, Credits and Quit.
 - **Make your fisher.** A new game opens the character creator: skin, hair style and
   colour, beard, glasses, hat, shirt and pattern, jacket, trousers or a dress, shoes, with
   a live preview walking round. Odette at **Threads & Tides** (behind the tavern) changes
@@ -153,7 +157,7 @@ Journal, Map, Controls, Settings, and Save and quit. Screens opened from it come
   colours: golden (1 in 400) and albino (1 in 250) any time, moonlit under a full moon,
   storm-touched in storms, ghostly in fog, and rainbow after a storm. Legends for those
   with the right rod and conditions. Cast right onto a fish's nose and it bites at once.
-- **A big catalogue.** About 190 fish and 16 legends across the eleven fishing grounds,
+- **A big catalogue.** About 200 fish and 16 legends across the eleven fishing grounds,
   plus shells, coral, pearls, sea glass, fossils from the rock pools, treasure, and finds
   that only wash up on particular islands.
 - **The mystery of the Gull's Eye.** Fifty years ago the lighthouse keeper took the great
@@ -212,7 +216,8 @@ godot/
     companion.gd          taming cats and your companion
     journal.gd            the Journal
     ambient.gd            gulls, crabs, butterflies, fireflies, dolphins, whales, smoke, boats
-    menus.gd              the title screen, the game menu, settings and key changes
+    menus.gd              the main menu, the game menu, settings and key changes
+    opening.gd            the opening flight and the main menu's drifting view
     story.gd              the main story: chapters, Old Marlo's notes, the corner tracker, the beacon
     dialogue.gd           the conversation box (portraits, typed text, choices)
     progress.gd           fisher level, XP, skills and what each level unlocks
@@ -263,30 +268,23 @@ python3 tools/godot_interior_art.py   # floors, walls, decor and critters
 python3 tools/godot_catalog_extra.py  # new fish, legends, pot catches and finds, with their art
 python3 tools/godot_wardrobe.py       # the layered character art for the creator and outfitter
 python3 tools/godot_music.py          # the new music (needs scipy and ffmpeg)
+python3 tools/godot_branding.py       # the logo, icon, boot splash and store art in store/
 ```
 
 ## Sharing the beta
 
-`export_presets.cfg` has Windows, macOS and Linux exports set up, and
-`.github/workflows/gullhaven-beta.yml` builds all three on GitHub's computers, so nobody
-has to export by hand:
+`godot/SHARING.md` has the step-by-step guide. In short:
 
-1. In GitHub Desktop, make sure everything's pushed to `hd2d`.
-2. On github.com, open the repo's **Releases**, click **Draft a new release**, choose
-   a new tag such as `beta-0.5`, set the target to `hd2d`, tick **Set as a pre-release**,
-   and publish. (Pushing a tag starting with `beta-` does the same.)
-3. About ten minutes later the release has three zips attached, one per system, each
-   with the tester guide (`BETA.md`). Send testers the release link.
-
-You can also export from the Godot editor yourself: **Project > Export**, pick a preset,
-**Export Project** (Godot will offer to download the export templates the first time).
-
-For a public or semi-public beta, **itch.io** is the easiest home: make a new project,
-upload the three zips (or use itch's `butler` tool), and set it to **Restricted** with
-download keys, or **Draft**, so only people you invite can get it. Steam Playtest comes
-later, once the game has a Steam page.
+- Push a tag starting with `beta-` (or publish a release on GitHub targeting `hd2d`), and
+  `.github/workflows/gullhaven-beta.yml` builds Windows, macOS and Linux zips on GitHub's
+  computers and attaches them to a pre-release, ready to share.
+- Every push to `hd2d` also builds all three as a download on the Actions tab, without
+  publishing anything.
+- **itch.io:** make the project page once (the cover and description are in `store/`),
+  then either upload the zips by hand or add a `BUTLER_API_KEY` secret and an `ITCH_GAME`
+  variable to the repo, and every beta tag uploads itself.
+- **Steam:** needs a Steamworks account, the Steam Direct fee and an App ID first. After
+  that, three repo settings switch on automatic uploads (Steam Playtest suits a beta).
 
 The builds aren't signed yet, so Windows shows a SmartScreen warning and macOS needs
-**Open Anyway** in Privacy & Security; `BETA.md` walks testers through it. Signing and
-notarizing (an Apple Developer account, a Windows code-signing certificate) can come
-before a wider release.
+**Open Anyway** in Privacy & Security; `BETA.md` walks testers through it.

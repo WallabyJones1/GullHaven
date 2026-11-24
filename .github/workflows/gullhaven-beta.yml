@@ -1,17 +1,22 @@
-# Builds downloadable beta copies of the Godot game (godot/ on the hd2d branch) for
-# Windows, macOS and Linux.
+# Builds the Godot game (godot/ on the hd2d branch) for Windows, macOS and Linux, and
+# shares it.
 #
-# Ways to run it:
-# - Push a tag that starts with "beta-" (for example beta-0.4). The builds are attached to a
-#   GitHub pre-release with that name, ready to share.
-# - Publish a release on GitHub (Releases > Draft a new release, target hd2d). The builds
-#   are added to it.
-# - Run it by hand from the Actions tab (Run workflow, branch hd2d). The builds appear as
-#   a downloadable artifact on the run's page.
+# - Every push to hd2d that touches godot/ builds all three, as a downloadable artifact on
+#   the run's page (Actions tab). Nothing is published.
+# - Pushing a tag that starts with "beta-" (for example beta-0.5), or publishing a release
+#   on GitHub, also:
+#     1. attaches the three zips to a GitHub pre-release with that name;
+#     2. uploads them to itch.io, if the repo has a BUTLER_API_KEY secret and an ITCH_GAME
+#        variable (for example wallabyjones/gullhaven) -- see godot/SHARING.md;
+#     3. uploads them to Steam, if the repo has a STEAM_APP_ID variable plus STEAM_USERNAME
+#        and STEAM_CONFIG_VDF secrets -- also in godot/SHARING.md.
+# - You can also run it by hand from the Actions tab (Run workflow, branch hd2d).
 name: Gullhaven beta builds
 
 on:
   push:
+    branches: [hd2d]
+    paths: ["godot/**", ".github/workflows/gullhaven-beta.yml"]
     tags: ["beta-*"]
   release:
     types: [published]
@@ -21,14 +26,22 @@ permissions:
   contents: write
 
 env:
-  GODOT_VERSION: "4.6"
+  GODOT_VERSION: "4.6.1"
   GODOT_STATUS: "stable"
 
 jobs:
   export:
     runs-on: ubuntu-latest
+    outputs:
+      name: ${{ steps.name.outputs.name }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Name this build
+        id: name
+        run: |
+          NAME="${GITHUB_REF_NAME//\//-}"
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
 
       - name: Fetch Godot and its export templates
         run: |
@@ -53,10 +66,13 @@ jobs:
           ./godot-bin --headless --path godot --export-release "Windows Desktop" build/windows/Gullhaven.exe
           ./godot-bin --headless --path godot --export-release "macOS" build/mac/Gullhaven.zip
           ./godot-bin --headless --path godot --export-release "Linux" build/linux/Gullhaven.x86_64
+          test -s godot/build/windows/Gullhaven.exe
+          test -s godot/build/mac/Gullhaven.zip
+          test -s godot/build/linux/Gullhaven.x86_64
 
       - name: Package
         run: |
-          NAME="${GITHUB_REF_NAME//\//-}"
+          NAME="${{ steps.name.outputs.name }}"
           cd godot/build
           cp ../BETA.md windows/README.md
           cp ../BETA.md linux/README.md
@@ -67,13 +83,67 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: gullhaven-beta
+          name: gullhaven-builds
           path: godot/build/*.zip
 
       - name: Attach to the release
-        if: github.event_name != 'workflow_dispatch'
+        if: startsWith(github.ref, 'refs/tags/beta-') || github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
           files: godot/build/*.zip
           prerelease: true
           body_path: godot/BETA.md
+
+  itch:
+    needs: export
+    if: (startsWith(github.ref, 'refs/tags/beta-') || github.event_name == 'release') && vars.ITCH_GAME != ''
+    runs-on: ubuntu-latest
+    env:
+      BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: gullhaven-builds
+          path: builds
+
+      - name: Upload to itch.io
+        run: |
+          if [ -z "$BUTLER_API_KEY" ]; then echo "No BUTLER_API_KEY secret yet: skipping itch.io"; exit 0; fi
+          curl -fsSL -o butler.zip https://broth.itch.zone/butler/linux-amd64/LATEST/archive/default
+          unzip -q butler.zip
+          chmod +x butler
+          NAME="${{ needs.export.outputs.name }}"
+          ./butler push "builds/Gullhaven-${NAME}-windows.zip" "${{ vars.ITCH_GAME }}:windows" --userversion "$NAME"
+          ./butler push "builds/Gullhaven-${NAME}-mac.zip" "${{ vars.ITCH_GAME }}:mac" --userversion "$NAME"
+          ./butler push "builds/Gullhaven-${NAME}-linux.zip" "${{ vars.ITCH_GAME }}:linux" --userversion "$NAME"
+
+  steam:
+    needs: export
+    if: (startsWith(github.ref, 'refs/tags/beta-') || github.event_name == 'release') && vars.STEAM_APP_ID != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: gullhaven-builds
+          path: builds
+
+      - name: Unpack for Steam's depots
+        run: |
+          NAME="${{ needs.export.outputs.name }}"
+          mkdir -p steam/windows steam/mac steam/linux
+          unzip -q "builds/Gullhaven-${NAME}-windows.zip" -d steam/windows
+          unzip -q "builds/Gullhaven-${NAME}-mac.zip" -d steam/mac
+          unzip -q "builds/Gullhaven-${NAME}-linux.zip" -d steam/linux
+          chmod +x steam/linux/Gullhaven.x86_64
+
+      - uses: game-ci/steam-deploy@v3
+        with:
+          username: ${{ secrets.STEAM_USERNAME }}
+          configVdf: ${{ secrets.STEAM_CONFIG_VDF }}
+          appId: ${{ vars.STEAM_APP_ID }}
+          buildDescription: ${{ needs.export.outputs.name }}
+          rootPath: steam
+          depot1Path: windows
+          depot2Path: mac
+          depot3Path: linux
+          releaseBranch: ${{ vars.STEAM_BRANCH || 'beta' }}
