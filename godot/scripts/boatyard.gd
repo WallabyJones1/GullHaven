@@ -144,7 +144,7 @@ func _show_tab(i: int, focus_row := 0) -> void:
 		if b.focus_mode != Control.FOCUS_NONE:
 			focusable.append(b)
 	if not focusable.is_empty():
-		focusable[clampi(focus_row, 0, focusable.size() - 1)].call_deferred("grab_focus")
+		UI.focus_soon(focusable[clampi(focus_row, 0, focusable.size() - 1)])
 	audio.play("click", -8.0)
 
 

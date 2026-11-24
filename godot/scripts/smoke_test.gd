@@ -76,6 +76,11 @@ func setup(m: Node) -> void:
 		["climb back down", _climb_down, 50],
 		["check we're back inside", _down_check, 5],
 		["leave the lighthouse", _leave, 50],
+		["build a low step and a tall crate", _build_steps, 5],
+		["walk up the step", _walk_step, 30],
+		["check we're on the step", _step_check, 5],
+		["walk into the crate", _walk_crate, 90],
+		["check we didn't climb it", _crate_check, 5],
 		["sail a rowboat", _boat, 20],
 		["steer it", _steer, 300],
 		["check it moved", _steer_check, 5],
@@ -449,6 +454,94 @@ func _leave() -> void:
 		main.interiors.leave()
 
 
+var _props: Array[Node] = []
+var _step_base := 0.0
+var _home := Vector3.ZERO
+const TEST_Y := 400.0  # a test floor high above everything, so nothing else is in the way
+
+
+## A flat test floor in the sky over dry land, with a 0.25 m step on one side and a 1.2 m
+## crate on the other, all plain colliders.
+func _build_steps() -> void:
+	_home = main.player.global_position
+	var w: Node = main.harbour
+	var c := Vector3(_home.x, TEST_Y, _home.z)
+	for ring: float in [0.0, 6.0, 12.0, 20.0, 30.0, 45.0]:
+		var found := false
+		for i in 12:
+			var a := TAU * float(i) / 12.0
+			var x: float = _home.x + cos(a) * ring
+			var z: float = _home.z + sin(a) * ring
+			if bool(w.walkable(x, z)) and bool(w.walkable(x + 3.5, z)) and bool(w.walkable(x - 3.5, z)):
+				c = Vector3(x, TEST_Y, z)
+				found = true
+				break
+		if found:
+			break
+	for spec: Array in [[Vector3(0.0, -0.25, 0.0), Vector3(14.0, 0.5, 6.0)], [Vector3(2.4, 0.125, 0.0), Vector3(2.0, 0.25, 3.0)], [Vector3(-2.4, 0.6, 0.0), Vector3(1.0, 1.2, 3.0)]]:
+		var body := StaticBody3D.new()
+		var col := CollisionShape3D.new()
+		var box := BoxShape3D.new()
+		box.size = spec[1]
+		col.shape = box
+		body.add_child(col)
+		main.add_child(body)
+		body.global_position = c + (spec[0] as Vector3)
+		_props.append(body)
+	main.player.global_position = c + Vector3(0.0, 0.05, 0.0)
+	main.player.velocity = Vector3.ZERO
+	_mark = c
+	_step_base = c.y
+
+
+func _walk_step() -> void:
+	_press_toward(_mark + Vector3(2.6, 0.0, 0.0))
+
+
+func _step_check() -> void:
+	_release_all()
+	var p: Vector3 = main.player.global_position
+	_check(p.x > _mark.x + 1.5 and p.y > _step_base + 0.18, "walked up a low step (%.2f m up, %.1f m along)" % [p.y - _step_base, p.x - _mark.x])
+	main.player.global_position = _mark + Vector3(0.0, 0.05, 0.0)
+	main.player.velocity = Vector3.ZERO
+
+
+func _walk_crate() -> void:
+	_press_toward(_mark + Vector3(-3.0, 0.0, 0.0))
+
+
+func _crate_check() -> void:
+	_release_all()
+	var p: Vector3 = main.player.global_position
+	_check(p.y < _step_base + 0.4 and p.x > _mark.x - 2.0, "a tall crate still blocks you (%.2f m up)" % (p.y - _step_base))
+	for n in _props:
+		n.queue_free()
+	_props.clear()
+	main.player.global_position = _home
+	main.player.velocity = Vector3.ZERO
+
+
+## Hold the move keys toward a point, whichever way the camera faces.
+func _press_toward(to: Vector3) -> void:
+	var f: Vector3 = to - main.player.global_position
+	f.y = 0.0
+	f = f.normalized()
+	var right: Vector3 = main.cam.global_transform.basis.x
+	var fwd: Vector3 = -main.cam.global_transform.basis.z
+	right.y = 0.0
+	fwd.y = 0.0
+	var x: float = f.dot(right.normalized())
+	var y: float = f.dot(fwd.normalized())
+	if x > 0.05:
+		Input.action_press("move_right", x)
+	elif x < -0.05:
+		Input.action_press("move_left", -x)
+	if y > 0.05:
+		Input.action_press("move_up", y)
+	elif y < -0.05:
+		Input.action_press("move_down", -y)
+
+
 func _boat() -> void:
 	_check(not bool(main.interiors.is_inside()), "back outside")
 	(main.save.boats as Array).append("row")
@@ -458,8 +551,21 @@ func _boat() -> void:
 	_mark = main.boats.boat.global_position
 
 
+## Push the stick the way the bow points (out to sea from the dock), whichever way the camera faces.
 func _steer() -> void:
-	Input.action_press("move_up")
+	var f: Vector3 = main.boats.forward()
+	var right: Vector3 = main.boats.cam.ground_right()
+	var fwd: Vector3 = main.boats.cam.ground_forward()
+	var x: float = f.dot(right)
+	var y: float = f.dot(fwd)
+	if x > 0.05:
+		Input.action_press("move_right", x)
+	elif x < -0.05:
+		Input.action_press("move_left", -x)
+	if y > 0.05:
+		Input.action_press("move_up", y)
+	elif y < -0.05:
+		Input.action_press("move_down", -y)
 
 
 func _steer_check() -> void:

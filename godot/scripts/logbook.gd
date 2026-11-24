@@ -189,7 +189,7 @@ func _show_page(i: int) -> void:
 			first = b
 	_count.text = "%d / %d" % [got, list.size()]
 	if first:
-		first.call_deferred("grab_focus")
+		UI.focus_soon(first)
 		_show_detail(list[0])
 	audio.play("click", -8.0)
 

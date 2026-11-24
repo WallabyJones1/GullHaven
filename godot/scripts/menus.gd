@@ -424,7 +424,7 @@ func _focus_rebind(action: String) -> void:
 	for b in _find_buttons(_box):
 		var row := b.get_parent()
 		if row is HBoxContainer and row.get_child_count() == 2 and row.get_child(0) is Label:
-			if (row.get_child(0) as Label).text == label_text and b.text == kn:
+			if (row.get_child(0) as Label).text == label_text and b.text == kn and b.is_visible_in_tree():
 				b.grab_focus()
 				return
 

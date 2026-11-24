@@ -17,6 +17,7 @@ const SWIM_SPEED := 2.4
 const SWIM_DEPTH := 0.75  # water this deep (ground below the surface) and you're swimming
 const SINK := 0.95  # how far the sprite sinks while swimming
 const CLIMB := 1.8  # the highest ledge above the water you can haul yourself onto
+const STEP_UP := 0.36  # the tallest ledge you walk straight up: a kerb, a dock edge, a stair
 
 signal gate_blocked(text: String)  # walked into somewhere locked (with why)
 
@@ -128,6 +129,8 @@ func _physics_process(delta: float) -> void:
 			_last_safe = global_position
 	else:
 		velocity.y -= GRAVITY * delta
+	if _moving and is_on_floor():
+		_step_up(delta)
 	move_and_slide()
 	var floor_y: float = harbour.height_at(global_position.x, global_position.z) - 4.0 if harbour else -1.0
 	if global_position.y < floor_y:
@@ -285,6 +288,35 @@ func _try_climb(dir: Vector3, wl: float) -> bool:
 # --- walking -------------------------------------------------------------------------
 
 ## Walk freely on land, docks and the shallows; slide along the edge of deeper water.
+## Walking into a low ledge (a step, a kerb, the edge of a dock)? Lift onto it, the way
+## feet would, rather than stopping dead against it. Walls and anything taller stay put.
+func _step_up(delta: float) -> void:
+	var motion := Vector3(velocity.x, 0.0, velocity.z) * delta
+	if motion.length() < 0.0005:
+		return
+	var hit := KinematicCollision3D.new()
+	if not test_move(global_transform, motion, hit):
+		return
+	if hit.get_normal().y > 0.7:
+		return  # a slope: sliding handles it
+	var up := Vector3(0.0, STEP_UP, 0.0)
+	if test_move(global_transform, up):
+		return  # no headroom
+	var ahead := motion.normalized() * maxf(motion.length(), 0.1)
+	var raised := global_transform.translated(up)
+	if test_move(raised, ahead):
+		return  # taller than a step
+	var down := KinematicCollision3D.new()
+	var over := raised.translated(ahead)
+	if not test_move(over, -up, down):
+		return  # nothing to stand on up there (a gap, not a step)
+	if down.get_normal().y < 0.75:
+		return  # the "step" is a steep face: a cliff you'd climb a stride at a time
+	var lift: float = STEP_UP - absf(down.get_travel().y)
+	if lift > 0.02:
+		global_position.y += lift + 0.01
+
+
 func _keep_on_land(vel: Vector3) -> Vector3:
 	var probe := 0.45
 	# standing somewhere too deep already (the tide came in)? Any way that's no deeper is fine

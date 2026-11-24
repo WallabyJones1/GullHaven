@@ -89,7 +89,9 @@ static func key(action: String) -> String:
 		if ev is InputEventKey:
 			var k := ev as InputEventKey
 			var code := k.physical_keycode if k.physical_keycode != KEY_NONE else k.keycode
-			var s := OS.get_keycode_string(DisplayServer.keyboard_get_keycode_from_physical(code))
+			# (the headless test runner has no keyboard layout to ask)
+			var shown: Key = code if DisplayServer.get_name() == "headless" else DisplayServer.keyboard_get_keycode_from_physical(code)
+			var s := OS.get_keycode_string(shown)
 			return {"Escape": "Esc", "BackSpace": "Backspace", "Equal": "=", "Minus": "-"}.get(s, s)
 	for ev in InputMap.action_get_events(action):
 		if ev is InputEventMouseButton:

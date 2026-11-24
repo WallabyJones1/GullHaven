@@ -56,6 +56,17 @@ static func label(text: String, size: int, color: Color, bold := false) -> Label
 	return l
 
 
+## Give a control the keyboard and pad focus on the next frame, if it's still on screen then
+## (a panel can close in the frame it opened).
+static func focus_soon(c: Control) -> void:
+	if c == null:
+		return
+	var grab := func() -> void:
+		if is_instance_valid(c) and c.is_inside_tree() and c.is_visible_in_tree() and c.focus_mode != Control.FOCUS_NONE:
+			c.grab_focus()
+	grab.call_deferred()
+
+
 static func button(text: String, size := 20) -> Button:
 	var b := Button.new()
 	b.text = text
