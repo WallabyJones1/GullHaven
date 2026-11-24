@@ -69,6 +69,7 @@ var boats: Node3D  # when you're aboard, you cast off the side
 var specials: Array[Callable] = []  # (zone) -> an entry to hook instead, or {}
 var catch_hooks: Array[Callable] = []  # (id, cm, variant) told whenever you land something
 var progress: Node  # fisher level and skills
+var cast_bait := ""  # what was on the hook for the last cast
 var difficulty := 1
 var bar_mode := false  # this fight is on the reel bar
 var bar_zone := 0.0  # bottom of the green zone (0 to 1)
@@ -307,6 +308,7 @@ func _casting(delta: float) -> void:
 		_splash(_cast_to)
 		audio.play("plop", -2.0, 1.0, 0.1)
 		zone = harbour.zone_at(_cast_to.x, _cast_to.z)
+		cast_bait = bait_key()
 		_use_bait()
 		var gap: float = school.lure_landed(Vector2(_cast_to.x, _cast_to.z))
 		_nose = gap < 1.6

@@ -40,6 +40,7 @@ const Bag := preload("res://scripts/bag.gd")
 const Progress := preload("res://scripts/progress.gd")
 const Kit := preload("res://scripts/kit.gd")
 const Spearfishing := preload("res://scripts/spearfishing.gd")
+const Story := preload("res://scripts/story.gd")
 
 var env: Environment
 var world_env: WorldEnvironment
@@ -77,6 +78,7 @@ var bag: CanvasLayer
 var progress: Node
 var kit: Node3D
 var spear: CanvasLayer
+var story: Node3D
 var _first_time := false
 var skip_save := false  # starting a new game: don't write the old save back on the way out
 var save: Dictionary
@@ -290,6 +292,19 @@ func _ready() -> void:
 	bag.setup(save, sea, hud, audio)
 	bag.extra_sections.append(_bag_kit)
 
+	story = Story.new()
+	story.name = "Story"
+	add_child(story)
+	story.setup(harbour, player, hud, audio, sea, save, town)
+	story.fishing = fishing
+	story.interiors = interiors
+	story.dialogue = dialogue
+	story.progress = progress
+	story.map_screen = map_screen
+	story.mystery = mystery
+	story.start()
+	journal.story = story
+
 	ambient = Ambient.new()
 	ambient.name = "Ambient"
 	add_child(ambient)
@@ -487,9 +502,8 @@ func welcome() -> void:
 	if not _first_time:
 		return
 	_first_time = false
-	hud.toast("Welcome to Gullhaven! Walk with {move}, turn the camera with {camera}. Hold {action} to cast.")
-	hud.toast("Hale's Tackle on the quay sells bait and better gear. Townsfolk have requests.")
-	hud.toast("They say the old lighthouse keeper left something behind. Your Journal ({journal}) keeps track.")
+	hud.toast("Welcome to Gullhaven! Walk with {move}, turn the camera with {camera}. The gold corner says what to do next.")
+	story.intro()
 
 
 func _on_gate_blocked(text: String) -> void:

@@ -17,6 +17,7 @@ var mystery: Node3D
 var sidequests: Node3D
 var minigames: Node3D
 var companion: Node3D
+var story: Node  # the main story
 var is_open := false
 var _tab := 0
 var _tabs: Array[Button] = []
@@ -135,6 +136,10 @@ func _mystery_text() -> String:
 
 func _quest_text() -> String:
 	var lines: Array[String] = []
+	if story:
+		lines.append("[color=#ffd24d][b]The story[/b][/color]")
+		lines.append_array(story.journal_lines())
+		lines.append("")
 	lines.append("[color=#ffd24d][b]Side quests[/b][/color]")
 	lines.append_array(sidequests.journal_lines())
 	lines.append("")
