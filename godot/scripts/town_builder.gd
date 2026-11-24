@@ -344,6 +344,45 @@ func bridge(b: Dictionary, repaired: bool) -> Node3D:
 	return root
 
 
+## A wooden gate across a road, with a sign. Closed, its leaves meet across the way;
+## open, they swing back.
+func gate(g: Dictionary, open: bool) -> Node3D:
+	var root := Node3D.new()
+	root.name = "Gate"
+	world.add_child(root)
+	var at := Vector3(float(g.x), 0.0, float(g.z))
+	at.y = world.height_at(at.x, at.z)
+	root.position = at
+	var dir: Array = g.get("dir", [0.0, -1.0])
+	root.rotation.y = atan2(-float(dir[0]), -float(dir[1]))  # local -Z points along the road
+	var wood := _mat("timber")
+	var half := 2.6
+	for s in [-1.0, 1.0]:
+		root.add_child(_mesh_box(Vector3(0.3, 1.9, 0.3), Vector3(s * half, 0.95, 0.0), wood))
+		root.add_child(_mesh_box(Vector3(0.36, 0.12, 0.36), Vector3(s * half, 1.95, 0.0), _mat("planks")))
+		var leaf := Node3D.new()
+		leaf.position = Vector3(s * half, 0.0, 0.0)
+		leaf.rotation.y = (s * -PI * 0.55) if open else 0.0
+		for y in [0.45, 1.05]:
+			leaf.add_child(_mesh_box(Vector3(half - 0.2, 0.14, 0.08), Vector3(-s * (half - 0.2) * 0.5, y, 0.0), _mat("planks")))
+		leaf.add_child(_mesh_box(Vector3(0.1, 1.2, 0.08), Vector3(-s * (half - 0.35), 0.75, 0.0), wood))
+		var brace := _mesh_box(Vector3(0.08, 1.3, 0.06), Vector3(-s * (half - 0.2) * 0.5, 0.75, 0.02), wood)
+		brace.rotation.z = s * 0.95
+		leaf.add_child(brace)
+		root.add_child(leaf)
+	_sign(root, "RANGER GATE" if str(g.id) == "ranger" else "KEEP OUT", Vector3(0.0, 2.25, 0.0))
+	if not open:
+		var body := StaticBody3D.new()
+		var col := CollisionShape3D.new()
+		var shape := BoxShape3D.new()
+		shape.size = Vector3(half * 2.0, 2.0, 0.3)
+		col.shape = shape
+		col.position.y = 1.0
+		body.add_child(col)
+		root.add_child(body)
+	return root
+
+
 ## Your fishing hut on the beach: a tumbledown shack to start with, and its jetty.
 func hut(h: Dictionary, tier: int) -> Node3D:
 	var root := Node3D.new()

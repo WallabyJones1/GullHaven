@@ -444,8 +444,10 @@ def finish(S, T, hut):
         [(400, 545), (400, 610)], [(376, 566), (440, 566)], [(376, 584), (440, 584)], [(440, 552), (440, 604)],
         [(400, 610), (410, 640), (418, 668)],  # down to the hut and the beach
         [(400, 545), (410, 500), (430, 440), (452, 392), (452, 368), (450, 338), (420, 318), (372, 300), (336, 284)],  # north road, over the river
-        [(336, 284), (300, 270), (270, 248), (250, 228), (232, 210), (222, 186), (214, 150), (206, 124), (200, 100)],  # up to the lake
+        # up to the lake, on the north bank, climbing steadily past the ranger gate
+        [(326, 240), (300, 215), (275, 195), (255, 172), (240, 150), (228, 128), (214, 110), (200, 100)],
     ]
+    climb = {6: (4.8, 24.5)}  # roads with a set climb from end to end instead of following the ground
     road_mask = np.zeros((H, W), bool)
     for i, rp in enumerate(roads):
         pts = catmull(rp, 10)
@@ -453,11 +455,15 @@ def finish(S, T, hut):
         wdt = 3.2 if i >= 5 else 2.4
         m = (d < wdt) & (land > -0.5)
         # follow a smoothed version of the ground height along the road
-        prof = np.array([hgt[int(np.clip(p[1], 0, H - 1)), int(np.clip(p[0], 0, W - 1))] for p in pts])
-        prof = np.maximum(prof, 0.8)
-        prof = ndimage.uniform_filter1d(prof, 9, mode='nearest')
+        if i in climb:
+            a, b = climb[i]
+            prof = np.linspace(a, b, len(pts))
+        else:
+            prof = np.array([hgt[int(np.clip(p[1], 0, H - 1)), int(np.clip(p[0], 0, W - 1))] for p in pts])
+            prof = np.maximum(prof, 0.8)
+            prof = ndimage.uniform_filter1d(prof, 9, mode='nearest')
         target = np.interp(along, np.linspace(0, 1, len(prof)), prof)
-        blend = smooth(wdt + 4, wdt * 0.6, d) * (land > 0)
+        blend = smooth(wdt + (9 if i in climb else 4), wdt * 0.6, d) * (land > 0)
         hgt = np.where(blend > 0, hgt * (1 - blend) + target * blend, hgt)
         road_mask |= m
     flags[road_mask] |= F_ROAD
@@ -678,7 +684,7 @@ def main():
         lakes=[dict(name=LAKE['name'], x=LAKE['cx'], z=LAKE['cz'], rx=LAKE['rx'] * 1.15, rz=LAKE['rz'] * 1.15, level=LAKE['level'])],
         waterfall=dict(x=206.0, z=150.0, top=LAKE['level'], bottom=0.0, width=8.0),
         bridge=dict(x=450.0, z=352.0, length=36.0, rot=0, broken=True),
-        gates=[dict(id='ranger', x=244.0, z=218.0, r=6.0, needs='permit_ranger', text='The ranger gate is locked. Ranger Hollis in Willowford has the key.')],
+        gates=[dict(id='ranger', x=268.0, z=188.0, r=6.0, dir=[-20.0, -23.0], needs='permit_ranger', text='The ranger gate is locked. Ranger Hollis in Willowford has the key.')],
         towns=T, islands=ISLANDS + [ATOLL],
         landmarks=[dict(name=t['name'], x=t['x'], z=t['z']) for t in T] +
                   [dict(name='Mirrorlake', x=LAKE['cx'], z=LAKE['cz']), dict(name='Gull Rock', x=572, z=470),

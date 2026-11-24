@@ -1,13 +1,14 @@
 extends CanvasLayer
-## The Logbook: every fish in the harbour and the Sandy Shallows, and everything else you
-## can hook or dig up. Uncaught entries show as silhouettes, but their hint still tells
-## you when and how to find them, and "Biting now" marks what you could catch right now.
-## L or Tab opens and closes it, arrows move, R changes page, Q or Esc closes.
+## The Logbook: a page for every fishing ground (the harbour, the shallows, the estuary,
+## seagrass, reef, kelp, wrecks, lagoon, open blue, the Deep and Mirrorlake) and one for
+## everything else you can hook or dig up. Uncaught entries show as silhouettes, but their
+## hint still tells you when and how to find them, and "Biting now" marks what you could
+## catch right now. L or Tab opens and closes it, arrows move, Q / E or R turn the page.
 
 const UI := preload("res://scripts/ui_kit.gd")
 const Sea := preload("res://scripts/sea.gd")
 
-const PAGES := ["Harbour", "Sandy Shallows", "Finds"]
+const ZONES := ["harbour", "shallows", "estuary", "seagrass", "reef", "kelp", "wreck", "lagoon", "blue", "deep", "lake"]
 
 var sea: Node
 var save: Dictionary
@@ -15,7 +16,7 @@ var audio: Node
 var hud: CanvasLayer
 var is_open := false
 var _page := 0
-var _tabs: Array[Button] = []
+var _page_label: Label
 var _grid: GridContainer
 var _count: Label
 var _d_icon: TextureRect
@@ -48,12 +49,8 @@ func setup(s: Node, sv: Dictionary, a: Node, h: CanvasLayer) -> void:
 	var top := HBoxContainer.new()
 	top.add_theme_constant_override("separation", 10)
 	top.add_child(UI.label("Logbook", 34, UI.GOLD, true))
-	for i in PAGES.size():
-		var t := UI.button(PAGES[i], 20)
-		t.alignment = HORIZONTAL_ALIGNMENT_CENTER
-		t.pressed.connect(_show_page.bind(i))
-		top.add_child(t)
-		_tabs.append(t)
+	_page_label = UI.label("", 26, UI.CREAM, true)
+	top.add_child(_page_label)
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(spacer)
@@ -98,7 +95,7 @@ func setup(s: Node, sv: Dictionary, a: Node, h: CanvasLayer) -> void:
 	for c in [_d_name, _d_kind, _d_now, _d_stats, _d_hint]:
 		c.custom_minimum_size = Vector2(300.0, 0.0)
 		dcol.add_child(c)
-	col.add_child(UI.label("Arrows choose   R next page   L or Esc close", 18, UI.DIM))
+	col.add_child(UI.label("Arrows choose   Q / E or R turn the page   L or Esc close", 18, UI.DIM))
 
 
 func open() -> void:
@@ -123,9 +120,23 @@ func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("cancel") or event.is_action_pressed("logbook"):
 		get_viewport().set_input_as_handled()
 		close()
-	elif event.is_action_pressed("bait"):
+	elif event.is_action_pressed("bait") or event.is_action_pressed("rotate_right"):
 		get_viewport().set_input_as_handled()
-		_show_page((_page + 1) % PAGES.size())
+		_show_page((_page + 1) % _pages())
+	elif event.is_action_pressed("rotate_left"):
+		get_viewport().set_input_as_handled()
+		_show_page((_page + _pages() - 1) % _pages())
+
+
+func _pages() -> int:
+	return ZONES.size() + 1
+
+
+func _page_name(page: int) -> String:
+	if page >= ZONES.size():
+		return "Finds"
+	var z: Dictionary = sea.zones.get(ZONES[page], {})
+	return str(z.get("n", ZONES[page]))
 
 
 func _entries(page: int) -> Array:
@@ -133,24 +144,20 @@ func _entries(page: int) -> Array:
 	for e in sea.items:
 		var cat: String = e.cat
 		var z: String = e.z
-		match page:
-			0, 1:
-				var want := "harbour" if page == 0 else "shallows"
-				if (cat == "fish" or cat == "legend") and z == want and e.how != "pot":
-					out.append(e)
-			2:
-				var here := z == "harbour" or z == "shallows" or z == "beach" or z == "any"
-				var how: String = e.how
-				if here and cat != "fish" and cat != "legend" and (how == "hook" or how == "snag" or how == "comb"):
-					out.append(e)
+		if page < ZONES.size():
+			if (cat == "fish" or cat == "legend") and z == ZONES[page] and e.how != "pot":
+				out.append(e)
+		else:
+			var how: String = e.how
+			if cat != "fish" and cat != "legend" and (how == "hook" or how == "snag" or how == "comb"):
+				out.append(e)
 	out.sort_custom(func(a, b): return int(a.r) < int(b.r) if int(a.r) != int(b.r) else str(a.n) < str(b.n))
 	return out
 
 
 func _show_page(i: int) -> void:
 	_page = i
-	for t in _tabs.size():
-		_tabs[t].add_theme_color_override("font_color", UI.GOLD if t == i else UI.CREAM)
+	_page_label.text = "   <  %s  >" % _page_name(i)
 	for c in _grid.get_children():
 		c.queue_free()
 	var list := _entries(i)

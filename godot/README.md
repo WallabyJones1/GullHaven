@@ -27,7 +27,8 @@ catalogue) and uses its own synthesized music and sound.
 | Arrange furniture (in your hut)         | B; Q/E choose, R turn, Space put | X                    |
 | Steer against a run                     | A/D or left/right                | Left stick           |
 | Change bait                             | R                                | Y                    |
-| Logbook                                 | L or Tab                         | Back                 |
+| Logbook (Q / E turn the page)           | L or Tab                         | Back                 |
+| World map                               | M                                | Start                |
 | Reel in early / close a menu            | Esc                              | B                    |
 | Skip an hour                            | T                                |                      |
 | Quality high/low                        | F2                               |                      |
@@ -73,8 +74,17 @@ catalogue) and uses its own synthesized music and sound.
   a ghost shows where each piece goes, wall pieces snap to the walls.
 - **Catch of the day.** The fishmongers pay double for three fish each day. Ask Mags in
   Gullhaven which.
-- **Locked places.** The hills past the ranger gate need a permit from Ranger Hollis in
-  Willowford, the bridge over the estuary is broken, and Ember Isle is off limits for now.
+- **Opening up the map.** Three things are locked at first:
+  - **The estuary bridge** is washed out, so Willowford is a row up the river until Tess
+    the carpenter mends it (her Projects tab: timber, rope and Shells).
+  - **The ranger gate** on the north road keeps you out of the highlands and Mirrorlake.
+    Ranger Hollis in Willowford sells a permit once you've caught four kinds of estuary
+    fish.
+  - **Ember Isle** is a live volcano: Harbourmaster Quill only lets seasoned fishers land
+    (30 kinds of fish in your Logbook and a Skiff or bigger).
+  The harbourmaster's notice board lists what's still locked.
+- **The map** (M) fills in as you explore, marks the towns you've found, your boat, your
+  hut and what's locked. Climb the lighthouse to see the whole bay at once.
 - **The clock is shared with the web game.** One real second is one town minute. The
   tide turns every 6 town hours (you can watch the water climb the beach), the weather
   every 4 (calm, windy, rain, fog, storm), the moon each real week, and the season too.
@@ -102,8 +112,9 @@ catalogue) and uses its own synthesized music and sound.
   Between requests they tell you what's biting nearby right now.
 - **Beachcombing.** Sparkles on any sandy shore are shells, sea glass and treasure to dig
   up. Low tide uncovers more beach.
-- **Logbook.** Every fish and find, with silhouettes for ones you haven't caught, a hint
-  for each, your best sizes, and a "Biting now" marker.
+- **Logbook.** A page for each of the eleven fishing grounds plus one for finds, with
+  silhouettes for ones you haven't caught, a hint for each, your best sizes, and a
+  "Biting now" marker.
 
 The save lives in Godot's user folder (`user://gullhaven_save.json`).
 
@@ -124,6 +135,8 @@ godot/
     furniture.gd          furniture, materials and hut upgrade data
     trade.gd              the carpenter, Home Goods and salvager menus
     hut_build.gd          arranging furniture in your hut
+    quests.gd             the bridge, the ranger's permit and the Ember Isle permit
+    map_screen.gd         the world map with fog of war
     player.gd             the fisher and footsteps
     fishing.gd            cast, bite, fight styles, catch
     fish_school.gd        fish shadows and feeding frenzies

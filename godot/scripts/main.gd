@@ -25,6 +25,8 @@ const Boats := preload("res://scripts/boats.gd")
 const Boatyard := preload("res://scripts/boatyard.gd")
 const Trade := preload("res://scripts/trade.gd")
 const HutBuild := preload("res://scripts/hut_build.gd")
+const Quests := preload("res://scripts/quests.gd")
+const MapScreen := preload("res://scripts/map_screen.gd")
 
 var env: Environment
 var world_env: WorldEnvironment
@@ -48,6 +50,8 @@ var boats: Node3D
 var boatyard: CanvasLayer
 var trade: CanvasLayer
 var hut_build: Node3D
+var quests: Node
+var map_screen: CanvasLayer
 var save: Dictionary
 var quality_high := true
 var _area := ""
@@ -153,6 +157,20 @@ func _ready() -> void:
 	hut_build.setup(interiors, player, cam, hud, audio, save)
 	interiors.hut_build = hut_build
 
+	quests = Quests.new()
+	quests.name = "Quests"
+	add_child(quests)
+	quests.setup(harbour, town, hud, audio, sea, save)
+	trade.quests = quests
+
+	map_screen = MapScreen.new()
+	map_screen.name = "Map"
+	add_child(map_screen)
+	map_screen.setup(harbour, player, hud, audio, save)
+	map_screen.boats = boats
+	map_screen.interiors = interiors
+	interiors.map_screen = map_screen
+
 	fishing = Fishing.new()
 	fishing.name = "Fishing"
 	add_child(fishing)
@@ -183,6 +201,8 @@ func _process(delta: float) -> void:
 		hud.visible = not hud.visible
 	if Input.is_action_just_pressed("logbook") and not hud.input_blocked() and fishing.state == 0:
 		logbook.open()
+	if Input.is_action_just_pressed("map") and not hud.input_blocked() and fishing.state == 0:
+		map_screen.open()
 	# Hear a feeding frenzy bubbling as you get close to it.
 	var near := 0.0
 	if school.frenzy_on:
@@ -234,6 +254,7 @@ func _update_area(first: bool) -> void:
 		return
 	var p := player.global_position
 	day_night.sea_near = _sea_near(p)
+	map_screen.mark(p)
 	var place: String = harbour.area_name(p.x, p.z)
 	var water := _water_near(p)
 	var corner := place

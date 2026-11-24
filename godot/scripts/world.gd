@@ -49,6 +49,7 @@ var hut_tier := 0
 var focus: Node3D
 var indoor := false  # the world is hidden while you're inside a building
 var bridge_node: Node3D
+var gate_nodes: Array[Node3D] = []
 var hut_node: Node3D
 var builder: RefCounted
 var _chunks := {}  # Vector2i -> {mesh, body}
@@ -98,6 +99,7 @@ func build() -> void:
 		builder.build_town(t)
 	bridge_node = builder.bridge(meta.bridge, permits.has("bridge"))
 	hut_node = builder.hut(meta.hut, hut_tier)
+	rebuild_gates()
 	_build_waterfall()
 	# terrain around the start, all at once
 	var c := _chunk_of(spawn_point)
@@ -121,6 +123,14 @@ func rebuild_bridge() -> void:
 	if bridge_node:
 		bridge_node.queue_free()
 	bridge_node = builder.bridge(meta.bridge, permits.has("bridge"))
+
+
+func rebuild_gates() -> void:
+	for g in gate_nodes:
+		g.queue_free()
+	gate_nodes.clear()
+	for g in meta.gates:
+		gate_nodes.append(builder.gate(g, permits.has(str(g.needs))))
 
 
 func rebuild_hut(tier: int) -> void:

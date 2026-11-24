@@ -31,6 +31,7 @@ var sea: Node
 var save: Dictionary
 var day_night: Node
 var hut_build: Node  # arranging furniture in your hut
+var map_screen: CanvasLayer  # the lighthouse shows you the bay
 var inside := {}  # the building you're in ({} outdoors)
 var _room: Node3D
 var _target: Node3D  # where new pieces go (the room, or one piece of furniture)
@@ -142,6 +143,8 @@ func use(it: Dictionary) -> void:
 		"arrange":
 			if hut_build:
 				hut_build.begin()
+		"climb":
+			_climb()
 
 
 func enter(b: Dictionary) -> void:
@@ -507,6 +510,8 @@ func _build_room(b: Dictionary) -> void:
 			_things.append({"pos": _to_world(Vector3(-1.4, 0.0, -_d * 0.5 + 1.8)), "text": "Space: Read the keeper's log",
 				"kind": "look", "data": "The keeper's log: \"Fog again. Three boats home safe by the light. A great shadow seen off the Deep, bigger than any boat.\""})
 			_stand("telescope", Vector3(1.6, 0.0, -_d * 0.5 + 1.2))
+			_things.append({"pos": _to_world(Vector3(_w * 0.32 - 0.9, 0.0, -_d * 0.5 + 2.0)), "text": "Space: Climb up to the lamp",
+				"kind": "climb", "data": 0})
 			_wall("window", "back", 0.4, 1.0)
 			_wall("chart", "left", 0.0, 1.3)
 			_stand("clock", Vector3(_w * 0.4, 0.0, _d * 0.1), true)
@@ -1052,6 +1057,17 @@ func _sleep(cost: int) -> void:
 	tw.tween_property(_fade, "color:a", 0.0, 0.8)
 	tw.tween_callback(_done)
 	tw.tween_callback(hud.toast.bind("You sleep soundly and wake at dawn. Good fishing weather?"))
+
+
+## From the lamp room you can see the whole bay: it fills in on your map.
+func _climb() -> void:
+	audio.play("step_wood", -4.0)
+	audio.play("whoosh", -10.0)
+	var door: Vector3 = inside.door
+	if map_screen:
+		map_screen.reveal(door.x, door.z, 300.0)
+		map_screen.mark(door)
+	hud.toast("You climb the spiral stair to the lamp. The whole bay spreads out below; your map fills in (M).")
 
 
 func _skip_night(hours: float) -> void:

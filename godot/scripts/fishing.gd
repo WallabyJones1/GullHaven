@@ -772,7 +772,7 @@ func _logged_here() -> int:
 	var n := 0
 	for id in save.log:
 		var e: Dictionary = sea.by_id.get(id, {})
-		if not e.is_empty() and (e.cat == "fish" or e.cat == "legend") and (e.z == "harbour" or e.z == "shallows"):
+		if not e.is_empty() and (e.cat == "fish" or e.cat == "legend") and e.z != "unknown":
 			n += 1
 	return n
 
@@ -780,7 +780,7 @@ func _logged_here() -> int:
 func _total_here() -> int:
 	var n := 0
 	for e in sea.items:
-		if (e.cat == "fish" or e.cat == "legend") and (e.z == "harbour" or e.z == "shallows") and e.how != "pot":
+		if (e.cat == "fish" or e.cat == "legend") and e.z != "unknown" and e.how != "pot":
 			n += 1
 	return n
 

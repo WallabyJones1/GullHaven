@@ -285,6 +285,11 @@ func _closed_line(kind: String) -> String:
 	return "Welcome!"
 
 
+## Someone says something, in a speech bubble over their head.
+func say(who: String, line: String) -> void:
+	_say(who, line)
+
+
 func _say(who: String, line: String) -> void:
 	if not _bubbles.has(who):
 		var b := Label3D.new()

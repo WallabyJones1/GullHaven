@@ -9,7 +9,7 @@ const SaveGame := preload("res://scripts/save_game.gd")
 const Furniture := preload("res://scripts/furniture.gd")
 
 const TABS := {
-	"carpenter": ["Your hut", "Furniture", "Materials"],
+	"carpenter": ["Your hut", "Projects", "Furniture", "Materials"],
 	"home": ["Furniture"],
 	"salvager": ["Furniture", "Materials"],
 }
@@ -24,6 +24,7 @@ var save: Dictionary
 var audio: Node
 var hud: CanvasLayer
 var world: Node3D
+var quests: Node  # the bridge is a carpenter's project
 var is_open := false
 var kind := "carpenter"
 var _tab := 0
@@ -145,6 +146,8 @@ func _show_tab(i: int, focus_row := 0) -> void:
 	match str(TABS[kind][i]):
 		"Your hut":
 			rows = _hut_rows()
+		"Projects":
+			rows = _project_rows()
 		"Furniture":
 			rows = _furniture_rows()
 		_:
@@ -182,6 +185,29 @@ func _hut_rows() -> Array[Button]:
 				row.add_theme_color_override("font_color", UI.DIM)
 		out.append(row)
 	return out
+
+
+func _project_rows() -> Array[Button]:
+	var out: Array[Button] = []
+	var row := UI.button("", 20)
+	var status: String = quests.bridge_status()
+	row.text = "Mend the estuary bridge   %s\n    The bridge north of Gullhaven washed out in a storm. Mended, it's a walk to Willowford." % status
+	if status == "Done":
+		row.disabled = true
+		row.focus_mode = Control.FOCUS_NONE
+	else:
+		row.pressed.connect(_mend_bridge)
+	out.append(row)
+	return out
+
+
+func _mend_bridge() -> void:
+	var msg: String = quests.mend_bridge()
+	if msg != "":
+		_fail(msg)
+		return
+	_done("Done! The estuary bridge is mended. Willowford's a walk up the north road now.")
+	_show_tab(_tab)
 
 
 func _furniture_rows() -> Array[Button]:

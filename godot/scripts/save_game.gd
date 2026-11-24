@@ -33,6 +33,7 @@ static func defaults() -> Dictionary:
 		"materials": {"wood": 0, "rope": 0, "scrap": 0},
 		"furniture": [],  # placed in your hut: {id, x, z, rot} or {id, side, along}
 		"furniture_inv": {"crates": 1, "net_wall": 1},  # owned but not placed: id -> count
+		"seen": "",  # the map: one 0/1 per 32 m square, row by row
 	}
 
 
