@@ -1,9 +1,10 @@
 extends RefCounted
-## A small JSON save in the user folder: Shells, gear, bait, the Logbook, requests and
-## a few stats. (On Steam this file will sit under Steam Cloud; see the plan doc.)
+## A small JSON save in the user folder: Shells, gear, bait, the Logbook, requests, the
+## places you've found, your unlocks and where you were standing, plus a few stats.
+## (On Steam this file will sit under Steam Cloud; see the plan doc.)
 
 const PATH := "user://gullhaven_save.json"
-const VERSION := 2
+const VERSION := 3
 
 
 static func defaults() -> Dictionary:
@@ -20,6 +21,19 @@ static func defaults() -> Dictionary:
 		"thanks": {},  # townsperson -> requests done
 		"stats": {"catches": 0, "junk": 0, "finds": 0},
 		"clock_offset": 0.0,
+		"visited": {},  # place name -> true
+		"permits": {},  # unlocks: bridge, permit_ranger, permit_ember...
+		"hut_tier": 0,
+		"pos": [],  # where you were standing when you quit
+		"boats": [],  # boats you own (keys from boats.gd)
+		"boat": "",  # the one you're using
+		"boat_pos": [],  # where she's moored: x, z, heading
+		"boat_paint": -1,  # -1 is her own colours
+		"boat_parts": {},  # deck lamp...
+		"materials": {"wood": 0, "rope": 0, "scrap": 0},
+		"furniture": [],  # placed in your hut: {id, x, z, rot} or {id, side, along}
+		"furniture_inv": {"crates": 1, "net_wall": 1},  # owned but not placed: id -> count
+		"seen": "",  # the map: one 0/1 per 32 m square, row by row
 	}
 
 
@@ -36,7 +50,7 @@ static func load_save() -> Dictionary:
 	for key in parsed:
 		var have: Variant = data.get(key)
 		var got: Variant = parsed[key]
-		if have is Dictionary and got is Dictionary and key != "log" and key != "bait" and key != "thanks":
+		if have is Dictionary and got is Dictionary and key not in ["log", "bait", "thanks", "visited", "permits", "furniture_inv"]:
 			for sub in got:
 				have[sub] = got[sub]
 		elif have == null or typeof(have) == typeof(got) or (have is float and got is int) or (have is int and got is float):

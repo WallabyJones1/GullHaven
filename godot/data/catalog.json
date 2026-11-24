@@ -445,6 +445,7 @@
    "price": 12,
    "how": "fish",
    "art": "torp",
+   "look": "torp|#5f8fa0|#b9cdd6|#eef3f4|lat|#e8c84a|#e8c84a",
    "release": false,
    "hint": "Bites in the Harbour and Piers.",
    "what": ""
@@ -474,6 +475,7 @@
    "price": 12,
    "how": "fish",
    "art": "torp",
+   "look": "torp|#6d7f8f|#c3ccd4|#eef1f3|stripes|#9aa6b2|#8b97a3",
    "release": false,
    "hint": "Bites by day in the Harbour and Piers.",
    "what": ""
@@ -503,6 +505,7 @@
    "price": 12,
    "how": "fish",
    "art": "gar",
+   "look": "gar|#5fa08f|#c8e0d8|#f2f8f5|none|#e05050|#6fb5a0",
    "release": false,
    "hint": "Bites by day in the Harbour and Piers in calm weather.",
    "what": ""
@@ -532,6 +535,7 @@
    "price": 12,
    "how": "fish",
    "art": "jacket",
+   "look": "jacket|#8a7a50|#c4b07a|#e8dcb4|spots|#6a5a38|#d8a040",
    "release": false,
    "hint": "Bites in the Harbour and Piers.",
    "what": ""
@@ -561,6 +565,7 @@
    "price": 12,
    "how": "fish",
    "art": "deep",
+   "look": "deep|#8f9aa8|#c8cfd8|#eef0f3|stripes|#d8b860|#e8c860",
    "release": false,
    "hint": "Bites by day in the Harbour and Piers.",
    "what": ""
@@ -590,6 +595,7 @@
    "price": 35,
    "how": "fish",
    "art": "deep",
+   "look": "deep|#7d8a6a|#c0c4a8|#ecebdc|none|#000|#f0d040",
    "release": false,
    "hint": "Bites at dawn or dusk in the Harbour and Piers on a rising tide.",
    "what": ""
@@ -619,6 +625,7 @@
    "price": 35,
    "how": "fish",
    "art": "deep",
+   "look": "deep|#3f4a46|#6a7a70|#a8b4aa|bars|#2a3330|#3f4a46",
    "release": false,
    "hint": "Bites by day in the Harbour and Piers at high tide. Likes weed bait.",
    "what": ""
@@ -648,6 +655,7 @@
    "price": 35,
    "how": "fish",
    "art": "disc",
+   "look": "disc|#e8e2d0|#e8e2d0|#f4f0e4|bars|#2a2a2a|#e8b040",
    "release": false,
    "hint": "Bites at night in the Harbour and Piers.",
    "what": ""
@@ -677,6 +685,7 @@
    "price": 35,
    "how": "fish",
    "art": "squid",
+   "look": "squid|#c8a0d0|#e0c4e4|#f4ecf6|spots|#8a4a9a|#c8a0d0",
    "release": false,
    "hint": "Bites from dusk into the night in the Harbour and Piers. Likes a squid jig.",
    "what": ""
@@ -706,6 +715,7 @@
    "price": 110,
    "how": "fish",
    "art": "guitar",
+   "look": "guitar|#a89070|#c8b490|#f0e8dc|lines|#5a6a8a|#a89070",
    "release": false,
    "hint": "Bites at night in the Harbour and Piers at low tide.",
    "what": ""
@@ -735,6 +745,7 @@
    "price": 110,
    "how": "fish",
    "art": "shark",
+   "look": "shark|#a08a6a|#bca88a|#efe6d6|harness|#4a3a2a|#a08a6a|blunt",
    "release": false,
    "hint": "Bites at night in the Harbour and Piers in winter.",
    "what": ""
@@ -766,6 +777,7 @@
    "price": 380,
    "how": "fish",
    "art": "seahorse",
+   "look": "seahorse|#e0b040|#f0cc60|#f8e0a0|none|#b08020|#e0b040",
    "release": true,
    "hint": "Bites by day in the Harbour and Piers in calm weather in summer. Protected: log it, then let it go.",
    "what": ""
@@ -795,6 +807,7 @@
    "price": 12,
    "how": "fish",
    "art": "torp",
+   "look": "torp|#c8b890|#e8dcc0|#f6f0e4|none|#000|#d8c8a0|slim",
    "release": false,
    "hint": "Bites by day in the Sandy Shallows on a rising tide.",
    "what": ""
@@ -824,6 +837,7 @@
    "price": 12,
    "how": "fish",
    "art": "deep",
+   "look": "deep|#6f8fa8|#d0dce4|#f4f6f8|spots|#2a3a4a|#e8d070|deepfork",
    "release": false,
    "hint": "Bites by day in the Sandy Shallows.",
    "what": ""
@@ -853,6 +867,7 @@
    "price": 12,
    "how": "fish",
    "art": "torp",
+   "look": "torp|#3f6f8a|#a8c4d0|#e8f0f2|none|#000|#6f8f6a",
    "release": false,
    "hint": "Bites at dawn or dusk in the Sandy Shallows.",
    "what": ""
@@ -882,6 +897,7 @@
    "price": 35,
    "how": "fish",
    "art": "torp",
+   "look": "torp|#3a5f6a|#9fb8b8|#e4ecea|spots|#2a3a3a|#c8a050",
    "release": false,
    "hint": "Bites in the Sandy Shallows when the wind is up in autumn.",
    "what": ""
@@ -911,6 +927,7 @@
    "price": 35,
    "how": "fish",
    "art": "flathead",
+   "look": "flathead|#6a5a48|#9a8a70|#d8ccb4|spots|#4a3a2a|#8a7a60",
    "release": false,
    "hint": "Bites by day in the Sandy Shallows at low tide.",
    "what": ""
@@ -940,6 +957,7 @@
    "price": 35,
    "how": "fish",
    "art": "torp",
+   "look": "torp|#c8b890|#e8dcc0|#f6f0e4|stripes|#b8985a|#d8c8a0|slim",
    "release": false,
    "hint": "Bites in the Sandy Shallows in spring.",
    "what": ""
@@ -971,6 +989,7 @@
    "price": 35,
    "how": "pot",
    "art": "crab",
+   "look": "crab|#4a7ad0|#6a9ae0|#e8f0fa|spots|#ffffff|#3a5ab0",
    "release": false,
    "hint": "Turns up in pots in the Sandy Shallows in summer.",
    "what": ""
@@ -1000,6 +1019,7 @@
    "price": 110,
    "how": "fish",
    "art": "shark",
+   "look": "shark|#8a96a6|#a8b2c0|#eef0f4|spots|#ffffff|#8a96a6",
    "release": false,
    "hint": "Bites at night in the Sandy Shallows.",
    "what": ""
@@ -1029,6 +1049,7 @@
    "price": 110,
    "how": "fish",
    "art": "guitar",
+   "look": "guitar|#b8a078|#d0bc96|#f4ece0|none|#000|#b8a078",
    "release": false,
    "hint": "Bites by day in the Sandy Shallows in calm weather.",
    "what": ""
@@ -1058,6 +1079,7 @@
    "price": 110,
    "how": "fish",
    "art": "torp",
+   "look": "torp|#8a8a90|#b0a490|#e4e0d8|none|#000|#a08868|big",
    "release": false,
    "hint": "Bites at night in the Sandy Shallows on a rising tide in the rain.",
    "what": ""
@@ -1087,6 +1109,7 @@
    "price": 380,
    "how": "fish",
    "art": "ray",
+   "look": "ray|#4a4a50|#5a5a62|#d8d4d0|none|#000|#4a4a50",
    "release": false,
    "hint": "Bites at night in the Sandy Shallows in winter.",
    "what": ""
@@ -1116,6 +1139,7 @@
    "price": 380,
    "how": "fish",
    "art": "shark",
+   "look": "shark|#8a7a5a|#a8966e|#e8e4d8|none|#000|#8a7a5a",
    "release": false,
    "hint": "Bites at dusk in the Sandy Shallows in a storm.",
    "what": ""
@@ -1145,6 +1169,7 @@
    "price": 12,
    "how": "fish",
    "art": "torp",
+   "look": "torp|#5a7080|#a8b8c4|#e4eaee|scales|#7f909e|#6a7a88",
    "release": false,
    "hint": "Bites in the Mangrove Estuary.",
    "what": ""
@@ -1174,6 +1199,7 @@
    "price": 12,
    "how": "fish",
    "art": "deep",
+   "look": "deep|#8a8070|#b8ac98|#ece6dc|spots|#5a4a3a|#a89a80",
    "release": false,
    "hint": "Bites by day in the Mangrove Estuary.",
    "what": ""
@@ -1203,6 +1229,7 @@
    "price": 12,
    "how": "fish",
    "art": "puffer",
+   "look": "puffer|#8a8a50|#a8a870|#f0f0e0|spots|#3a3a2a|#8a8a50",
    "release": false,
    "hint": "Bites in the Mangrove Estuary.",
    "what": ""
@@ -1232,6 +1259,7 @@
    "price": 35,
    "how": "fish",
    "art": "deep",
+   "look": "deep|#b8c4a0|#d8e0c4|#f4f6ec|bars|#2a2a2a|#c8b860",
    "release": false,
    "hint": "Bites by day in the Mangrove Estuary in summer.",
    "what": ""
@@ -1261,6 +1289,7 @@
    "price": 35,
    "how": "fish",
    "art": "grouper",
+   "look": "grouper|#8a7a5a|#a89870|#e0d6c0|spots|#5a4a3a|#8a7a5a",
    "release": false,
    "hint": "Bites at dawn in the Mangrove Estuary.",
    "what": ""
@@ -1292,6 +1321,7 @@
    "price": 35,
    "how": "pot",
    "art": "crab",
+   "look": "crab|#4a5a3a|#6a7a50|#c8c4a0|none|#000|#3a4a2a",
    "release": false,
    "hint": "Turns up in pots in the Mangrove Estuary in the rain.",
    "what": ""
@@ -1321,6 +1351,7 @@
    "price": 110,
    "how": "fish",
    "art": "deep",
+   "look": "deep|#b0503a|#c86a4a|#ecc4b0|none|#000|#c06040|snapper",
    "release": false,
    "hint": "Bites at night in the Mangrove Estuary in summer.",
    "what": ""
@@ -1350,6 +1381,7 @@
    "price": 110,
    "how": "fish",
    "art": "torp",
+   "look": "torp|#6a7a6a|#b8c4bc|#ecf0ec|none|#000|#6a7a6a|barra",
    "release": false,
    "hint": "Bites at night in the Mangrove Estuary in the rain.",
    "what": ""
@@ -1379,6 +1411,7 @@
    "price": 110,
    "how": "fish",
    "art": "torp",
+   "look": "torp|#8a98a8|#c4ccd4|#eef0f2|none|#000|#d8d0b8|thread",
    "release": false,
    "hint": "Bites in the Mangrove Estuary on a rising tide.",
    "what": ""
@@ -1408,6 +1441,7 @@
    "price": 380,
    "how": "fish",
    "art": "torp",
+   "look": "torp|#3f5a7a|#c4d0dc|#f0f4f8|scales|#a8b8c8|#6a7a8a|big",
    "release": false,
    "hint": "Bites at dawn in the Mangrove Estuary in summer.",
    "what": ""
@@ -1437,6 +1471,7 @@
    "price": 380,
    "how": "fish",
    "art": "shark",
+   "look": "shark|#8a8e96|#a2a6ae|#e8eaee|none|#000|#8a8e96|blunt",
    "release": false,
    "hint": "Bites at night in the Mangrove Estuary in a storm.",
    "what": ""
@@ -1468,6 +1503,7 @@
    "price": 380,
    "how": "fish",
    "art": "saw",
+   "look": "saw|#7a8a6a|#94a280|#e4e8d8|none|#000|#7a8a6a",
    "release": true,
    "hint": "Bites in the Mangrove Estuary in the rain in summer. Protected: log it, then let it go.",
    "what": ""
@@ -1497,6 +1533,7 @@
    "price": 12,
    "how": "fish",
    "art": "clown",
+   "look": "clown|#f08030|#f49a48|#fbd0a0|clown|#ffffff|#f08030",
    "release": false,
    "hint": "Bites by day in the Coral Reef.",
    "what": ""
@@ -1526,6 +1563,7 @@
    "price": 12,
    "how": "fish",
    "art": "deep",
+   "look": "deep|#2f5fd0|#4a7ae0|#7a9ae8|tang|#1a1a3a|#f0d020",
    "release": false,
    "hint": "Bites by day in the Coral Reef.",
    "what": ""
@@ -1555,6 +1593,7 @@
    "price": 35,
    "how": "fish",
    "art": "idol",
+   "look": "idol|#f4f0e0|#f4f0e0|#ffffff|bars|#1a1a1a|#f0d040",
    "release": false,
    "hint": "Bites by day in the Coral Reef.",
    "what": ""
@@ -1584,6 +1623,7 @@
    "price": 35,
    "how": "fish",
    "art": "trigger",
+   "look": "trigger|#c8b890|#d8cca8|#f0ead8|lines|#3a6ad0|#3a3a5a",
    "release": false,
    "hint": "Bites by day in the Coral Reef.",
    "what": ""
@@ -1613,6 +1653,7 @@
    "price": 35,
    "how": "fish",
    "art": "parrot",
+   "look": "parrot|#3fb8a0|#5ccab2|#a8e8d8|scales|#f080a0|#f080a0",
    "release": false,
    "hint": "Bites by day in the Coral Reef at high tide.",
    "what": ""
@@ -1642,6 +1683,7 @@
    "price": 35,
    "how": "fish",
    "art": "deep",
+   "look": "deep|#a8b0a0|#c4c8bc|#ecece6|spots|#4a8ad0|#d86040",
    "release": false,
    "hint": "Bites at dawn in the Coral Reef.",
    "what": ""
@@ -1671,6 +1713,7 @@
    "price": 35,
    "how": "fish",
    "art": "deep",
+   "look": "deep|#e8d8a0|#f0e4b8|#f8f2dc|spots|#e07040|#e8c870",
    "release": false,
    "hint": "Bites at dusk in the Coral Reef.",
    "what": ""
@@ -1700,6 +1743,7 @@
    "price": 110,
    "how": "fish",
    "art": "grouper",
+   "look": "grouper|#d84838|#e05a48|#f0a090|spots|#4ab0e8|#d84838",
    "release": false,
    "hint": "Bites at dawn or dusk in the Coral Reef.",
    "what": ""
@@ -1729,6 +1773,7 @@
    "price": 110,
    "how": "fish",
    "art": "deep",
+   "look": "deep|#e05a48|#e87060|#f8d0c8|bars|#f4e8e0|#e05a48",
    "release": false,
    "hint": "Bites at night in the Coral Reef.",
    "what": ""
@@ -1758,6 +1803,7 @@
    "price": 110,
    "how": "fish",
    "art": "lion",
+   "look": "lion|#d86a48|#e48060|#f4d8c8|bars|#f4ece0|#d86a48",
    "release": false,
    "hint": "Bites at night in the Coral Reef in calm weather.",
    "what": ""
@@ -1787,6 +1833,7 @@
    "price": 380,
    "how": "fish",
    "art": "deep",
+   "look": "deep|#5a6470|#9aa4ae|#d8dce0|none|#000|#3a4048|big",
    "release": false,
    "hint": "Bites at dawn in the Coral Reef when the wind is up.",
    "what": ""
@@ -1818,6 +1865,7 @@
    "price": 380,
    "how": "fish",
    "art": "hump",
+   "look": "hump|#3a8a80|#4aa098|#a0d8d0|lines|#2a5a6a|#3a7a90",
    "release": true,
    "hint": "Bites by day in the Coral Reef in summer. Protected: log it, then let it go.",
    "what": ""
@@ -1847,6 +1895,7 @@
    "price": 12,
    "how": "fish",
    "art": "deep",
+   "look": "deep|#6a7aa0|#8a98b8|#c8d0e0|none|#000|#5a6a90",
    "release": false,
    "hint": "Bites by day in the Kelp Forest.",
    "what": ""
@@ -1876,6 +1925,7 @@
    "price": 12,
    "how": "fish",
    "art": "deep",
+   "look": "deep|#c8b8a0|#d8ccb8|#f0eae0|bars|#4a3a2a|#e07040",
    "release": false,
    "hint": "Bites by day in the Kelp Forest.",
    "what": ""
@@ -1905,6 +1955,7 @@
    "price": 12,
    "how": "fish",
    "art": "torp",
+   "look": "torp|#6a5a3a|#8a7a58|#c8bc9c|stripes|#4a3a2a|#7a6a4a|slim",
    "release": false,
    "hint": "Bites by day in the Kelp Forest.",
    "what": ""
@@ -1934,6 +1985,7 @@
    "price": 12,
    "how": "fish",
    "art": "torp",
+   "look": "torp|#6a8a7a|#b8ccc4|#eef4f2|spots|#3a4a40|#c8c060",
    "release": false,
    "hint": "Bites at dusk in the Kelp Forest.",
    "what": ""
@@ -1963,6 +2015,7 @@
    "price": 35,
    "how": "fish",
    "art": "deep",
+   "look": "deep|#f0ece4|#f0ece4|#ffffff|bars|#1a1a1a|#e08040",
    "release": false,
    "hint": "Bites by day in the Kelp Forest.",
    "what": ""
@@ -1992,6 +2045,7 @@
    "price": 35,
    "how": "fish",
    "art": "torp",
+   "look": "torp|#e8d0b0|#f0dcc4|#faf0e4|band|#c83a3a|#3a6ad0",
    "release": false,
    "hint": "Bites by day in the Kelp Forest.",
    "what": ""
@@ -2021,6 +2075,7 @@
    "price": 35,
    "how": "fish",
    "art": "boar",
+   "look": "boar|#d8c8b0|#e4d8c4|#f4ecdc|bars|#2a2a2a|#d8b040",
    "release": false,
    "hint": "Bites in the Kelp Forest in winter.",
    "what": ""
@@ -2052,6 +2107,7 @@
    "price": 35,
    "how": "pot",
    "art": "lobster",
+   "look": "lobster|#c84a2a|#d86a40|#f0b090|none|#000|#a83a20",
    "release": false,
    "hint": "Turns up in pots in the Kelp Forest in winter.",
    "what": ""
@@ -2081,6 +2137,7 @@
    "price": 110,
    "how": "fish",
    "art": "deep",
+   "look": "deep|#e8a0a0|#f0b8b8|#fae4e4|spots|#6ab0e8|#e8a0a0|snapper",
    "release": false,
    "hint": "Bites at dawn in the Kelp Forest after a storm.",
    "what": ""
@@ -2110,6 +2167,7 @@
    "price": 110,
    "how": "fish",
    "art": "dory",
+   "look": "dory|#c8c0a8|#d8d0bc|#eee8dc|dory|#1a1a1a|#a8a088",
    "release": false,
    "hint": "Bites at dusk in the Kelp Forest in calm weather.",
    "what": ""
@@ -2139,6 +2197,7 @@
    "price": 110,
    "how": "fish",
    "art": "grouper",
+   "look": "grouper|#2f5fb0|#3f70c0|#8aa8e0|none|#000|#2a4a90",
    "release": false,
    "hint": "Bites by day in the Kelp Forest. Likes crab bait.",
    "what": ""
@@ -2170,6 +2229,7 @@
    "price": 380,
    "how": "fish",
    "art": "dragon",
+   "look": "dragon|#e0a040|#ecb860|#f8e0a8|bars|#7a4ab0|#c06030",
    "release": true,
    "hint": "Bites in the Kelp Forest in calm weather. Protected: log it, then let it go.",
    "what": ""
@@ -2199,6 +2259,7 @@
    "price": 12,
    "how": "fish",
    "art": "bat",
+   "look": "bat|#8a8a80|#a8a89c|#e0e0d8|bars|#4a4a40|#6a6a60",
    "release": false,
    "hint": "Bites by day in the Wreck Graveyard.",
    "what": ""
@@ -2228,6 +2289,7 @@
    "price": 12,
    "how": "fish",
    "art": "deep",
+   "look": "deep|#e04a3a|#e86a5a|#f8c8c0|stripes|#f4e0e0|#e04a3a|bigeye",
    "release": false,
    "hint": "Bites at night in the Wreck Graveyard.",
    "what": ""
@@ -2257,6 +2319,7 @@
    "price": 35,
    "how": "fish",
    "art": "eel",
+   "look": "eel|#6a7a3a|#7e8e4c|#b8c08a|spots|#3a4a2a|#6a7a3a",
    "release": false,
    "hint": "Bites at night in the Wreck Graveyard.",
    "what": ""
@@ -2286,6 +2349,7 @@
    "price": 35,
    "how": "fish",
    "art": "cuttle",
+   "look": "cuttle|#a88a6a|#c0a484|#ecdcc8|bars|#6a5a4a|#a88a6a",
    "release": false,
    "hint": "Bites at dusk in the Wreck Graveyard.",
    "what": ""
@@ -2317,6 +2381,7 @@
    "price": 35,
    "how": "pot",
    "art": "octo",
+   "look": "octo|#c8603a|#d87850|#f0b898|spots|#a04a2a|#c8603a",
    "release": false,
    "hint": "Turns up in pots in the Wreck Graveyard.",
    "what": ""
@@ -2346,6 +2411,7 @@
    "price": 35,
    "how": "fish",
    "art": "torp",
+   "look": "torp|#6a6a70|#a8acb4|#e4e6ea|band|#d8a040|#7a7a80|big",
    "release": false,
    "hint": "Bites by day in the Wreck Graveyard.",
    "what": ""
@@ -2375,6 +2441,7 @@
    "price": 35,
    "how": "fish",
    "art": "deep",
+   "look": "deep|#7a8080|#a0a8a8|#e0e4e4|bars|#4a5050|#c0a050",
    "release": false,
    "hint": "Bites at dawn in the Wreck Graveyard.",
    "what": ""
@@ -2404,6 +2471,7 @@
    "price": 110,
    "how": "fish",
    "art": "deep",
+   "look": "deep|#b8c0c8|#d0d6dc|#f4f6f8|shoulder|#2a2a2a|#c8ccd4",
    "release": false,
    "hint": "Bites at night in the Wreck Graveyard.",
    "what": ""
@@ -2433,6 +2501,7 @@
    "price": 110,
    "how": "fish",
    "art": "deep",
+   "look": "deep|#e05a48|#e87868|#f8d0c8|stripes|#f0c040|#e05a48|snapper",
    "release": false,
    "hint": "Bites at dawn in the Wreck Graveyard.",
    "what": ""
@@ -2462,6 +2531,7 @@
    "price": 110,
    "how": "fish",
    "art": "torp",
+   "look": "torp|#4a4a40|#6a6a5a|#b8b4a4|none|#000|#4a4a40|big",
    "release": false,
    "hint": "Bites at night in the Wreck Graveyard under a new moon.",
    "what": ""
@@ -2491,6 +2561,7 @@
    "price": 110,
    "how": "fish",
    "art": "wobbe",
+   "look": "wobbe|#b8985a|#c8aa70|#e8dcc0|blotch|#6a5030|#b8985a",
    "release": false,
    "hint": "Bites at night in the Wreck Graveyard.",
    "what": ""
@@ -2520,6 +2591,7 @@
    "price": 380,
    "how": "fish",
    "art": "ray",
+   "look": "ray|#3a4a6a|#4a5a7a|#e8ecf0|spots|#ffffff|#3a4a6a|eagle",
    "release": false,
    "hint": "Bites by day in the Wreck Graveyard in calm weather.",
    "what": ""
@@ -2549,6 +2621,7 @@
    "price": 12,
    "how": "fish",
    "art": "flying",
+   "look": "flying|#3a6ab0|#c8d8ec|#f0f4fa|none|#000|#8ab0e0",
    "release": false,
    "hint": "Bites by day in the Open Blue in calm weather.",
    "what": ""
@@ -2578,6 +2651,7 @@
    "price": 12,
    "how": "fish",
    "art": "tuna",
+   "look": "tuna|#2a3a6a|#c0c8d4|#eef0f4|belly|#4a5a7a|#3a4a7a",
    "release": false,
    "hint": "Bites by day in the Open Blue. Look for bait schools.",
    "what": ""
@@ -2607,6 +2681,7 @@
    "price": 12,
    "how": "fish",
    "art": "tuna",
+   "look": "tuna|#3a5a7a|#c8d0d8|#eef2f4|oblique|#2a3a5a|#4a6a8a",
    "release": false,
    "hint": "Bites at dawn in the Open Blue.",
    "what": ""
@@ -2636,6 +2711,7 @@
    "price": 35,
    "how": "fish",
    "art": "mahi",
+   "look": "mahi|#3ab070|#f0d040|#f8ec98|spots|#3a8ad0|#3a9ad0",
    "release": false,
    "hint": "Bites in the Open Blue in summer. Look near floating debris.",
    "what": ""
@@ -2665,6 +2741,7 @@
    "price": 35,
    "how": "fish",
    "art": "torp",
+   "look": "torp|#3a5a8a|#d8dce4|#f2f4f6|lat|#f0d040|#f0d040|big",
    "release": false,
    "hint": "Bites at dawn or dusk in the Open Blue.",
    "what": ""
@@ -2694,6 +2771,7 @@
    "price": 35,
    "how": "fish",
    "art": "torp",
+   "look": "torp|#4a6a8a|#b8c8d8|#eef2f6|wavy|#8aa0b8|#4a6a8a|long",
    "release": false,
    "hint": "Bites in the Open Blue in autumn.",
    "what": ""
@@ -2723,6 +2801,7 @@
    "price": 110,
    "how": "fish",
    "art": "torp",
+   "look": "torp|#2a4a8a|#a8bcd8|#e8eef6|bars|#5a7ab8|#2a4a8a|long",
    "release": false,
    "hint": "Bites in the Open Blue when the wind is up.",
    "what": ""
@@ -2752,6 +2831,7 @@
    "price": 110,
    "how": "fish",
    "art": "tuna",
+   "look": "tuna|#2a3a6a|#c8d0dc|#f0f2f6|lat|#f0d040|#f0d040|yfin",
    "release": false,
    "hint": "Bites at dawn in the Open Blue. Look for diving birds.",
    "what": ""
@@ -2781,6 +2861,7 @@
    "price": 380,
    "how": "fish",
    "art": "marlin",
+   "look": "marlin|#2a3a6a|#a8b8d0|#eef2f6|bars|#8ab8e8|#2a3a6a",
    "release": false,
    "hint": "Bites by day in the Open Blue in summer.",
    "what": ""
@@ -2810,6 +2891,7 @@
    "price": 380,
    "how": "fish",
    "art": "sail",
+   "look": "sail|#2a3a6a|#a8b8d0|#eef2f6|bars|#8ab8e8|#3a5ab0",
    "release": false,
    "hint": "Bites in the Open Blue in calm weather in summer.",
    "what": ""
@@ -2839,6 +2921,7 @@
    "price": 380,
    "how": "fish",
    "art": "tuna",
+   "look": "tuna|#1a2a5a|#b8c4d4|#eef0f4|none|#000|#2a3a6a|yfin",
    "release": false,
    "hint": "Bites in the Open Blue in winter.",
    "what": ""
@@ -2868,6 +2951,7 @@
    "price": 380,
    "how": "fish",
    "art": "shark",
+   "look": "shark|#2f5a9a|#4a74b0|#f0f2f6|none|#000|#2f5a9a|sleek",
    "release": false,
    "hint": "Bites in the Open Blue in a storm.",
    "what": ""
@@ -2897,6 +2981,7 @@
    "price": 12,
    "how": "fish",
    "art": "lantern",
+   "look": "lantern|#3a3a5a|#4a4a6a|#8a8aa8|glow|#8af0ff|#3a3a5a",
    "release": false,
    "hint": "Bites at night in The Deep.",
    "what": ""
@@ -2926,6 +3011,7 @@
    "price": 12,
    "how": "fish",
    "art": "eel",
+   "look": "eel|#c8a0a0|#d4b0b0|#ecd8d8|none|#000|#c8a0a0|nofin",
    "release": false,
    "hint": "Bites in The Deep.",
    "what": ""
@@ -2955,6 +3041,7 @@
    "price": 35,
    "how": "fish",
    "art": "torp",
+   "look": "torp|#5a5a6a|#a8b0b8|#e4e8ec|none|#000|#5a5a6a|long",
    "release": false,
    "hint": "Bites in The Deep in winter.",
    "what": ""
@@ -2984,6 +3071,7 @@
    "price": 35,
    "how": "fish",
    "art": "eel",
+   "look": "eel|#e8a0a0|#f0b8b0|#f8e0dc|spots|#c87070|#e8a0a0",
    "release": false,
    "hint": "Bites in The Deep.",
    "what": ""
@@ -3013,6 +3101,7 @@
    "price": 35,
    "how": "fish",
    "art": "ribbon",
+   "look": "ribbon|#d8e0e8|#e8eef4|#ffffff|none|#000|#b8c4d0",
    "release": false,
    "hint": "Bites at night in The Deep in winter.",
    "what": ""
@@ -3044,6 +3133,7 @@
    "price": 110,
    "how": "fish",
    "art": "deep",
+   "look": "deep|#4a5a6a|#8a98a8|#d0d8e0|none|#000|#4a5a6a|blueeye",
    "release": false,
    "hint": "Bites at dawn in The Deep. Needs a deep reel.",
    "what": ""
@@ -3075,6 +3165,7 @@
    "price": 110,
    "how": "fish",
    "art": "grouper",
+   "look": "grouper|#5a5a50|#76766a|#c4c4b4|none|#000|#4a4a40",
    "release": false,
    "hint": "Bites in The Deep. Needs a deep reel.",
    "what": ""
@@ -3104,6 +3195,7 @@
    "price": 110,
    "how": "fish",
    "art": "chimaera",
+   "look": "chimaera|#c8c8d0|#d8d8e0|#f4f4f8|lines|#6a6a7a|#b8b8c8",
    "release": false,
    "hint": "Bites at night in The Deep.",
    "what": ""
@@ -3135,6 +3227,7 @@
    "price": 380,
    "how": "fish",
    "art": "angler",
+   "look": "angler|#3a2a3a|#4a3a4a|#6a5a6a|glow|#8af0ff|#3a2a3a",
    "release": false,
    "hint": "Bites at night in The Deep. Needs a deck lamp.",
    "what": ""
@@ -3164,6 +3257,7 @@
    "price": 380,
    "how": "fish",
    "art": "gulper",
+   "look": "gulper|#1a1a2a|#2a2a3a|#4a4a5a|none|#000|#1a1a2a",
    "release": false,
    "hint": "Bites at night in The Deep under a new moon.",
    "what": ""
@@ -3193,6 +3287,7 @@
    "price": 380,
    "how": "fish",
    "art": "oar",
+   "look": "oar|#d8dce4|#e8ecf0|#ffffff|spots|#9aa4b4|#e04a4a",
    "release": false,
    "hint": "Bites in The Deep in a storm.",
    "what": ""
@@ -3222,6 +3317,7 @@
    "price": 380,
    "how": "fish",
    "art": "shark",
+   "look": "shark|#5a5048|#6e645a|#c8c0b4|none|#000|#5a5048|sixgill",
    "release": false,
    "hint": "Bites at night in The Deep in winter.",
    "what": ""
@@ -3251,6 +3347,7 @@
    "price": 2500,
    "how": "fish",
    "art": "grouper",
+   "look": "grouper|#3a3a30|#4e4e40|#9a9680|spots|#1a1a14|#2a2a20|legend",
    "release": false,
    "hint": "Sighted in the Wreck Graveyard in a storm.",
    "what": "A 2.5-metre groper that has broken every line in town"
@@ -3280,6 +3377,7 @@
    "price": 2500,
    "how": "fish",
    "art": "angler",
+   "look": "angler|#4a1a4a|#5e2a5e|#8a5a8a|glow|#ffd24d|#4a1a4a|crown",
    "release": false,
    "hint": "Sighted around midnight in The Deep under a new moon.",
    "what": "A giant anglerfish whose lure lights the whole trench"
@@ -3309,6 +3407,7 @@
    "price": 2500,
    "how": "fish",
    "art": "tuna",
+   "look": "tuna|#2a3a5a|#e0e8f0|#ffffff|none|#000|#ffd24d|yfin legend",
    "release": false,
    "hint": "Sighted at dawn in the Open Blue in winter.",
    "what": "A record southern bluefin that leads the winter run"
@@ -3338,6 +3437,7 @@
    "price": 2500,
    "how": "fish",
    "art": "torp",
+   "look": "torp|#8a7a3a|#d8c890|#f8f0d0|none|#000|#a89040|barra legend",
    "release": false,
    "hint": "Sighted at night in the Mangrove Estuary in the rain in summer.",
    "what": "A 1.8-metre barramundi the old-timers named after a lost boat"
@@ -3367,6 +3467,7 @@
    "price": 2500,
    "how": "fish",
    "art": "ray",
+   "look": "ray|#f4f0f0|#f8f6f6|#ffffff|none|#000|#e8d8e0|legend",
    "release": false,
    "hint": "Sighted in the Sandy Shallows at low tide in the fog.",
    "what": "An albino stingray that glides through the fog"
@@ -3396,6 +3497,7 @@
    "price": 2500,
    "how": "fish",
    "art": "torp",
+   "look": "torp|#d8a020|#ffd24d|#fff0b0|lat|#ffffff|#ffd24d|big legend",
    "release": false,
    "hint": "Sighted in the Harbour and Piers on a king tide.",
    "what": "A golden kingfish that swims under the piers once a moon"
@@ -3425,6 +3527,7 @@
    "price": 2500,
    "how": "fish",
    "art": "octo",
+   "look": "octo|#6a3a8a|#8a50a8|#c8a0d8|spots|#ffd24d|#6a3a8a|legend",
    "release": false,
    "hint": "Sighted around midnight in the Wreck Graveyard.",
    "what": "A giant octopus living in a sunken bell tower"
@@ -3454,6 +3557,7 @@
    "price": 2500,
    "how": "fish",
    "art": "squid",
+   "look": "squid|#a8302a|#c84a40|#f0a090|spots|#ffd24d|#a8302a|legend",
    "release": false,
    "hint": "Sighted at night in The Deep in a storm under a full moon.",
    "what": "A giant squid that rises past the shelf edge"
@@ -3485,6 +3589,7 @@
    "price": 2500,
    "how": "fish",
    "art": "odd",
+   "look": "odd|#c39bff|#7fdcc0|#ffd24d|prism|#ff7a6b|#6fb2ff|legend",
    "release": false,
    "hint": "Rumoured to bite once a year. Nobody agrees where.",
    "what": "Nobody has a photo. Everybody has a story."
@@ -3511,6 +3616,7 @@
    "price": 30,
    "how": "comb",
    "art": "crate",
+   "look": "crate",
    "release": false,
    "hint": "Washes up on the beach at low tide.",
    "what": ""
@@ -3537,6 +3643,7 @@
    "price": 30,
    "how": "hook",
    "art": "tackle",
+   "look": "tackle",
    "release": false,
    "hint": "Hooked now and then in the Harbour and Piers.",
    "what": ""
@@ -3563,6 +3670,7 @@
    "price": 80,
    "how": "salvage",
    "art": "chest",
+   "look": "chest|#8a6a4a|#c0b08a",
    "release": false,
    "hint": "Salvaged from the seabed in the Wreck Graveyard.",
    "what": ""
@@ -3589,6 +3697,7 @@
    "price": 80,
    "how": "salvage",
    "art": "lockbox",
+   "look": "lockbox",
    "release": false,
    "hint": "Salvaged from the seabed in the Mangrove Estuary.",
    "what": ""
@@ -3615,6 +3724,7 @@
    "price": 80,
    "how": "salvage",
    "art": "compass",
+   "look": "compass",
    "release": false,
    "hint": "Salvaged from the seabed in the Wreck Graveyard.",
    "what": ""
@@ -3641,6 +3751,7 @@
    "price": 80,
    "how": "comb",
    "art": "spyglass",
+   "look": "spyglass",
    "release": false,
    "hint": "Washes up on the beach at low tide.",
    "what": ""
@@ -3667,6 +3778,7 @@
    "price": 80,
    "how": "snag",
    "art": "watch",
+   "look": "watch",
    "release": false,
    "hint": "Snagged on a line in the Coral Reef.",
    "what": ""
@@ -3693,6 +3805,7 @@
    "price": 80,
    "how": "hook",
    "art": "locket",
+   "look": "locket",
    "release": false,
    "hint": "Hooked now and then in the Harbour and Piers.",
    "what": ""
@@ -3719,6 +3832,7 @@
    "price": 220,
    "how": "salvage",
    "art": "strongbox",
+   "look": "strongbox",
    "release": false,
    "hint": "Salvaged from the seabed in the Wreck Graveyard.",
    "what": ""
@@ -3745,6 +3859,7 @@
    "price": 220,
    "how": "salvage",
    "art": "chest",
+   "look": "chest|#2f4f8f|#ffd24d",
    "release": false,
    "hint": "Salvaged from the seabed in the Open Blue.",
    "what": ""
@@ -3771,6 +3886,7 @@
    "price": 220,
    "how": "salvage",
    "art": "bell",
+   "look": "bell",
    "release": false,
    "hint": "Salvaged from the seabed in the Wreck Graveyard.",
    "what": ""
@@ -3797,6 +3913,7 @@
    "price": 220,
    "how": "salvage",
    "art": "figurehead",
+   "look": "figurehead",
    "release": false,
    "hint": "Salvaged from the seabed in the Wreck Graveyard.",
    "what": ""
@@ -3823,6 +3940,7 @@
    "price": 220,
    "how": "snag",
    "art": "sextant",
+   "look": "sextant",
    "release": false,
    "hint": "Snagged on a line in the Kelp Forest.",
    "what": ""
@@ -3849,6 +3967,7 @@
    "price": 220,
    "how": "snag",
    "art": "pendant",
+   "look": "pendant",
    "release": false,
    "hint": "Snagged on a line in the Coral Reef.",
    "what": ""
@@ -3875,6 +3994,7 @@
    "price": 220,
    "how": "comb",
    "art": "key",
+   "look": "key",
    "release": false,
    "hint": "Found in the rock pools on the rock platform.",
    "what": ""
@@ -3901,6 +4021,7 @@
    "price": 220,
    "how": "salvage",
    "art": "cutlass",
+   "look": "cutlass",
    "release": false,
    "hint": "Salvaged from the seabed in the Wreck Graveyard.",
    "what": ""
@@ -3927,6 +4048,7 @@
    "price": 700,
    "how": "salvage",
    "art": "chest",
+   "look": "chest|#6a3a2a|#ffd24d|gold",
    "release": false,
    "hint": "Salvaged from the seabed in the Wreck Graveyard in a storm.",
    "what": ""
@@ -3953,6 +4075,7 @@
    "price": 700,
    "how": "salvage",
    "art": "chest",
+   "look": "chest|#3a3a5a|#8af0ff|glow",
    "release": false,
    "hint": "Salvaged from the seabed in The Deep.",
    "what": ""
@@ -3979,6 +4102,7 @@
    "price": 700,
    "how": "snag",
    "art": "idol",
+   "look": "idol",
    "release": false,
    "hint": "Snagged on a line in the Coral Reef.",
    "what": ""
@@ -4005,6 +4129,7 @@
    "price": 700,
    "how": "salvage",
    "art": "crown",
+   "look": "crown",
    "release": false,
    "hint": "Salvaged from the seabed at night in The Deep.",
    "what": ""
@@ -4031,6 +4156,7 @@
    "price": 15,
    "how": "snag",
    "art": "branch",
+   "look": "branch|#e8c8a0",
    "release": false,
    "hint": "Snagged on a line in the Coral Reef.",
    "what": ""
@@ -4057,6 +4183,7 @@
    "price": 15,
    "how": "snag",
    "art": "brain",
+   "look": "brain|#d8b890",
    "release": false,
    "hint": "Snagged on a line in the Coral Reef.",
    "what": ""
@@ -4083,6 +4210,7 @@
    "price": 40,
    "how": "snag",
    "art": "plate",
+   "look": "plate|#c8a878",
    "release": false,
    "hint": "Snagged on a line in the Coral Reef.",
    "what": ""
@@ -4109,6 +4237,7 @@
    "price": 40,
    "how": "snag",
    "art": "mushroom",
+   "look": "mushroom|#e8a0a8",
    "release": false,
    "hint": "Snagged on a line in the Coral Reef.",
    "what": ""
@@ -4135,6 +4264,7 @@
    "price": 40,
    "how": "snag",
    "art": "bubble",
+   "look": "bubble|#f0e0c8",
    "release": false,
    "hint": "Snagged on a line in the Coral Reef.",
    "what": ""
@@ -4161,6 +4291,7 @@
    "price": 40,
    "how": "snag",
    "art": "fan",
+   "look": "fan|#c86a9a",
    "release": false,
    "hint": "Snagged on a line in the Kelp Forest.",
    "what": ""
@@ -4187,6 +4318,7 @@
    "price": 40,
    "how": "snag",
    "art": "branch",
+   "look": "branch|#f08a3a",
    "release": false,
    "hint": "Snagged on a line in the Coral Reef.",
    "what": ""
@@ -4213,6 +4345,7 @@
    "price": 120,
    "how": "snag",
    "art": "pillar",
+   "look": "pillar|#d8c8a8",
    "release": false,
    "hint": "Snagged on a line in the Coral Reef.",
    "what": ""
@@ -4239,6 +4372,7 @@
    "price": 120,
    "how": "snag",
    "art": "pipe",
+   "look": "pipe|#c84a3a",
    "release": false,
    "hint": "Snagged on a line in the Coral Reef.",
    "what": ""
@@ -4265,6 +4399,7 @@
    "price": 120,
    "how": "snag",
    "art": "branch",
+   "look": "branch|#4a8ad0",
    "release": false,
    "hint": "Snagged on a line in the Coral Reef.",
    "what": ""
@@ -4291,6 +4426,7 @@
    "price": 120,
    "how": "snag",
    "art": "fan",
+   "look": "fan|#f0a0c8",
    "release": false,
    "hint": "Snagged on a line in the Wreck Graveyard.",
    "what": ""
@@ -4317,6 +4453,7 @@
    "price": 400,
    "how": "snag",
    "art": "branch",
+   "look": "branch|#2a2430",
    "release": false,
    "hint": "Snagged on a line in The Deep.",
    "what": ""
@@ -4343,6 +4480,7 @@
    "price": 400,
    "how": "snag",
    "art": "branch",
+   "look": "branch|#d8302a",
    "release": false,
    "hint": "Snagged on a line in the Wreck Graveyard.",
    "what": ""
@@ -4369,6 +4507,7 @@
    "price": 400,
    "how": "snag",
    "art": "branch",
+   "look": "branch|#e8b830",
    "release": false,
    "hint": "Snagged on a line in The Deep.",
    "what": ""
@@ -4395,6 +4534,7 @@
    "price": 400,
    "how": "snag",
    "art": "branch",
+   "look": "branch|#5ae8f0|glow",
    "release": false,
    "hint": "Snagged on a line at night in The Deep.",
    "what": ""
@@ -4423,6 +4563,7 @@
    "price": 1500,
    "how": "snag",
    "art": "branch",
+   "look": "branch|#ff7a6b|rainbow",
    "release": false,
    "hint": "Snagged on a line in the Coral Reef during the coral spawn (full-moon summer nights).",
    "what": ""
@@ -4449,6 +4590,7 @@
    "price": 6,
    "how": "comb",
    "art": "fan",
+   "look": "fan|#e8d0b0|#c8a080",
    "release": false,
    "hint": "Washes up on the beach at low tide.",
    "what": ""
@@ -4475,6 +4617,7 @@
    "price": 6,
    "how": "comb",
    "art": "fan",
+   "look": "fan|#f0a070|#d07040",
    "release": false,
    "hint": "Washes up on the beach at low tide.",
    "what": ""
@@ -4501,6 +4644,7 @@
    "price": 6,
    "how": "comb",
    "art": "spiral",
+   "look": "spiral|#a89878|#7a6a50",
    "release": false,
    "hint": "Found in the rock pools on the rock platform.",
    "what": ""
@@ -4527,6 +4671,7 @@
    "price": 6,
    "how": "comb",
    "art": "dollar",
+   "look": "dollar|#e8dcc0|#c8b890",
    "release": false,
    "hint": "Washes up on the beach at low tide.",
    "what": ""
@@ -4553,6 +4698,7 @@
    "price": 20,
    "how": "comb",
    "art": "star",
+   "look": "star|#e8783a|#c0502a",
    "release": false,
    "hint": "Found in the rock pools on the rock platform.",
    "what": ""
@@ -4579,6 +4725,7 @@
    "price": 20,
    "how": "comb",
    "art": "cowrie",
+   "look": "cowrie|#e8d8b8|#a07850",
    "release": false,
    "hint": "Washes up on the beach at low tide.",
    "what": ""
@@ -4605,6 +4752,7 @@
    "price": 20,
    "how": "comb",
    "art": "murex",
+   "look": "murex|#e8e0d0|#a89880",
    "release": false,
    "hint": "Found in the rock pools on the rock platform.",
    "what": ""
@@ -4631,6 +4779,7 @@
    "price": 20,
    "how": "comb",
    "art": "abalone",
+   "look": "abalone|#8ab0b8|#c89ad8",
    "release": false,
    "hint": "Found in the rock pools on the rock platform.",
    "what": ""
@@ -4657,6 +4806,7 @@
    "price": 70,
    "how": "comb",
    "art": "spiral",
+   "look": "spiral|#e8c890|#b06a3a",
    "release": false,
    "hint": "Washes up on the beach at low tide after a storm.",
    "what": ""
@@ -4683,6 +4833,7 @@
    "price": 70,
    "how": "snag",
    "art": "conch",
+   "look": "conch|#f4c8b0|#e08a6a",
    "release": false,
    "hint": "Snagged on a line in the Coral Reef.",
    "what": ""
@@ -4709,6 +4860,7 @@
    "price": 70,
    "how": "comb",
    "art": "cone",
+   "look": "cone|#f0e8d8|#8a4a2a",
    "release": false,
    "hint": "Found in the rock pools on the rock platform.",
    "what": ""
@@ -4735,6 +4887,7 @@
    "price": 70,
    "how": "snag",
    "art": "cowrie",
+   "look": "cowrie|#e8e0d0|#4a3a2a|spots",
    "release": false,
    "hint": "Snagged on a line in the Coral Reef.",
    "what": ""
@@ -4761,6 +4914,7 @@
    "price": 70,
    "how": "comb",
    "art": "tall",
+   "look": "tall|#f4f0e8|#c8c0b0",
    "release": false,
    "hint": "Washes up on the beach at low tide after a storm.",
    "what": ""
@@ -4787,6 +4941,7 @@
    "price": 300,
    "how": "pot",
    "art": "nautilus",
+   "look": "nautilus|#f4ece0|#b0603a",
    "release": false,
    "hint": "Turns up in pots in The Deep.",
    "what": ""
@@ -4813,6 +4968,7 @@
    "price": 300,
    "how": "comb",
    "art": "nautilus",
+   "look": "nautilus|#fbf8f0|#d8d0c0|paper",
    "release": false,
    "hint": "Washes up on the beach at low tide after a storm in winter.",
    "what": ""
@@ -4839,6 +4995,7 @@
    "price": 300,
    "how": "snag",
    "art": "cowrie",
+   "look": "cowrie|#f0b040|#c07820",
    "release": false,
    "hint": "Snagged on a line at night in the Coral Reef.",
    "what": ""
@@ -4865,6 +5022,7 @@
    "price": 10,
    "how": "comb",
    "art": "glass",
+   "look": "glass|#6ac080",
    "release": false,
    "hint": "Washes up on the beach at low tide.",
    "what": ""
@@ -4891,6 +5049,7 @@
    "price": 40,
    "how": "comb",
    "art": "carving",
+   "look": "carving",
    "release": false,
    "hint": "Washes up on the beach at low tide.",
    "what": ""
@@ -4917,6 +5076,7 @@
    "price": 40,
    "how": "comb",
    "art": "glass",
+   "look": "glass|#5a9ae0",
    "release": false,
    "hint": "Washes up on the beach at low tide.",
    "what": ""
@@ -4943,6 +5103,7 @@
    "price": 40,
    "how": "salvage",
    "art": "anchor",
+   "look": "anchor",
    "release": false,
    "hint": "Salvaged from the seabed in the Wreck Graveyard.",
    "what": ""
@@ -4969,6 +5130,7 @@
    "price": 40,
    "how": "salvage",
    "art": "cannonball",
+   "look": "cannonball",
    "release": false,
    "hint": "Salvaged from the seabed in the Wreck Graveyard.",
    "what": ""
@@ -4995,6 +5157,7 @@
    "price": 150,
    "how": "comb",
    "art": "glass",
+   "look": "glass|#e05050",
    "release": false,
    "hint": "Washes up on the beach at low tide.",
    "what": ""
@@ -5021,6 +5184,7 @@
    "price": 150,
    "how": "comb",
    "art": "ammonite",
+   "look": "ammonite",
    "release": false,
    "hint": "Found in the rock pools on the rock platform at low tide.",
    "what": ""
@@ -5047,6 +5211,7 @@
    "price": 150,
    "how": "comb",
    "art": "shipbottle",
+   "look": "shipbottle",
    "release": false,
    "hint": "Washes up on the beach at low tide.",
    "what": ""
@@ -5073,6 +5238,7 @@
    "price": 600,
    "how": "salvage",
    "art": "tooth",
+   "look": "tooth",
    "release": false,
    "hint": "Salvaged from the seabed in The Deep.",
    "what": ""
@@ -5099,6 +5265,7 @@
    "price": 600,
    "how": "comb",
    "art": "ambergris",
+   "look": "ambergris",
    "release": false,
    "hint": "Washes up on the beach at low tide after a storm.",
    "what": ""
@@ -5125,6 +5292,7 @@
    "price": 600,
    "how": "salvage",
    "art": "helmet",
+   "look": "helmet",
    "release": false,
    "hint": "Salvaged from the seabed in the Wreck Graveyard.",
    "what": ""
@@ -5151,6 +5319,7 @@
    "price": 600,
    "how": "comb",
    "art": "comb",
+   "look": "comb",
    "release": false,
    "hint": "Found in the rock pools at dawn on the rock platform in the fog.",
    "what": ""
@@ -5177,6 +5346,7 @@
    "price": 0,
    "how": "hook",
    "art": "bottle",
+   "look": "bottle|1",
    "release": false,
    "hint": "Hooked now and then in the Harbour and Piers.",
    "what": ""
@@ -5203,6 +5373,7 @@
    "price": 0,
    "how": "hook",
    "art": "bottle",
+   "look": "bottle|2",
    "release": false,
    "hint": "Hooked now and then in the Sandy Shallows.",
    "what": ""
@@ -5229,6 +5400,7 @@
    "price": 0,
    "how": "hook",
    "art": "bottle",
+   "look": "bottle|3",
    "release": false,
    "hint": "Hooked now and then in the Mangrove Estuary.",
    "what": ""
@@ -5255,6 +5427,7 @@
    "price": 0,
    "how": "hook",
    "art": "bottle",
+   "look": "bottle|4",
    "release": false,
    "hint": "Hooked now and then in the Wreck Graveyard.",
    "what": ""
@@ -5281,6 +5454,7 @@
    "price": 0,
    "how": "hook",
    "art": "bottle",
+   "look": "bottle|5",
    "release": false,
    "hint": "Hooked now and then in the Wreck Graveyard.",
    "what": ""
@@ -5307,6 +5481,7 @@
    "price": 0,
    "how": "hook",
    "art": "bottle",
+   "look": "bottle|6",
    "release": false,
    "hint": "Hooked now and then in the Harbour and Piers.",
    "what": ""
@@ -5333,6 +5508,7 @@
    "price": 0,
    "how": "hook",
    "art": "bottle",
+   "look": "bottle|7",
    "release": false,
    "hint": "Hooked now and then in the Sandy Shallows.",
    "what": ""
@@ -5359,6 +5535,7 @@
    "price": 0,
    "how": "hook",
    "art": "bottle",
+   "look": "bottle|8",
    "release": false,
    "hint": "Hooked now and then in The Deep.",
    "what": ""
@@ -5385,6 +5562,7 @@
    "price": 0,
    "how": "hook",
    "art": "bottle",
+   "look": "bottle|9",
    "release": false,
    "hint": "Hooked now and then in the Kelp Forest.",
    "what": ""
@@ -5411,6 +5589,7 @@
    "price": 0,
    "how": "hook",
    "art": "bottle",
+   "look": "bottle|10",
    "release": false,
    "hint": "Hooked now and then in the Coral Reef.",
    "what": ""
@@ -5437,6 +5616,7 @@
    "price": 0,
    "how": "hook",
    "art": "bottle",
+   "look": "bottle|11",
    "release": false,
    "hint": "Hooked now and then in the Open Blue.",
    "what": ""
@@ -5463,6 +5643,7 @@
    "price": 0,
    "how": "comb",
    "art": "bottle",
+   "look": "bottle|12",
    "release": false,
    "hint": "Found in the rock pools on the rock platform.",
    "what": ""
@@ -5489,6 +5670,7 @@
    "price": 15,
    "how": "comb",
    "art": "coin",
+   "look": "coin|#e8d8c0",
    "release": false,
    "hint": "Washes up on the beach at low tide.",
    "what": ""
@@ -5515,6 +5697,7 @@
    "price": 15,
    "how": "salvage",
    "art": "coin",
+   "look": "coin|#c87840",
    "release": false,
    "hint": "Salvaged from the seabed in the Harbour and Piers.",
    "what": ""
@@ -5541,6 +5724,7 @@
    "price": 40,
    "how": "salvage",
    "art": "coin",
+   "look": "coin|#b8703a",
    "release": false,
    "hint": "Salvaged from the seabed in the Harbour and Piers.",
    "what": ""
@@ -5567,6 +5751,7 @@
    "price": 40,
    "how": "comb",
    "art": "coin",
+   "look": "coin|#c8c8d0",
    "release": false,
    "hint": "Found in the rock pools on the rock platform.",
    "what": ""
@@ -5593,6 +5778,7 @@
    "price": 120,
    "how": "comb",
    "art": "coin",
+   "look": "coin|#d8d8e0",
    "release": false,
    "hint": "Washes up on the beach at low tide after a storm.",
    "what": ""
@@ -5619,6 +5805,7 @@
    "price": 120,
    "how": "salvage",
    "art": "coin",
+   "look": "coin|#a8a070",
    "release": false,
    "hint": "Salvaged from the seabed in the Mangrove Estuary.",
    "what": ""
@@ -5645,6 +5832,7 @@
    "price": 120,
    "how": "salvage",
    "art": "coin",
+   "look": "coin|#e0e4ec",
    "release": false,
    "hint": "Salvaged from the seabed in the Wreck Graveyard.",
    "what": ""
@@ -5671,6 +5859,7 @@
    "price": 400,
    "how": "salvage",
    "art": "coin",
+   "look": "coin|#d8d8d0",
    "release": false,
    "hint": "Salvaged from the seabed in the Wreck Graveyard.",
    "what": ""
@@ -5697,6 +5886,7 @@
    "price": 400,
    "how": "salvage",
    "art": "coin",
+   "look": "coin|#f0c040",
    "release": false,
    "hint": "Salvaged from the seabed in The Deep.",
    "what": ""
@@ -5723,6 +5913,7 @@
    "price": 25,
    "how": "snag",
    "art": "lure",
+   "look": "lure|spoon|#e04a3a",
    "release": false,
    "hint": "Snagged on a line in the Harbour and Piers.",
    "what": ""
@@ -5749,6 +5940,7 @@
    "price": 25,
    "how": "snag",
    "art": "lure",
+   "look": "lure|jig|#f0e8d8",
    "release": false,
    "hint": "Snagged on a line in the Sandy Shallows.",
    "what": ""
@@ -5775,6 +5967,7 @@
    "price": 50,
    "how": "snag",
    "art": "lure",
+   "look": "lure|popper|#f0a040",
    "release": false,
    "hint": "Snagged on a line in the Coral Reef.",
    "what": ""
@@ -5801,6 +5994,7 @@
    "price": 50,
    "how": "snag",
    "art": "lure",
+   "look": "lure|spinner|#c87840",
    "release": false,
    "hint": "Snagged on a line in the Mangrove Estuary.",
    "what": ""
@@ -5827,6 +6021,7 @@
    "price": 130,
    "how": "snag",
    "art": "lure",
+   "look": "lure|minnow|#3a8ad0",
    "release": false,
    "hint": "Snagged on a line in the Kelp Forest.",
    "what": ""
@@ -5853,6 +6048,7 @@
    "price": 130,
    "how": "snag",
    "art": "lure",
+   "look": "lure|spoon|#d8b040",
    "release": false,
    "hint": "Snagged on a line in the Wreck Graveyard.",
    "what": ""
@@ -5879,6 +6075,7 @@
    "price": 410,
    "how": "snag",
    "art": "lure",
+   "look": "lure|squidjig|#8af0ff",
    "release": false,
    "hint": "Snagged on a line in The Deep.",
    "what": ""
@@ -5905,6 +6102,7 @@
    "price": 410,
    "how": "snag",
    "art": "lure",
+   "look": "lure|fly|#ffd24d",
    "release": false,
    "hint": "Snagged on a line in the Open Blue.",
    "what": ""
@@ -5931,6 +6129,7 @@
    "price": 1,
    "how": "hook",
    "art": "junk",
+   "look": "junk|boot",
    "release": false,
    "hint": "Hooked by accident.",
    "what": ""
@@ -5957,6 +6156,7 @@
    "price": 1,
    "how": "hook",
    "art": "junk",
+   "look": "junk|can",
    "release": false,
    "hint": "Hooked by accident.",
    "what": ""
@@ -5983,6 +6183,7 @@
    "price": 1,
    "how": "hook",
    "art": "junk",
+   "look": "junk|weed",
    "release": false,
    "hint": "Hooked by accident.",
    "what": ""
@@ -6009,6 +6210,7 @@
    "price": 1,
    "how": "hook",
    "art": "junk",
+   "look": "junk|line",
    "release": false,
    "hint": "Hooked by accident.",
    "what": ""
@@ -6035,6 +6237,7 @@
    "price": 1,
    "how": "hook",
    "art": "junk",
+   "look": "junk|bag",
    "release": false,
    "hint": "Hooked by accident.",
    "what": ""
@@ -6061,6 +6264,7 @@
    "price": 3,
    "how": "hook",
    "art": "junk",
+   "look": "junk|rod",
    "release": false,
    "hint": "Hooked by accident.",
    "what": ""
@@ -6087,6 +6291,7 @@
    "price": 3,
    "how": "hook",
    "art": "junk",
+   "look": "junk|tyre",
    "release": false,
    "hint": "Hooked by accident.",
    "what": ""
@@ -6113,6 +6318,7 @@
    "price": 3,
    "how": "hook",
    "art": "junk",
+   "look": "junk|trolley",
    "release": false,
    "hint": "Hooked by accident.",
    "what": ""
@@ -6139,6 +6345,7 @@
    "price": 5,
    "how": "hook",
    "art": "junk",
+   "look": "junk|bike",
    "release": false,
    "hint": "Hooked by accident.",
    "what": ""
@@ -6165,6 +6372,7 @@
    "price": 5,
    "how": "hook",
    "art": "junk",
+   "look": "junk|duck",
    "release": false,
    "hint": "Hooked by accident.",
    "what": ""
@@ -6194,6 +6402,7 @@
    "price": 12,
    "how": "fish",
    "art": "deep",
+   "look": "deep|#7a8a90|#c0ccd0|#eef2f2|spots|#5a6a70|#9aa8b0",
    "release": false,
    "hint": "Bites in the Mirrorlake.",
    "what": ""
@@ -6223,6 +6432,7 @@
    "price": 12,
    "how": "fish",
    "art": "deep",
+   "look": "deep|#5a6a3a|#a8b070|#f0e8c0|bars|#2a3a1a|#e85a30",
    "release": false,
    "hint": "Bites by day in the Mirrorlake.",
    "what": ""
@@ -6252,6 +6462,7 @@
    "price": 35,
    "how": "fish",
    "art": "torp",
+   "look": "torp|#5a7a6a|#c8c8b8|#f4f0ec|lat|#e88aa0|#7a8a7a",
    "release": false,
    "hint": "Bites at dawn or dusk in the Mirrorlake.",
    "what": ""
@@ -6281,6 +6492,7 @@
    "price": 35,
    "how": "fish",
    "art": "deep",
+   "look": "deep|#8a7a3a|#d8c060|#f8f0c0|none|#000|#e0b040",
    "release": false,
    "hint": "Bites in the Mirrorlake in the rain.",
    "what": ""
@@ -6310,6 +6522,7 @@
    "price": 35,
    "how": "fish",
    "art": "deep",
+   "look": "deep|#4a4a3a|#8a8a6a|#d8d4c0|none|#000|#5a5a4a",
    "release": false,
    "hint": "Bites at night in the Mirrorlake.",
    "what": ""
@@ -6339,6 +6552,7 @@
    "price": 35,
    "how": "fish",
    "art": "eel",
+   "look": "eel|#4a4a2a|#6a6a40|#a8a888|none|#000|#4a4a2a",
    "release": false,
    "hint": "Bites at night in the Mirrorlake in the rain.",
    "what": ""
@@ -6368,6 +6582,7 @@
    "price": 110,
    "how": "fish",
    "art": "torp",
+   "look": "torp|#6a5a3a|#b8a070|#f0e4c8|spots|#c84a3a|#8a7a5a",
    "release": false,
    "hint": "Bites at dawn in the Mirrorlake in the fog.",
    "what": ""
@@ -6397,6 +6612,7 @@
    "price": 110,
    "how": "fish",
    "art": "grouper",
+   "look": "grouper|#4a5a3a|#7a8a5a|#e0e0c0|spots|#2a3a20|#4a5a3a|big",
    "release": false,
    "hint": "Bites in the Mirrorlake.",
    "what": ""
@@ -6426,6 +6642,7 @@
    "price": 380,
    "how": "fish",
    "art": "torp",
+   "look": "torp|#6a6a40|#c8b878|#f0e8c8|scales|#c84a3a|#8a8a50|big",
    "release": false,
    "hint": "Bites by day in the Mirrorlake in calm weather in summer.",
    "what": ""
@@ -6455,6 +6672,7 @@
    "price": 12,
    "how": "fish",
    "art": "torp",
+   "look": "torp|#c8b890|#e8dcc0|#f6f0e4|spots|#a07850|#d8c8a0|slim",
    "release": false,
    "hint": "Bites by day in the Seagrass Meadows.",
    "what": ""
@@ -6484,6 +6702,7 @@
    "price": 12,
    "how": "fish",
    "art": "jacket",
+   "look": "jacket|#5a7a8a|#c8b060|#e8dca0|lines|#2a5a8a|#e8c040",
    "release": false,
    "hint": "Bites in the Seagrass Meadows.",
    "what": ""
@@ -6513,6 +6732,7 @@
    "price": 12,
    "how": "fish",
    "art": "flathead",
+   "look": "flathead|#6a6a48|#8a8a60|#d8d0b0|spots|#3a3a2a|#7a7a5a",
    "release": false,
    "hint": "Bites by day in the Seagrass Meadows at low tide.",
    "what": ""
@@ -6542,6 +6762,7 @@
    "price": 35,
    "how": "fish",
    "art": "torp",
+   "look": "torp|#6a7a5a|#b8c0a0|#eef0e4|none|#000|#8a9a70|slim",
    "release": false,
    "hint": "Bites at dawn or dusk in the Seagrass Meadows.",
    "what": ""
@@ -6571,6 +6792,7 @@
    "price": 35,
    "how": "fish",
    "art": "deep",
+   "look": "deep|#5a6a7a|#9aa8b4|#dfe6ec|bars|#3a4a5a|#6a7a8a",
    "release": false,
    "hint": "Bites by day in the Seagrass Meadows.",
    "what": ""
@@ -6600,6 +6822,7 @@
    "price": 35,
    "how": "fish",
    "art": "puffer",
+   "look": "puffer|#9a9a6a|#c8c890|#f4f4e0|spots|#3a3a2a|#9a9a6a",
    "release": false,
    "hint": "Bites at night in the Seagrass Meadows.",
    "what": ""
@@ -6629,6 +6852,7 @@
    "price": 110,
    "how": "fish",
    "art": "ray",
+   "look": "ray|#6a5a4a|#8a7a64|#e8e0d0|spots|#d8c8a0|#6a5a4a",
    "release": false,
    "hint": "Bites by day in the Seagrass Meadows in calm weather.",
    "what": ""
@@ -6658,6 +6882,7 @@
    "price": 110,
    "how": "fish",
    "art": "grouper",
+   "look": "grouper|#2a5aa8|#4a7ac8|#a8c4e8|none|#000|#2a5aa8",
    "release": false,
    "hint": "Bites in the Seagrass Meadows. Likes crab bait.",
    "what": ""
@@ -6689,6 +6914,7 @@
    "price": 380,
    "how": "fish",
    "art": "dragon",
+   "look": "dragon|#a8a040|#c8c060|#f0e8a8|bars|#6a7a2a|#8a9a3a",
    "release": true,
    "hint": "Bites in the Seagrass Meadows in calm weather. Protected: log it, then let it go.",
    "what": ""
@@ -6718,6 +6944,7 @@
    "price": 12,
    "how": "fish",
    "art": "torp",
+   "look": "torp|#8aa0b0|#d0dce4|#f2f6f8|none|#000|#a0b4c4",
    "release": false,
    "hint": "Bites in the Turquoise Lagoon.",
    "what": ""
@@ -6747,6 +6974,7 @@
    "price": 35,
    "how": "fish",
    "art": "torp",
+   "look": "torp|#a8b8c8|#d8e4ec|#f4f8fa|lines|#8a9aa8|#b8c8d4|slim",
    "release": false,
    "hint": "Bites by day in the Turquoise Lagoon on a rising tide.",
    "what": ""
@@ -6776,6 +7004,7 @@
    "price": 35,
    "how": "fish",
    "art": "deep",
+   "look": "deep|#3a6aa8|#9ab8d8|#e4eef6|spots|#2a4a8a|#4a8ad8",
    "release": false,
    "hint": "Bites by day in the Turquoise Lagoon.",
    "what": ""
@@ -6805,6 +7034,7 @@
    "price": 35,
    "how": "fish",
    "art": "trigger",
+   "look": "trigger|#e8dcc0|#f0e8d0|#fbf6ea|stripes|#2a6ad0|#e8a030",
    "release": false,
    "hint": "Bites by day in the Turquoise Lagoon in calm weather.",
    "what": ""
@@ -6834,6 +7064,7 @@
    "price": 35,
    "how": "fish",
    "art": "torp",
+   "look": "torp|#2a6aa8|#7ac8e8|#f0f8fc|stripes|#ffd24d|#4aa8d8",
    "release": false,
    "hint": "Bites in the Turquoise Lagoon. Look for diving birds.",
    "what": ""
@@ -6863,6 +7094,7 @@
    "price": 110,
    "how": "fish",
    "art": "ray",
+   "look": "ray|#2a2a3a|#3a3a4a|#e8e8f0|spots|#ffffff|#2a2a3a",
    "release": false,
    "hint": "Bites by day in the Turquoise Lagoon.",
    "what": ""
@@ -6892,6 +7124,7 @@
    "price": 110,
    "how": "fish",
    "art": "parrot",
+   "look": "parrot|#4a7a6a|#7aa890|#c8e0d0|none|#000|#4a7a6a|big",
    "release": false,
    "hint": "Bites at dawn in the Turquoise Lagoon.",
    "what": ""
@@ -6921,6 +7154,7 @@
    "price": 380,
    "how": "fish",
    "art": "shark",
+   "look": "shark|#c8b878|#d8c890|#f4ecd8|none|#000|#c8b878",
    "release": false,
    "hint": "Bites at dusk in the Turquoise Lagoon.",
    "what": ""
@@ -6950,6 +7184,7 @@
    "price": 2500,
    "how": "fish",
    "art": "grouper",
+   "look": "grouper|#3a4a5a|#8aa0b8|#e8f0f8|spots|#ffffff|#3a4a5a|legend",
    "release": false,
    "hint": "Sighted at night in the Mirrorlake under a full moon.",
    "what": "A Murray cod so old its scales hold the moon"

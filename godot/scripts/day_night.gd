@@ -29,6 +29,8 @@ var harbour: Node3D
 var sea: Node
 var audio: Node
 var focus: Node3D  # the rain follows this (the player)
+var indoor := false  # inside a building: no sun, no rain, muffled weather
+var sea_near := 1.0  # how close the open sea is (0 far inland), for the sound of waves
 var _beam_angle := 0.0
 var _sky_t := 0.0
 var _last_hour := -1.0
@@ -108,6 +110,11 @@ func _apply(delta: float) -> void:
 	moon.shadow_enabled = moon.light_energy > 0.02
 	if to_moon.y > -0.25:
 		moon.basis = Basis.looking_at(-to_moon, Vector3.UP)
+	if indoor:
+		sun.light_energy = 0.0
+		sun.shadow_enabled = false
+		moon.light_energy = 0.0
+		moon.shadow_enabled = false
 
 	# Lamps and windows come on through dusk (and in dark weather) and stay on until dawn.
 	var lamps_on := clampf(smoothstep(0.45, 0.85, night) + _overcast * 0.5 * day, 0.0, 1.0)
@@ -130,9 +137,12 @@ func _apply(delta: float) -> void:
 	# The tide: high at midnight and noon, low at six.
 	harbour.sea_level = float(E.tide) * TIDE_RANGE
 
-	# Fog and haze.
+	# Fog and haze (indoors, just a touch).
 	env.fog_density = lerpf(0.0035, 0.045, _fog) + _rain_amount * 0.006
 	env.volumetric_fog_density = lerpf(0.008, 0.035, _fog) + _rain_amount * 0.01
+	if indoor:
+		env.fog_density = 0.002
+		env.volumetric_fog_density = 0.012
 
 	_update_rain(delta)
 	_update_lightning(delta, sky_kind)
@@ -205,7 +215,7 @@ func _build_rain() -> void:
 func _update_rain(_delta: float) -> void:
 	if focus:
 		_rain.global_position = focus.global_position + Vector3(0.0, 12.0, 2.0)
-	_rain.emitting = _rain_amount > 0.05
+	_rain.emitting = _rain_amount > 0.05 and not indoor
 	_rain.amount_ratio = clampf(_rain_amount, 0.0, 1.0)
 
 
@@ -237,13 +247,14 @@ func _update_sound(delta: float, E: Dictionary, night: float) -> void:
 		audio.set_music("day")
 	else:
 		audio.set_music("night")
-	audio.set_amb("waves", 0.75 + wind * 0.4)
-	audio.set_amb("wind", clampf((wind - 0.3) * 1.4, 0.0, 1.0))
-	audio.set_amb("rain", _rain_amount)
-	audio.set_amb("crickets", night * (1.0 - _rain_amount) * (1.0 - _fog * 0.5))
+	var muffle := 0.25 if indoor else 1.0
+	audio.set_amb("waves", (0.75 + wind * 0.4) * sea_near * muffle)
+	audio.set_amb("wind", clampf((wind - 0.3) * 1.4, 0.0, 1.0) * muffle)
+	audio.set_amb("rain", _rain_amount * (0.45 if indoor else 1.0))
+	audio.set_amb("crickets", night * (1.0 - _rain_amount) * (1.0 - _fog * 0.5) * muffle)
 	# Gulls call by day when it isn't pouring.
 	_gull_in -= delta
 	if _gull_in <= 0.0:
 		_gull_in = randf_range(9.0, 24.0)
-		if night < 0.5 and _rain_amount < 0.3:
+		if night < 0.5 and _rain_amount < 0.3 and not indoor and sea_near > 0.3:
 			audio.play("gull", randf_range(-14.0, -8.0), randf_range(0.9, 1.15))

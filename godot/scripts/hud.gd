@@ -1,7 +1,7 @@
 extends CanvasLayer
-## The on-screen layer: Shells, clock and conditions, the Logbook count, townsfolk
-## requests, your bait and catch streak, a context prompt, the cast power bar, the fight
-## meters, the catch card and toasts.
+## The on-screen layer: Shells, clock and conditions, the Logbook count, where you are,
+## townsfolk requests, your bait and catch streak, a context prompt, the cast power bar,
+## the fight meters, the catch card, toasts and the banner when you reach a new place.
 
 const UI := preload("res://scripts/ui_kit.gd")
 const DayNight := preload("res://scripts/day_night.gd")
@@ -62,12 +62,19 @@ var card_size: Label
 var card_tier: Label
 var card_reward: Label
 var card_note: Label
+var area_label: Label
+var banner: VBoxContainer
+var banner_title: Label
+var banner_sub: Label
+var _banner_t := 0.0
 var _toasts: Array[String] = []
 var _toast_t := 0.0
 var _minute := -1
 var _shown_shells := 0.0
 var _target_shells := 0.0
 var _block_until := 0
+var modal := false  # a mode (arranging furniture) has the controls
+var mats_label: Label
 
 
 func setup(s: Node, sv: Dictionary) -> void:
@@ -100,6 +107,11 @@ func setup(s: Node, sv: Dictionary) -> void:
 	col.add_child(clock_label)
 	col.add_child(env_label)
 	col.add_child(log_label)
+	mats_label = UI.label("", 18, Color(0.85, 0.78, 0.62))
+	mats_label.visible = false
+	col.add_child(mats_label)
+	area_label = UI.label("", 18, UI.CREAM)
+	col.add_child(area_label)
 
 	# Top right: what the townsfolk want.
 	var right := VBoxContainer.new()
@@ -133,7 +145,7 @@ func setup(s: Node, sv: Dictionary) -> void:
 	bait_label = UI.label("Bait: Bread dough", 20, UI.CREAM)
 	bait_panel.add_child(bait_label)
 	bottom_left.add_child(bait_panel)
-	bottom_left.add_child(UI.label("E cast, talk   R bait   L Logbook   T skip hour   P hide HUD", 16, UI.DIM))
+	bottom_left.add_child(UI.label("Space cast, talk   Q/E turn camera   Wheel zoom   R bait   L Logbook   T skip hour   F2 quality", 16, UI.DIM))
 
 	# Top centre: toasts.
 	var toast_row := _centered(root, Control.PRESET_TOP_WIDE, 20.0, 70.0)
@@ -142,6 +154,19 @@ func setup(s: Node, sv: Dictionary) -> void:
 	toast_panel.add_child(toast_label)
 	toast_panel.visible = false
 	toast_row.add_child(toast_panel)
+
+	# Upper centre: the name of a place as you arrive.
+	var banner_row := _centered(root, Control.PRESET_TOP_WIDE, 110.0, 200.0)
+	banner = VBoxContainer.new()
+	banner.alignment = BoxContainer.ALIGNMENT_CENTER
+	banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	banner_title = UI.label("", 52, UI.GOLD, true)
+	banner_sub = UI.label("", 22, UI.CREAM)
+	for c in [banner_title, banner_sub]:
+		c.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		banner.add_child(c)
+	banner.visible = false
+	banner_row.add_child(banner)
 
 	# Bottom centre: the context prompt.
 	var prompt_row := _centered(root, Control.PRESET_BOTTOM_WIDE, -70.0, -30.0)
@@ -163,7 +188,7 @@ func setup(s: Node, sv: Dictionary) -> void:
 	var fcol := VBoxContainer.new()
 	fcol.add_theme_constant_override("separation", 6)
 	fight_panel.add_child(fcol)
-	fight_label = UI.label("Hold E to reel in", 24, UI.CREAM, true)
+	fight_label = UI.label("Hold Space to reel in", 24, UI.CREAM, true)
 	fight_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	fcol.add_child(fight_label)
 	tension_bar = Bar.new()
@@ -199,7 +224,7 @@ func setup(s: Node, sv: Dictionary) -> void:
 	card_note = UI.label("", 20, UI.GOOD)
 	card_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	card_note.custom_minimum_size = Vector2(420.0, 0.0)
-	var hint := UI.label("Press E to continue", 18, UI.DIM)
+	var hint := UI.label("Press Space to continue", 18, UI.DIM)
 	for c in [card_title, card_name, card_rarity, card_icon, card_size, card_tier, card_reward, card_note, hint]:
 		ccol.add_child(c)
 		if c is Label:
@@ -210,6 +235,7 @@ func setup(s: Node, sv: Dictionary) -> void:
 	_target_shells = _shown_shells
 	set_shells(save.shells)
 	set_requests(save.requests)
+	set_materials(save.materials)
 
 
 func _process(delta: float) -> void:
@@ -219,9 +245,27 @@ func _process(delta: float) -> void:
 			toast_panel.modulate.a = maxf(_toast_t / 0.4, 0.0)
 		if _toast_t <= 0.0:
 			_next_toast()
+	if _banner_t > 0.0:
+		_banner_t -= delta
+		banner.modulate.a = clampf(minf((4.0 - _banner_t) / 0.6, _banner_t / 0.8), 0.0, 1.0)
+		banner.visible = _banner_t > 0.0
 	if absf(_shown_shells - _target_shells) > 0.5:
 		_shown_shells = move_toward(_shown_shells, _target_shells, maxf(absf(_target_shells - _shown_shells) * 4.0, 20.0) * delta)
 		shells_label.text = "Shells  %d" % int(round(_shown_shells))
+
+
+## Announce a place you've just reached ("Willowford", "on the river"), and keep its
+## name in the corner.
+func show_area(title: String, subtitle := "", announce := true) -> void:
+	area_label.text = title
+	if not announce or title == "":
+		return
+	banner_title.text = title
+	banner_sub.text = subtitle
+	banner_sub.visible = subtitle != ""
+	_banner_t = 4.0
+	banner.modulate.a = 0.0
+	banner.visible = true
 
 
 ## Ignore gameplay presses for a moment (after closing a menu with the same key).
@@ -230,7 +274,16 @@ func block_input(seconds: float) -> void:
 
 
 func input_blocked() -> bool:
-	return Time.get_ticks_msec() < _block_until or get_tree().paused
+	return modal or Time.get_ticks_msec() < _block_until or get_tree().paused
+
+
+## Driftwood, rope and scrap metal on hand (hidden until you have some).
+func set_materials(m: Dictionary) -> void:
+	var w := int(m.get("wood", 0))
+	var r := int(m.get("rope", 0))
+	var s := int(m.get("scrap", 0))
+	mats_label.visible = w + r + s > 0
+	mats_label.text = "Wood %d   Rope %d   Scrap %d" % [w, r, s]
 
 
 func set_shells(n: Variant) -> void:

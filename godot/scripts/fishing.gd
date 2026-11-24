@@ -1,10 +1,10 @@
 extends Node
 ## The fishing loop.
-##   Cast: hold E (or click / pad A) to charge, release near the top for distance. Your rod
+##   Cast: hold Space (or click / pad A) to charge, release near the top for distance. Your rod
 ##     sets how far you can cast. The bait on your hook (R to change) shifts what bites.
 ##   Wait: a shadow comes over and nibbles. Striking early spooks it.
 ##   Bite: the "!" gives you 0.9 s to strike. What's on the line is rolled from the web
-##     game's rules: where you cast (harbour or Sandy Shallows), the time, tide, weather,
+##     game's rules: which water you cast into, the time, tide, weather,
 ##     season, your bait, your rod, and the size of the shadow that bit.
 ##   Fight: hold to reel. Every fish has a style (runner, jumper, diver, sulker...) that
 ##     decides how it fights. Steer against runs, ease off for dives, and let go while it
@@ -62,6 +62,7 @@ var save: Dictionary
 var sea: Node
 var audio: Node
 var town: Node
+var boats: Node3D  # when you're aboard, you cast off the side
 
 var power := 0.0
 var catch_e: Dictionary = {}
@@ -203,7 +204,7 @@ func _use_bait() -> void:
 # --- states ----------------------------------------------------------------------
 
 func _idle() -> void:
-	player.can_move = true
+	player.can_move = not hud.modal
 	if hud.input_blocked():
 		return
 	if Input.is_action_just_pressed("bait"):
@@ -214,14 +215,21 @@ func _idle() -> void:
 		if Input.is_action_just_pressed("action"):
 			town.interact(it)
 		return
+	if harbour.indoor:
+		hud.set_prompt("")
+		return
 	var f: Vector3 = player.facing
 	var pos: Vector3 = player.global_position
 	var near_water: bool = harbour.is_water(pos.x + f.x * 3.0, pos.z + f.z * 3.0) or harbour.is_water(pos.x + f.x * 6.0, pos.z + f.z * 6.0)
-	hud.set_prompt("Hold E to cast" if near_water else "")
+	var hint := "Hold Space to cast" if near_water else ""
+	if boats and boats.aboard:
+		hint = "Hold Space to cast   Esc: step ashore" if boats.can_land() else "Hold Space to cast"
+	hud.set_prompt(hint)
 	if near_water and Input.is_action_just_pressed("action"):
 		power = 0.0
 		_power_dir = 1.0
 		_cast_dir = Vector3(f.x, 0.0, f.z).normalized()
+		player.face(_cast_dir)
 		_set_state(State.CHARGING)
 
 
@@ -270,7 +278,7 @@ func _start_cast() -> void:
 
 func _casting(delta: float) -> void:
 	_cast_t = minf(_cast_t + delta / 0.55, 1.0)
-	var water_y: float = harbour.sea_level
+	var water_y: float = harbour.water_level_at(_cast_to.x, _cast_to.z)
 	var p := _cast_from.lerp(Vector3(_cast_to.x, water_y, _cast_to.z), _cast_t)
 	p.y += sin(_cast_t * PI) * (1.2 + power * 2.0)
 	bobber.global_position = p
@@ -280,8 +288,11 @@ func _casting(delta: float) -> void:
 		zone = harbour.zone_at(_cast_to.x, _cast_to.z)
 		_use_bait()
 		school.lure_landed(Vector2(_cast_to.x, _cast_to.z))
-		var where := "the Sandy Shallows" if zone == "shallows" else "the harbour"
-		hud.set_prompt("Fishing %s...   Q to reel in" % where)
+		var info: Dictionary = sea.zones.get(zone, {})
+		var where := str(info.get("n", "the water"))
+		if zone == "harbour":
+			where = "the harbour"
+		hud.set_prompt("Fishing %s...   Esc to reel in" % where)
 		_set_state(State.WAITING)
 
 
@@ -297,7 +308,8 @@ func _waiting(delta: float) -> void:
 
 func _biting(_delta: float) -> void:
 	var p := bobber.global_position
-	p.y = harbour.sea_level - 0.14 + sin(_bob_t * 30.0) * 0.03  # dragged under, thrashing
+	var level: float = harbour.water_level_at(p.x, p.z)
+	p.y = level - 0.14 + sin(_bob_t * 30.0) * 0.03  # dragged under, thrashing
 	bobber.global_position = p
 	alert.global_position = player.global_position + Vector3(0.0, 2.35, 0.0)
 	alert.visible = true
@@ -310,7 +322,7 @@ func _biting(_delta: float) -> void:
 		audio.play("miss", -4.0)
 		_break_streak()
 		school.bite_missed()
-		hud.set_prompt("Waiting for another bite...   Q to reel in")
+		hud.set_prompt("Waiting for another bite...   Esc to reel in")
 		_set_state(State.WAITING)
 
 
@@ -468,7 +480,7 @@ func _begin_phase(p: String, st: Dictionary, r: float) -> void:
 			_jump_t = 0.0
 			jumper.texture = _icon(str(catch_e.id))
 			jumper.modulate = _tint()
-			jumper.pixel_size = (1.0 / 26.0) * (0.8 + Sea.size_class(catch_e) * 0.35)
+			jumper.pixel_size = (1.0 / 44.0) * (0.8 + Sea.size_class(catch_e) * 0.35)
 			jumper.visible = true
 			audio.play("jump", -1.0, 1.0, 0.1)
 	cam.shake(0.25)
@@ -493,7 +505,7 @@ func _move_bobber(delta: float) -> void:
 	var b := bobber.global_position.lerp(Vector3(want.x, 0.0, want.z), minf(delta * 2.0, 1.0))
 	if not harbour.is_water(b.x, b.z):
 		b = bobber.global_position
-	var water_y: float = harbour.sea_level
+	var water_y: float = harbour.water_level_at(b.x, b.z)
 	b.y = water_y - 0.06 + sin(_bob_t * 18.0) * 0.03 - (0.1 if phase == "dive" else 0.0)
 	bobber.global_position = b
 	school.move_lure(Vector2(b.x, b.z))
@@ -512,7 +524,7 @@ func _move_bobber(delta: float) -> void:
 
 
 func _fight_hud() -> void:
-	var text := "Hold E to reel in"
+	var text := "Hold Space to reel in"
 	if _state_t < 1.4:
 		text = "Hooked! Feels like %s." % STYLE_NAME.get(style, "a fish")
 	elif style == "junk":
@@ -583,9 +595,15 @@ func _land() -> void:
 		value = int(round(float(e.price) * (0.8 + 0.4 * Sea.size_frac(e, size_cm)) * float(TIER_BONUS[tier]) * vmult * smult))
 	elif cat != "junk":
 		value = int(round(float(e.price) * float(TIER_BONUS[tier])))
+	var hot: bool = is_fish and town.is_hot(id)
+	if hot:
+		value *= 2
 	var for_who: String = town.claim_catch(e, size_cm)
 	if for_who != "":
 		value = 0
+	var mats_note := ""
+	if cat == "junk":
+		mats_note = town.junk_materials(id)
 
 	var book: Dictionary = save.log
 	var entry: Dictionary = book.get(id, {})
@@ -637,6 +655,10 @@ func _land() -> void:
 		note = "%s asked for one of these! Take it to them." % for_who
 	elif cat == "junk":
 		note = JUNK_QUIPS.get(id, "")
+		if mats_note != "":
+			note = ("%s  %s for your hut." % [note, mats_note]).strip_edges()
+	elif hot:
+		note = "Catch of the day: double Shells!" + ("  New in your Logbook!" if is_new else "")
 	elif is_new:
 		note = "New in your Logbook!"
 	elif size_cm > best and size_cm > 0.0:
@@ -727,7 +749,7 @@ func _on_bite(cls: int) -> void:
 	_splash(bobber.global_position)
 	audio.play("bite")
 	cam.shake(0.3)
-	hud.set_prompt("Strike! Press E")
+	hud.set_prompt("Strike! Press Space")
 	_set_state(State.BITE)
 
 
@@ -750,7 +772,7 @@ func _logged_here() -> int:
 	var n := 0
 	for id in save.log:
 		var e: Dictionary = sea.by_id.get(id, {})
-		if not e.is_empty() and (e.cat == "fish" or e.cat == "legend") and (e.z == "harbour" or e.z == "shallows"):
+		if not e.is_empty() and (e.cat == "fish" or e.cat == "legend") and e.z != "unknown":
 			n += 1
 	return n
 
@@ -758,13 +780,15 @@ func _logged_here() -> int:
 func _total_here() -> int:
 	var n := 0
 	for e in sea.items:
-		if (e.cat == "fish" or e.cat == "legend") and (e.z == "harbour" or e.z == "shallows") and e.how != "pot":
+		if (e.cat == "fish" or e.cat == "legend") and e.z != "unknown" and e.how != "pot":
 			n += 1
 	return n
 
 
 func _icon(id: String) -> Texture2D:
-	var path := "res://art/fish/%s.png" % id
+	var path := "res://art/fish2/%s.png" % id
+	if not ResourceLoader.exists(path):
+		path = "res://art/fish/%s.png" % id
 	return load(path) if ResourceLoader.exists(path) else null
 
 
@@ -924,7 +948,7 @@ func _update_gear() -> void:
 func _float_bobber(delta: float) -> void:
 	_dip = move_toward(_dip, 0.0, delta * 0.4)
 	var p := bobber.global_position
-	var water_y: float = harbour.sea_level
+	var water_y: float = harbour.water_level_at(p.x, p.z)
 	p.y = water_y + sin(_bob_t * 2.6) * 0.025 - _dip
 	bobber.global_position = p
 
@@ -953,7 +977,7 @@ func _float_text(text: String, at: Vector3) -> void:
 
 
 func _splash(at: Vector3) -> void:
-	var water_y: float = harbour.sea_level
+	var water_y: float = harbour.water_level_at(at.x, at.z)
 	splash.global_position = Vector3(at.x, water_y + 0.02, at.z)
 	splash.restart()
 
@@ -962,3 +986,8 @@ func _set_state(s: State) -> void:
 	state = s
 	_state_t = 0.0
 	player.can_move = s == State.IDLE
+	if s == State.IDLE:
+		if player.pose == "cast":
+			player.pose = ""
+	elif s != State.LANDED:
+		player.pose = "cast"
