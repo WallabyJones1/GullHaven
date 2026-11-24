@@ -201,8 +201,10 @@ func _take_camera() -> void:
 	cam.cinematic = true
 	world.focus = _proxy
 	player.visible = false
+	player.can_move = false
 	day_night.look_hour = DAWN
 	hud.visible = false
+	hud.modal = true  # no casting or walking while it plays (the menu hands control back)
 
 
 func _set_bars(k: float, secs: float) -> void:
