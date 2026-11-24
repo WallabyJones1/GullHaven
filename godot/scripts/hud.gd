@@ -145,7 +145,7 @@ func setup(s: Node, sv: Dictionary) -> void:
 	bait_label = UI.label("Bait: Bread dough", 20, UI.CREAM)
 	bait_panel.add_child(bait_label)
 	bottom_left.add_child(bait_panel)
-	bottom_left.add_child(UI.label("Space cast, talk   Q/E turn camera   Wheel zoom   R bait   L Logbook   T skip hour   F2 quality", 16, UI.DIM))
+	bottom_left.add_child(UI.label("Space cast, talk   Q/E turn camera   Wheel zoom   R bait   L Logbook   J Journal   M map   Esc menu", 16, UI.DIM))
 
 	# Top centre: toasts.
 	var toast_row := _centered(root, Control.PRESET_TOP_WIDE, 20.0, 70.0)

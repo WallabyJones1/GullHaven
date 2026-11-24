@@ -401,7 +401,7 @@ func _update_sailors(delta: float) -> void:
 func _update_smoke(p: Vector3, hour: float) -> void:
 	var chimneys: Array = []
 	for b in world.buildings:
-		if not str(b.kind) in ["cottage", "house", "shop", "inn", "tavern", "bakery", "hut"]:
+		if str(b.kind) not in ["house", "shop", "tavern", "lodge", "hut"]:
 			continue
 		var node: Node3D = b.node
 		if not is_instance_valid(node):

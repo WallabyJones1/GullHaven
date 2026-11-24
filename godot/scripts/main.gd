@@ -33,6 +33,7 @@ const Companion := preload("res://scripts/companion.gd")
 const Minigames := preload("res://scripts/minigames.gd")
 const Journal := preload("res://scripts/journal.gd")
 const Ambient := preload("res://scripts/ambient.gd")
+const Menus := preload("res://scripts/menus.gd")
 
 var env: Environment
 var world_env: WorldEnvironment
@@ -64,6 +65,9 @@ var companion: Node3D
 var minigames: Node3D
 var journal: CanvasLayer
 var ambient: Node3D
+var menus: CanvasLayer
+var _first_time := false
+var skip_save := false  # starting a new game: don't write the old save back on the way out
 var save: Dictionary
 var quality_high := true
 var _area := ""
@@ -237,11 +241,15 @@ func _ready() -> void:
 	ambient.setup(harbour, player, cam, audio, sea, boats)
 	ambient.school = school
 
-	if save.visited.is_empty():
-		hud.toast("Welcome to Gullhaven! Walk with WASD, turn the camera with Q and E. Hold Space to cast.")
-		hud.toast("Hale's Tackle on the quay sells bait and better gear. Townsfolk have requests.")
-		hud.toast("Follow the coast road north to the river. The islands across the bay will need a boat.")
+	menus = Menus.new()
+	menus.name = "Menus"
+	add_child(menus)
+	menus.setup(self, hud, audio, player, cam)
+	set_quality(bool(menus.settings.quality), false)
+
+	_first_time = save.visited.is_empty()
 	_update_area(true)
+	menus.show_title()
 
 
 func _process(delta: float) -> void:
@@ -255,7 +263,9 @@ func _process(delta: float) -> void:
 		save.clock_offset = sea.offset
 		hud.toast("An hour passes...")
 	if Input.is_action_just_pressed("quality"):
-		_set_quality(not quality_high)
+		set_quality(not quality_high)
+		menus.settings.quality = quality_high
+		menus._save_settings()
 	if Input.is_action_just_pressed("photo"):
 		hud.visible = not hud.visible
 	if Input.is_action_just_pressed("logbook") and not hud.input_blocked() and fishing.state == 0:
@@ -264,6 +274,9 @@ func _process(delta: float) -> void:
 		map_screen.open()
 	if Input.is_action_just_pressed("journal") and not hud.input_blocked() and fishing.state == 0:
 		journal.open()
+	if Input.is_action_just_pressed("cancel") and not hud.input_blocked() and fishing.state == 0 and menus.mode == "":
+		if not (boats.aboard and boats.can_land()) and not player.swimming:
+			menus.open_pause()
 	# Hear a feeding frenzy bubbling as you get close to it.
 	var near := 0.0
 	if school.frenzy_on:
@@ -275,20 +288,37 @@ func _process(delta: float) -> void:
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_APPLICATION_PAUSED:
-		if sea:
-			save.clock_offset = sea.offset
-		if interiors and interiors.is_inside():
-			var door: Vector3 = interiors.inside.door
-			save.pos = [door.x, door.y, door.z]
-		elif boats and boats.aboard:
-			boats.remember()
-			var spot: Vector3 = boats.landing_spot()
-			if spot != Vector3.INF:
-				save.pos = [spot.x, spot.y, spot.z]
-		elif player and player.is_on_floor():
-			var p := player.global_position
-			save.pos = [p.x, p.y, p.z]
-		SaveGame.write(save)
+		save_now()
+
+
+## Write the save, remembering where you're standing (or the door, or your mooring).
+func save_now() -> void:
+	if skip_save:
+		return
+	if sea:
+		save.clock_offset = sea.offset
+	if interiors and interiors.is_inside():
+		var door: Vector3 = interiors.inside.door
+		save.pos = [door.x, door.y, door.z]
+	elif boats and boats.aboard:
+		boats.remember()
+		var spot: Vector3 = boats.landing_spot()
+		if spot != Vector3.INF:
+			save.pos = [spot.x, spot.y, spot.z]
+	elif player and player.is_on_floor():
+		var p := player.global_position
+		save.pos = [p.x, p.y, p.z]
+	SaveGame.write(save)
+
+
+## After the title screen: a few pointers the first time you play.
+func welcome() -> void:
+	if not _first_time:
+		return
+	_first_time = false
+	hud.toast("Welcome to Gullhaven! Walk with WASD, turn the camera with Q and E. Hold Space to cast.")
+	hud.toast("Hale's Tackle on the quay sells bait and better gear. Townsfolk have requests.")
+	hud.toast("They say the old lighthouse keeper left something behind. Your Journal (J) keeps track.")
 
 
 func _on_gate_blocked(text: String) -> void:
@@ -453,7 +483,7 @@ func _build_environment() -> void:
 	add_child(moon)
 
 
-func _set_quality(high: bool) -> void:
+func set_quality(high: bool, say := true) -> void:
 	quality_high = high
 	var attr := world_env.camera_attributes as CameraAttributesPractical
 	attr.dof_blur_far_enabled = high
@@ -461,4 +491,5 @@ func _set_quality(high: bool) -> void:
 	env.ssao_enabled = high
 	env.volumetric_fog_enabled = high
 	sun.shadow_blur = 1.5 if high else 0.5
-	hud.toast("Quality: " + ("High" if high else "Low"))
+	if say:
+		hud.toast("Quality: " + ("High" if high else "Low"))

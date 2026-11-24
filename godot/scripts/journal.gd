@@ -4,6 +4,7 @@ extends CanvasLayer
 ## you've collected. Q / E or left / right turn the page, Esc or J closes.
 
 const UI := preload("res://scripts/ui_kit.gd")
+const Mystery := preload("res://scripts/mystery.gd")
 
 const TABS := ["The Gull's Eye", "Quests and games", "Letters", "Collection"]
 
@@ -156,7 +157,7 @@ func _letters_text() -> String:
 		var e: Dictionary = sea.by_id.get(id, {})
 		var title := str(e.get("n", "Letter %d" % i))
 		if book.has(id):
-			out += "[color=#ffd24d][b]%s[/b][/color]\n%s\n\n" % [title, mystery.LETTERS.get(id, "")]
+			out += "[color=#ffd24d][b]%s[/b][/color]\n%s\n\n" % [title, Mystery.LETTERS.get(id, "")]
 		else:
 			out += "[color=#6a7080][b]Letter %d: not found yet[/b][/color]\n[color=#6a7080]%s[/color]\n\n" % [i, str(e.get("hint", "Bottles float about the sea."))]
 	return out
