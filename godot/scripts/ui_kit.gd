@@ -62,7 +62,7 @@ static func focus_soon(c: Control) -> void:
 	if c == null:
 		return
 	var grab := func() -> void:
-		if is_instance_valid(c) and c.is_inside_tree() and c.is_visible_in_tree() and c.focus_mode != Control.FOCUS_NONE:
+		if is_instance_valid(c) and c.is_inside_tree() and c.is_visible_in_tree() and c.focus_mode == Control.FOCUS_ALL:
 			c.grab_focus()
 	grab.call_deferred()
 

@@ -576,14 +576,16 @@ func _button(text: String, action: Callable) -> void:
 	_box.add_child(b)
 
 
+## Put the keyboard / pad focus on the first button (labels can take focus only for a
+## screen reader in Godot 4.6, so they're skipped).
 func _focus_first() -> void:
 	await get_tree().process_frame
 	for c in _box.get_children():
-		if c is Control and (c as Control).focus_mode != Control.FOCUS_NONE and (c as Control).is_visible_in_tree():
+		if c is Control and (c as Control).focus_mode == Control.FOCUS_ALL and (c as Control).is_visible_in_tree():
 			(c as Control).grab_focus()
 			return
 		for cc in c.get_children():
-			if cc is Control and (cc as Control).focus_mode != Control.FOCUS_NONE and (cc as Control).is_visible_in_tree():
+			if cc is Control and (cc as Control).focus_mode == Control.FOCUS_ALL and (cc as Control).is_visible_in_tree():
 				(cc as Control).grab_focus()
 				return
 

@@ -32,8 +32,9 @@ func build_town(t: Dictionary) -> void:
 		building(root, b, t)
 	for q in t.get("quays", []):
 		quay(root, q, y)
+	var has_quay: bool = not (t.get("quays", []) as Array).is_empty()
 	for dk in t.get("docks", []):
-		dock(root, dk, y)
+		dock(root, dk, y, not has_quay)
 	for l in t.get("lamps", []):
 		lamp(root, Vector3(float(l[0]), world.height_at(float(l[0]), float(l[1])), float(l[1])))
 	for p in t.get("props", []):
@@ -177,8 +178,10 @@ func quay(parent: Node3D, q: Dictionary, y: float) -> void:
 	_box(parent, Vector3(x1 - x0, y + depth, z1 - z0), Vector3((x0 + x1) * 0.5, (y - depth) * 0.5, (z0 + z1) * 0.5), _mat("stone"))
 
 
-func dock(parent: Node3D, dk: Dictionary, y: float) -> void:
+func dock(parent: Node3D, dk: Dictionary, y: float, reach_shore := false) -> void:
 	var r: Array = dk.rect
+	if reach_shore:
+		r = _reach_shore(r, y - 0.1)
 	var x0 := float(r[0])
 	var z0 := float(r[1])
 	var x1 := float(r[2])
@@ -200,6 +203,34 @@ func dock(parent: Node3D, dk: Dictionary, y: float) -> void:
 	else:
 		_box(parent, size, centre, null)
 	world.docks.append({"rect": Rect2(x0, z0, x1 - x0, z1 - z0), "y": top, "moor": dk.get("moor", null)})
+
+
+## A dock the map set down a little short of the shore, or at the foot of a bank, would
+## leave you stranded on it (or unable to get on). Run its boards on landward until they
+## meet ground near deck height, so you can always walk on and off.
+func _reach_shore(r: Array, top: float) -> Array:
+	var x0 := float(r[0])
+	var z0 := float(r[1])
+	var x1 := float(r[2])
+	var z1 := float(r[3])
+	var long_x := (x1 - x0) >= (z1 - z0)
+	var cx := (x0 + x1) * 0.5
+	var cz := (z0 + z1) * 0.5
+	# the landward end is the one with the higher ground just beyond it
+	var g_lo: float = world.height_at(x0 - 0.5, cz) if long_x else world.height_at(cx, z0 - 0.5)
+	var g_hi: float = world.height_at(x1 + 0.5, cz) if long_x else world.height_at(cx, z1 + 0.5)
+	var dir := 1.0 if g_hi >= g_lo else -1.0
+	if maxf(g_lo, g_hi) >= top - 0.3:
+		return r  # already meets the ground
+	var edge: float = (x1 if dir > 0.0 else x0) if long_x else (z1 if dir > 0.0 else z0)
+	for i in 32:  # up to 16 m
+		edge += dir * 0.5
+		var g: float = world.height_at(edge + dir * 0.4, cz) if long_x else world.height_at(cx, edge + dir * 0.4)
+		if g >= top - 0.3:
+			if long_x:
+				return [minf(x0, edge), z0, maxf(x1, edge), z1]
+			return [x0, minf(z0, edge), x1, maxf(z1, edge)]
+	return r  # no ground at deck height nearby: leave it as the map has it
 
 
 func lamp(parent: Node3D, at: Vector3) -> void:

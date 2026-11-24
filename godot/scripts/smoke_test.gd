@@ -90,6 +90,7 @@ func setup(m: Node) -> void:
 		["fall in the water", _fall_in, 30],
 		["swim back to shore", _swim, 600],
 		["check we climbed out", _swim_check, 5],
+		["plan a walk onto every dock", _plan_docks, 2],
 		["plan a tour of every building", _plan_tour, 5],
 		["watch the opening again", _replay, 60],
 		["skip it", _skip_opening, 10],
@@ -613,6 +614,85 @@ func _steer_check() -> void:
 		main.player.riding = false
 		main.player.global_position = Vector3(436.0, float(main.harbour.height_at(436.0, 566.0)) + 0.5, 566.0)
 	main.player.can_move = true
+
+
+## Every dock and jetty: stand on the ground just past its landward end and walk on.
+func _plan_docks() -> void:
+	var at := _i
+	var n := 0
+	for d: Dictionary in main.harbour.docks:
+		n += 1
+		_steps.insert(at, ["go to dock %d" % n, _dock_start.bind(d), 20])
+		_steps.insert(at + 1, ["walk onto dock %d" % n, _dock_walk.bind(d, n), 75])
+		_steps.insert(at + 2, ["check dock %d" % n, _dock_check.bind(d, n), 3])
+		at += 3
+
+
+var _dock_skip := false
+
+
+## The two points 2.5 m past each end of a dock, along its length.
+func _dock_ends(d: Dictionary) -> Array[Vector3]:
+	var r: Rect2 = d.rect
+	var c := r.get_center()
+	var long_x := r.size.x >= r.size.y
+	var half := (r.size.x if long_x else r.size.y) * 0.5 + 2.5
+	var axis := Vector2(1.0, 0.0) if long_x else Vector2(0.0, 1.0)
+	var a := c + axis * half
+	var b := c - axis * half
+	return [Vector3(a.x, 0.0, a.y), Vector3(b.x, 0.0, b.y)]
+
+
+func _dock_start(d: Dictionary) -> void:
+	_release_all()
+	var ends := _dock_ends(d)
+	var e: Vector3 = ends[0]
+	main.player.global_position = Vector3(e.x, float(main.harbour.stand_height(e.x, e.z)) + 0.5, e.z)
+	main.player.velocity = Vector3.ZERO
+	main.player.can_move = true
+
+
+## The top of whatever's solid at (x, z): ground, a quay, a deck. -INF over nothing.
+func _top_at(x: float, z: float) -> float:
+	var space: PhysicsDirectSpaceState3D = main.player.get_world_3d().direct_space_state
+	var q := PhysicsRayQueryParameters3D.create(Vector3(x, 60.0, z), Vector3(x, -30.0, z), 1)
+	q.exclude = [main.player.get_rid()]
+	var hit := space.intersect_ray(q)
+	if hit.is_empty():
+		return -INF
+	var at: Vector3 = hit.position
+	return at.y
+
+
+func _dock_walk(d: Dictionary, n: int) -> void:
+	var w: Node = main.harbour
+	var best := Vector3.INF
+	var best_y := -INF
+	for e: Vector3 in _dock_ends(d):
+		var top := _top_at(e.x, e.z)
+		var wl := float(w.water_level_at(e.x, e.z))
+		if top > wl - 0.3 and top > best_y:
+			best_y = top
+			best = Vector3(e.x, top, e.z)
+	_dock_skip = best == Vector3.INF
+	if _dock_skip:
+		print("  dock %d (%s): open water at both ends, reached by boat" % [n, str(d.rect)])
+		return
+	main.player.global_position = best + Vector3(0.0, 0.1, 0.0)
+	main.player.velocity = Vector3.ZERO
+	var r: Rect2 = d.rect
+	var c := r.get_center()
+	_press_toward(Vector3(c.x, best.y, c.y))
+
+
+func _dock_check(d: Dictionary, n: int) -> void:
+	_release_all()
+	if _dock_skip:
+		return
+	var r: Rect2 = d.rect
+	var p: Vector3 = main.player.global_position
+	var on: bool = r.grow(0.3).has_point(Vector2(p.x, p.z)) and p.y > float(d.y) - 0.25
+	_check(on, "walked onto dock %d at %s from the shore (at %.1f, %.1f, %.1f; deck %.2f)" % [n, str(r.position.round()), p.x, p.y, p.z, float(d.y)])
 
 
 ## Go into every building, walk into the room, and come back out.
