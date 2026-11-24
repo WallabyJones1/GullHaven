@@ -707,6 +707,19 @@ def boat_model():
     return p.outline()
 
 
+def driftwood():
+    p = Pix(44, 22)
+    logs = [(3, 15, 40, 19, '#c8b8a0'), (8, 10, 36, 14, '#b8a488'), (14, 5, 30, 9, '#d8ccb8')]
+    for x0, y0, x1, y1, c in logs:
+        p.box(x0, y0, x1, y1, c)
+        p.ellipse(x1, (y0 + y1) / 2 + 0.5, 2, (y1 - y0) / 2 + 0.5, shift(hx(c), 0.12))
+        p.px(x1, (y0 + y1) // 2, shift(hx(c), -0.25))
+        for x in range(x0 + 3, x1 - 2, 5):
+            p.px(x, y0 + 2, shift(hx(c), -0.18))
+    p.line(30, 4, 36, 1, '#a89878')  # a stray branch
+    return p.outline()
+
+
 def bed_frame_texture():
     return quilt()
 
@@ -722,7 +735,7 @@ DECOR = {
     'rug_blue': lambda: rug('#3a5a98', '#e8dcc0'), 'rug_green': lambda: rug('#3a7a5a', '#e8c070'),
     'quilt_red': lambda: quilt('#c84a4a'), 'quilt_blue': lambda: quilt('#4a6ac8'), 'stove': stove, 'anvil': anvil,
     'furnace': furnace, 'gears': gears, 'sacks': sacks, 'tea_set': tea_set, 'telescope': telescope,
-    'trophy_board': trophy_board, 'crates': crate_stack, 'boat_model': boat_model,
+    'trophy_board': trophy_board, 'crates': crate_stack, 'boat_model': boat_model, 'driftwood': driftwood,
 }
 TEX = {
     'floor_wood': lambda: floor_wood(), 'floor_wood_dark': lambda: floor_wood('#7a5030', 2),

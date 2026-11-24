@@ -9,6 +9,7 @@ extends Node3D
 
 const Billboard := preload("res://scripts/billboard.gd")
 const SaveGame := preload("res://scripts/save_game.gd")
+const Furniture := preload("res://scripts/furniture.gd")
 
 const ROOM_Y := 240.0
 const WALL_H := 3.2
@@ -29,8 +30,11 @@ var audio: Node
 var sea: Node
 var save: Dictionary
 var day_night: Node
+var hut_build: Node  # arranging furniture in your hut
 var inside := {}  # the building you're in ({} outdoors)
 var _room: Node3D
+var _target: Node3D  # where new pieces go (the room, or one piece of furniture)
+var furniture_nodes: Array = []  # [{item, node}] for what's placed in your hut
 var _origin := Vector3.ZERO
 var _w := 8.0
 var _d := 7.0
@@ -135,6 +139,9 @@ func use(it: Dictionary) -> void:
 		"look":
 			hud.toast(str(it.data))
 			audio.play("pin", -8.0)
+		"arrange":
+			if hut_build:
+				hut_build.begin()
 
 
 func enter(b: Dictionary) -> void:
@@ -210,7 +217,7 @@ func _go_in(b: Dictionary) -> void:
 		var s := Billboard.sprite(outdoor.texture, 1.0 / 26.0, 5, 4, 46.0)
 		s.position = _keeper_at
 		s.frame = Billboard.DOWN * 5
-		_room.add_child(s)
+		_into().add_child(s)
 		_swapped[who] = outdoor
 		f.node = s
 		_keeper_at += Vector3(1.6, 0.0, 0.0)
@@ -232,13 +239,7 @@ func _go_out() -> void:
 		if world.folk.has(who):
 			world.folk[who].node = _swapped[who]
 	_swapped.clear()
-	if _room:
-		_room.queue_free()
-		_room = null
-	_things.clear()
-	_fires.clear()
-	_swimmers.clear()
-	_sky_mats.clear()
+	_clear_room()
 	inside = {}
 	var door: Vector3 = b.door
 	var node: Node3D = b.node
@@ -253,6 +254,43 @@ func _go_out() -> void:
 	cam.indoor = false
 	cam.set_yaw(_out_yaw)
 	cam.snap()
+
+
+func _clear_room() -> void:
+	if _room:
+		_room.queue_free()
+		_room = null
+	_target = null
+	_things.clear()
+	_fires.clear()
+	_swimmers.clear()
+	_sky_mats.clear()
+	furniture_nodes.clear()
+
+
+## Rebuild the room you're in (after moving furniture), leaving you where you stand.
+func refresh() -> void:
+	if not is_inside():
+		return
+	_clear_room()
+	_build_room(inside)
+
+
+## The room's size, and whether you're in your own hut.
+func room_size() -> Vector2:
+	return Vector2(_w, _d)
+
+
+func in_hut() -> bool:
+	return is_inside() and str(inside.get("kind", "")) == "hut"
+
+
+func origin() -> Vector3:
+	return _origin
+
+
+func _into() -> Node3D:
+	return _target if _target else _room
 
 
 func _title(b: Dictionary) -> String:
@@ -272,6 +310,7 @@ func _build_room(b: Dictionary) -> void:
 	_room = Node3D.new()
 	_room.name = "Room"
 	add_child(_room)
+	_target = null
 	_room.global_position = _origin
 	var role := str(b.role)
 	var kind := str(b.kind)
@@ -296,7 +335,7 @@ func _build_room(b: Dictionary) -> void:
 	var void_mi := MeshInstance3D.new()
 	void_mi.mesh = void_mesh
 	void_mi.position.y = -0.6
-	_room.add_child(void_mi)
+	_into().add_child(void_mi)
 	# a warm light (and a second in big rooms)
 	_light(Vector3(0.0, WALL_H - 0.5, 0.0), 1.5, maxf(_w, _d) * 0.95, true)
 	if _w > 11.0:
@@ -547,27 +586,95 @@ func _cottage(b: Dictionary) -> void:
 func _hut_room() -> void:
 	var tier := clampi(int(world.hut_tier), 0, 3)
 	_shell(["wood", "wood", "dark", "dark"][tier], "wall_wood", ["wall_wood", "wall_wood_light", "wall_paper", "wall_paper_green"][tier])
+	# fixed: the bed, the trophy board and a window; the rest is yours to arrange
 	_bed(Vector3(-_w * 0.3, 0.0, -_d * 0.5 + 1.2), "quilt_red", true)
 	_trophy("back", _w * 0.15)
 	_wall("window", "back", _w * 0.38, 0.9)
-	_wall("net_wall", "right", 0.0, 1.0)
-	_stand("rope_coil", Vector3(_w * 0.36, 0.0, _d * 0.2))
-	if tier >= 1:
-		_stand("stove", Vector3(_w * 0.36, 0.0, -_d * 0.5 + 0.6))
-		_table(Vector3(_w * 0.05, 0.0, _d * 0.1))
-		_rug("rug_blue", Vector3(0.0, 0.0, _d * 0.12), Vector2(2.6, 1.8))
-	if tier >= 2:
-		_stand("bookshelf", Vector3(-_w * 0.05, 0.0, -_d * 0.5 + 0.3), false)
-		_wall("painting_sea", "left", 0.0, 1.5)
-		_stand("plant_fern", Vector3(-_w * 0.42, 0.0, _d * 0.25))
-	if tier >= 3:
-		_fireplace("left", -_d * 0.25)
-		_stand("clock", Vector3(_w * 0.42, 0.0, -_d * 0.5 + 0.4), true)
+	var placed: Array = save.furniture
+	for item in placed:
+		place_furniture(item)
+	_things.append({"pos": _to_world(Vector3(-0.9, 0.0, _d * 0.5 - 1.0)), "text": "Space: Arrange your furniture (or press B)",
+		"kind": "arrange", "data": 0})
 	_keeper_at = Vector3(0.0, 0.0, 0.0)
 
 
+## Fixed things in your hut that furniture can't overlap: floor rectangles (room-local,
+## x/z) and wall spans ({side, from, to}).
+func hut_fixed() -> Dictionary:
+	var floor_rects: Array[Rect2] = [
+		Rect2(-_w * 0.3 - 0.75, -_d * 0.5, 1.5, 2.4),  # the bed
+		Rect2(-DOOR_W * 0.5 - 0.2, _d * 0.5 - 1.5, DOOR_W + 0.4, 1.5),  # the way in
+	]
+	var walls: Array = [
+		{"side": "back", "from": _w * 0.15 - 0.75, "to": _w * 0.15 + 0.75},
+		{"side": "back", "from": _w * 0.38 - 0.55, "to": _w * 0.38 + 0.55},
+	]
+	return {"floor": floor_rects, "walls": walls}
+
+
+## Build one piece of furniture from the save into the room. Floor pieces sit at x/z
+## (room-local) turned rot quarter turns; wall pieces hang on side at along.
+func place_furniture(item: Dictionary) -> Node3D:
+	var id := str(item.get("id", ""))
+	var data: Dictionary = Furniture.ITEMS.get(id, {})
+	if data.is_empty():
+		return null
+	var node := Node3D.new()
+	node.name = "Furniture"
+	_room.add_child(node)
+	_target = node
+	var kind := str(data.kind)
+	if kind == "wall":
+		var side := str(item.get("side", "back"))
+		var along := float(item.get("along", 0.0))
+		var y := float(data.get("y", 1.2))
+		if id == "fireplace":
+			_fireplace(side, along)
+		else:
+			_wall(id, side, along, y)
+	else:
+		var rot := int(item.get("rot", 0))
+		node.position = Vector3(float(item.get("x", 0.0)), 0.0, float(item.get("z", 0.0)))
+		node.rotation.y = -rot * PI * 0.5
+		match id:
+			"table":
+				_table(Vector3.ZERO)
+			"bed":
+				_bed(Vector3.ZERO, "quilt_blue", false)
+				_things.append({"pos": node.global_position + node.basis * Vector3(0.95, 0.0, 0.2), "text": "Space: Sleep until morning",
+					"kind": "bed", "data": 0})
+			"barrels":
+				_barrels(Vector3(0.0, 0.0, -0.4))
+			"tank":
+				_tank(Vector3.ZERO, Vector3(1.4, 0.9, 0.8), Color(0.25, 0.6, 0.8), _caught_fish(3))
+			"rug_red", "rug_blue", "rug_green":
+				var fp := Furniture.footprint(id, 0)
+				_rug(id, Vector3.ZERO, fp)
+			"bookshelf":
+				_stand(id, Vector3(0.0, 0.0, -0.2), false)
+			_:
+				_stand(id, Vector3.ZERO, true)
+	_target = null
+	furniture_nodes.append({"item": item, "node": node})
+	return node
+
+
+func _caught_fish(n: int) -> Array:
+	var out: Array = []
+	var book: Dictionary = save.log
+	var ids := book.keys()
+	ids.shuffle()
+	for id in ids:
+		var e: Dictionary = sea.by_id.get(id, {})
+		if not e.is_empty() and e.cat == "fish":
+			out.append(id)
+			if out.size() >= n:
+				break
+	return out
+
+
 func _aquarium() -> void:
-	# Tanks along the back and right walls, stocked with fish from your own Logbook.
+	# Tanks along the back wall, stocked with fish from your own Logbook.
 	var caught: Array = []
 	var book: Dictionary = save.log
 	for id in book:
@@ -575,43 +682,42 @@ func _aquarium() -> void:
 		if not e.is_empty() and e.cat == "fish":
 			caught.append(id)
 	caught.sort()
-	var tanks := [Vector3(-_w * 0.32, 0.0, -_d * 0.5 + 0.7), Vector3(-_w * 0.08, 0.0, -_d * 0.5 + 0.7),
-		Vector3(_w * 0.16, 0.0, -_d * 0.5 + 0.7), Vector3(_w * 0.4, 0.0, -_d * 0.5 + 0.7)]
 	var waters := [Color(0.25, 0.6, 0.8), Color(0.2, 0.55, 0.5), Color(0.3, 0.7, 0.75), Color(0.15, 0.3, 0.6)]
-	var n := 0
-	for i in tanks.size():
-		var at: Vector3 = tanks[i]
-		var size := Vector3(_w * 0.2, 1.5, 1.0)
-		_box(at, Vector3(size.x + 0.2, 0.7, size.z + 0.2), "timber")
-		var glass := StandardMaterial3D.new()
-		glass.albedo_color = Color(waters[i].r, waters[i].g, waters[i].b, 0.55)
-		glass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		glass.emission_enabled = true
-		glass.emission = waters[i]
-		glass.emission_energy_multiplier = 0.6
-		glass.roughness = 0.1
-		_vis_box(at + Vector3(0.0, 0.7, 0.0), size, glass)
-		_light(at + Vector3(0.0, 1.6, 0.4), 0.6, 3.0, false, waters[i].lightened(0.3))
-		for k in 3:
-			if n >= caught.size():
-				break
-			var tex_path := "res://art/fish2/%s.png" % str(caught[n])
-			n += 1
-			if not ResourceLoader.exists(tex_path):
-				continue
-			var s := Sprite3D.new()
-			s.texture = load(tex_path)
-			s.pixel_size = 1.0 / 90.0
-			s.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-			s.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
-			s.shaded = false
-			_room.add_child(s)
-			var y := 0.95 + k * 0.38
-			var from := at + Vector3(-size.x * 0.32, y, size.z * 0.25)
-			var to := at + Vector3(size.x * 0.32, y, size.z * 0.25)
-			s.position = from
-			_swimmers.append({"node": s, "from": from, "to": to, "t": randf() * TAU, "speed": randf_range(0.3, 0.6)})
-		_things.append({"pos": _to_world(at + Vector3(0.0, 0.0, 1.2)), "text": "Space: Look in the tank", "kind": "tank", "data": i})
+	for i in 4:
+		var at := Vector3(-_w * 0.32 + i * _w * 0.24, 0.0, -_d * 0.5 + 0.7)
+		_tank(at, Vector3(_w * 0.2, 1.5, 1.0), waters[i], caught.slice(i * 3, i * 3 + 3))
+
+
+## A glass tank on a stand with fish swimming in it (ids from the catalogue).
+func _tank(at: Vector3, size: Vector3, water: Color, fish: Array) -> void:
+	_box(at, Vector3(size.x + 0.2, 0.7, size.z + 0.2), "timber")
+	var glass := StandardMaterial3D.new()
+	glass.albedo_color = Color(water.r, water.g, water.b, 0.55)
+	glass.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	glass.emission_enabled = true
+	glass.emission = water
+	glass.emission_energy_multiplier = 0.6
+	glass.roughness = 0.1
+	_vis_box(at + Vector3(0.0, 0.7, 0.0), size, glass)
+	_light(at + Vector3(0.0, 0.7 + size.y + 0.1, 0.4), 0.6, 3.0, false, water.lightened(0.3))
+	for k in fish.size():
+		var tex_path := "res://art/fish2/%s.png" % str(fish[k])
+		if not ResourceLoader.exists(tex_path):
+			continue
+		var s := Sprite3D.new()
+		s.texture = load(tex_path)
+		s.pixel_size = 1.0 / 90.0
+		s.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+		s.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
+		s.shaded = false
+		_into().add_child(s)
+		var y := 0.95 + k * size.y * 0.25
+		var from := at + Vector3(-size.x * 0.32, y, size.z * 0.25)
+		var to := at + Vector3(size.x * 0.32, y, size.z * 0.25)
+		s.position = from
+		_swimmers.append({"node": s, "from": from, "to": to, "t": randf() * TAU, "speed": randf_range(0.3, 0.6)})
+	var front := _into().global_transform * (at + Vector3(0.0, 0.0, size.z * 0.5 + 0.7))
+	_things.append({"pos": front, "text": "Space: Look in the tank", "kind": "tank", "data": 0})
 
 
 # --- furniture and decor ------------------------------------------------------------
@@ -651,7 +757,7 @@ func _wall(tex: String, side: String, along: float, y: float) -> void:
 		mi.mesh = q
 		mi.position = s.position + Vector3(0.0, 0.06, 0.0) - s.basis.z * 0.02
 		mi.rotation = s.rotation
-		_room.add_child(mi)
+		_into().add_child(mi)
 
 
 ## A decor sprite standing on the floor. Against a wall it's flat; free-standing ones
@@ -686,7 +792,7 @@ func _decor(tex: String) -> Sprite3D:
 	s.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	s.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
 	s.double_sided = true
-	_room.add_child(s)
+	_into().add_child(s)
 	return s
 
 
@@ -735,7 +841,7 @@ func _trophy(side: String, along: float) -> void:
 		s.position = at + (Vector3(0.0, 0.0, 0.03) if side != "left" else Vector3(0.03, 0.0, 0.0))
 		if side == "left":
 			s.rotation.y = PI * 0.5
-		_room.add_child(s)
+		_into().add_child(s)
 	var stand := at
 	stand.y = 0.0
 	stand += Vector3(0.0, 0.0, 1.0) if side != "left" else Vector3(1.0, 0.0, 0.0)
@@ -753,7 +859,7 @@ func _rug(tex: String, at: Vector3, size: Vector2) -> void:
 	var mi := MeshInstance3D.new()
 	mi.mesh = q
 	mi.position = at + Vector3(0.0, 0.012, 0.0)
-	_room.add_child(mi)
+	_into().add_child(mi)
 
 
 func _table(at: Vector3) -> void:
@@ -784,7 +890,7 @@ func _bed(at: Vector3, quilt: String, own: bool) -> void:
 	var mi := MeshInstance3D.new()
 	mi.mesh = top
 	mi.position = at + Vector3(0.0, 0.47, 0.0)
-	_room.add_child(mi)
+	_into().add_child(mi)
 	if own:
 		_things.append({"pos": _to_world(at + Vector3(0.95, 0.0, 0.2)), "text": "Space: Sleep until morning", "kind": "bed", "data": 0})
 
@@ -817,7 +923,7 @@ func _light(at: Vector3, energy: float, reach: float, shadow: bool, color := Col
 	l.omni_range = reach
 	l.omni_attenuation = 1.2
 	l.shadow_enabled = shadow
-	_room.add_child(l)
+	_into().add_child(l)
 
 
 ## A solid box standing on the floor at `at` (its base), with a collider.
@@ -835,7 +941,7 @@ func _box(at: Vector3, size: Vector3, tex: String, mat: Material = null) -> void
 	var mi := MeshInstance3D.new()
 	mi.mesh = mesh
 	body.add_child(mi)
-	_room.add_child(body)
+	_into().add_child(body)
 
 
 ## A box you can see but not bump into (trim, legs, panels).
@@ -846,7 +952,7 @@ func _vis_box(at: Vector3, size: Vector3, mat: Material) -> void:
 	var mi := MeshInstance3D.new()
 	mi.mesh = mesh
 	mi.position = at + Vector3(0.0, size.y * 0.5, 0.0)
-	_room.add_child(mi)
+	_into().add_child(mi)
 
 
 func _collider(at: Vector3, size: Vector3) -> void:
@@ -857,7 +963,7 @@ func _collider(at: Vector3, size: Vector3) -> void:
 	shape.size = size
 	col.shape = shape
 	body.add_child(col)
-	_room.add_child(body)
+	_into().add_child(body)
 
 
 func _cyl(at: Vector3, radius: float, height: float, tex: String) -> void:
@@ -878,7 +984,7 @@ func _cyl(at: Vector3, radius: float, height: float, tex: String) -> void:
 	var mi := MeshInstance3D.new()
 	mi.mesh = mesh
 	body.add_child(mi)
-	_room.add_child(body)
+	_into().add_child(body)
 
 
 func _tex(tex_name: String, uv: float) -> StandardMaterial3D:

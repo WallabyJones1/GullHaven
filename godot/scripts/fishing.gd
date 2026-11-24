@@ -204,7 +204,7 @@ func _use_bait() -> void:
 # --- states ----------------------------------------------------------------------
 
 func _idle() -> void:
-	player.can_move = true
+	player.can_move = not hud.modal
 	if hud.input_blocked():
 		return
 	if Input.is_action_just_pressed("bait"):
@@ -595,9 +595,15 @@ func _land() -> void:
 		value = int(round(float(e.price) * (0.8 + 0.4 * Sea.size_frac(e, size_cm)) * float(TIER_BONUS[tier]) * vmult * smult))
 	elif cat != "junk":
 		value = int(round(float(e.price) * float(TIER_BONUS[tier])))
+	var hot: bool = is_fish and town.is_hot(id)
+	if hot:
+		value *= 2
 	var for_who: String = town.claim_catch(e, size_cm)
 	if for_who != "":
 		value = 0
+	var mats_note := ""
+	if cat == "junk":
+		mats_note = town.junk_materials(id)
 
 	var book: Dictionary = save.log
 	var entry: Dictionary = book.get(id, {})
@@ -649,6 +655,10 @@ func _land() -> void:
 		note = "%s asked for one of these! Take it to them." % for_who
 	elif cat == "junk":
 		note = JUNK_QUIPS.get(id, "")
+		if mats_note != "":
+			note = ("%s  %s for your hut." % [note, mats_note]).strip_edges()
+	elif hot:
+		note = "Catch of the day: double Shells!" + ("  New in your Logbook!" if is_new else "")
 	elif is_new:
 		note = "New in your Logbook!"
 	elif size_cm > best and size_cm > 0.0:

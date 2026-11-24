@@ -23,6 +23,8 @@ const Logbook := preload("res://scripts/logbook.gd")
 const Interiors := preload("res://scripts/interiors.gd")
 const Boats := preload("res://scripts/boats.gd")
 const Boatyard := preload("res://scripts/boatyard.gd")
+const Trade := preload("res://scripts/trade.gd")
+const HutBuild := preload("res://scripts/hut_build.gd")
 
 var env: Environment
 var world_env: WorldEnvironment
@@ -44,6 +46,8 @@ var logbook: CanvasLayer
 var interiors: Node3D
 var boats: Node3D
 var boatyard: CanvasLayer
+var trade: CanvasLayer
+var hut_build: Node3D
 var save: Dictionary
 var quality_high := true
 var _area := ""
@@ -135,6 +139,19 @@ func _ready() -> void:
 	boatyard.setup(save, audio, hud, boats, player)
 	town.register_service("boatyard", boatyard.open)
 	town.register_service("boatworks", boatyard.open)
+
+	trade = Trade.new()
+	trade.name = "Trade"
+	add_child(trade)
+	trade.setup(save, audio, hud, harbour)
+	for kind in ["carpenter", "home", "salvager"]:
+		town.register_service(kind, trade.open)
+
+	hut_build = HutBuild.new()
+	hut_build.name = "HutBuild"
+	add_child(hut_build)
+	hut_build.setup(interiors, player, cam, hud, audio, save)
+	interiors.hut_build = hut_build
 
 	fishing = Fishing.new()
 	fishing.name = "Fishing"

@@ -24,6 +24,7 @@ catalogue) and uses its own synthesized music and sound.
 | Go inside (facing a door)               | Space or F; walk out to leave    | A                    |
 | Board your boat / steer it              | Space by the boat / move keys    | A / left stick       |
 | Step ashore (beside a dock or beach)    | Esc                              | B                    |
+| Arrange furniture (in your hut)         | B; Q/E choose, R turn, Space put | X                    |
 | Steer against a run                     | A/D or left/right                | Left stick           |
 | Change bait                             | R                                | Y                    |
 | Logbook                                 | L or Tab                         | Back                 |
@@ -61,6 +62,17 @@ catalogue) and uses its own synthesized music and sound.
   Atoll; the Trawler gets through the breakers to Wrecker's Cove; only the Cutter goes out
   to the Deep. Kelpwood hides in a fog bank you can only find with a deck lamp. Paint the
   hull any of ten colours.
+- **Your hut.** Tess the carpenter upgrades it from a beach shack to a snug cabin, a
+  fisher's cottage and finally a harbour lodge, each bigger inside and with a
+  housewarming gift. Upgrades and wooden furniture take materials: gather driftwood piles
+  on sandy shores, dig some up while beachcombing, and fish up junk (tangled line gives
+  rope; tins, tyres, trolleys and bikes give scrap metal), or buy them from Tess and the
+  salvager at Wrecker's Cove. Fern's Home Goods on Mossbank sells rugs, paintings,
+  plants, clocks, a fish tank (stocked with your own catches) and more; the salvager has
+  ship's wheels, anchors, nets and a telescope. Inside your hut press B to arrange it all:
+  a ghost shows where each piece goes, wall pieces snap to the walls.
+- **Catch of the day.** The fishmongers pay double for three fish each day. Ask Mags in
+  Gullhaven which.
 - **Locked places.** The hills past the ranger gate need a permit from Ranger Hollis in
   Willowford, the bridge over the estuary is broken, and Ember Isle is off limits for now.
 - **The clock is shared with the web game.** One real second is one town minute. The
@@ -109,6 +121,9 @@ godot/
     interiors.gd          doors and the furnished room inside every building
     boats.gd              boats: buying, boarding, steering, sea limits, fog, wake
     boatyard.gd           the Boatyard and Lantern Boatworks menus
+    furniture.gd          furniture, materials and hut upgrade data
+    trade.gd              the carpenter, Home Goods and salvager menus
+    hut_build.gd          arranging furniture in your hut
     player.gd             the fisher and footsteps
     fishing.gd            cast, bite, fight styles, catch
     fish_school.gd        fish shadows and feeding frenzies

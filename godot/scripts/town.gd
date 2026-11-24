@@ -11,12 +11,17 @@ extends Node
 
 const Sea := preload("res://scripts/sea.gd")
 const SaveGame := preload("res://scripts/save_game.gd")
+const Furniture := preload("res://scripts/furniture.gd")
 
 const TALK_RANGE := 2.0
 const CAT_RANGE := 1.3
 const COMB_RANGE := 1.3
 const COMB_SPOTS := 3
 const COMB_W := [30.0, 12.0, 4.5, 1.2, 0.2]
+const DRIFT_SPOTS := 2
+# Junk you fish up is worth something to a builder.
+const JUNK_MATS := {"tangled_line": {"rope": 2}, "tin_can": {"scrap": 1}, "broken_rod": {"wood": 1, "scrap": 1},
+	"car_tyre": {"scrap": 2}, "shopping_trolley": {"scrap": 3}, "bicycle": {"scrap": 3}, "old_boot": {"rope": 1}}
 # The water each town knows best, for tips.
 const TOWN_ZONE := {"gullhaven": "harbour", "willowford": "estuary", "mirrorlake": "lake", "tideglass": "shallows",
 	"mossbank": "reef", "kelpwood": "kelp", "lantern": "kelp", "cove": "wreck", "ember": "blue"}
@@ -63,6 +68,11 @@ var _heart_tex: ImageTexture
 var _sparkle_tex: ImageTexture
 var _comb: Array[Sprite3D] = []
 var _comb_wait := 3.0
+var _drift: Array[Sprite3D] = []
+var _drift_wait := 5.0
+var _drift_tex: Texture2D
+var _hot_day := -1
+var _hot: Array = []
 var _rng := RandomNumberGenerator.new()
 var _font: Font
 
@@ -79,8 +89,10 @@ func setup(h: Node3D, p: CharacterBody3D, u: CanvasLayer, a: Node, s: Node, sv: 
 	_heart_tex = _make_heart()
 	_sparkle_tex = _make_sparkle()
 	_font = load("res://art/fonts/pixelify_sans.woff2")
+	_drift_tex = load("res://art/decor/driftwood.png")
 	for kind in ["tackle", "general", "baittea", "kelptea"]:
 		services[kind] = shop.open
+	services["fishmonger"] = _fishmonger
 	_refresh_requests()
 	hud.set_requests(save.requests)
 
@@ -92,7 +104,9 @@ func register_service(kind: String, handler: Callable) -> void:
 
 func _process(delta: float) -> void:
 	_refresh_requests()
-	_update_comb(delta)
+	if not harbour.indoor:
+		_update_comb(delta)
+		_update_drift(delta)
 	for who in _bubbles.keys():
 		var b: Label3D = _bubbles[who]
 		_bubble_t[who] = float(_bubble_t[who]) - delta
@@ -141,6 +155,12 @@ func nearest(pos: Vector3, facing := Vector3.ZERO) -> Dictionary:
 		if d < COMB_RANGE and d < best_d and absf(pos.y - sp.y) < 2.0 and _facing(pos, sp, facing):
 			best_d = d
 			best = {"kind": "comb", "node": spot, "text": "Space: Dig in the sand"}
+	for pile in _drift:
+		var dp := pile.global_position
+		var d := Vector2(pos.x - dp.x, pos.z - dp.z).length()
+		if d < COMB_RANGE + 0.3 and d < best_d and absf(pos.y - dp.y) < 2.0 and _facing(pos, dp, facing):
+			best_d = d
+			best = {"kind": "drift", "node": pile, "text": "Space: Gather driftwood"}
 	var more: Array = []
 	if interiors:
 		more.append(interiors.door_near(pos, facing))
@@ -160,6 +180,8 @@ func interact(it: Dictionary) -> void:
 			_pet(it.node)
 		"comb":
 			_dig(it.node)
+		"drift":
+			_gather(it.node)
 		"folk":
 			_talk(str(it.who))
 		"board":
@@ -469,6 +491,111 @@ func _update_comb(delta: float) -> void:
 		return
 
 
+# --- materials -----------------------------------------------------------------------
+
+## Add materials to your store and say so. Returns the "+2 rope" text.
+func add_materials(mats: Dictionary) -> String:
+	var have: Dictionary = save.materials
+	var parts: Array[String] = []
+	for k in mats:
+		have[k] = int(have.get(k, 0)) + int(mats[k])
+		parts.append("+%d %s" % [int(mats[k]), str(Furniture.MATERIALS[k].n).to_lower()])
+	hud.set_materials(have)
+	return ", ".join(parts)
+
+
+## Materials in a piece of junk you've just fished up ("" if none).
+func junk_materials(id: String) -> String:
+	if not JUNK_MATS.has(id):
+		return ""
+	return add_materials(JUNK_MATS[id])
+
+
+func _update_drift(delta: float) -> void:
+	var here := player.global_position
+	for pile: Sprite3D in _drift.duplicate():
+		if pile.global_position.distance_to(here) > 70.0:
+			_drift.erase(pile)
+			pile.queue_free()
+	if _drift.size() >= DRIFT_SPOTS:
+		return
+	_drift_wait -= delta
+	if _drift_wait > 0.0:
+		return
+	_drift_wait = _rng.randf_range(15.0, 35.0)
+	var comb_flag := int(harbour.F.comb)
+	for attempt in 24:
+		var a := _rng.randf() * TAU
+		var r := _rng.randf_range(10.0, 30.0)
+		var x := here.x + cos(a) * r
+		var z := here.z + sin(a) * r
+		if not (harbour.flags_at(x, z) & comb_flag):
+			continue
+		var h: float = harbour.height_at(x, z)
+		if h < float(harbour.sea_level) + 0.25 or h > float(harbour.sea_level) + 1.6:
+			continue
+		var pile := Sprite3D.new()
+		pile.texture = _drift_tex
+		pile.pixel_size = 1.0 / 28.0
+		pile.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
+		pile.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+		pile.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
+		add_child(pile)
+		pile.global_position = Vector3(x, h + 22.0 / 28.0 * 0.5, z)
+		_drift.append(pile)
+		return
+
+
+func _gather(pile: Sprite3D) -> void:
+	_drift.erase(pile)
+	pile.queue_free()
+	var mats := {"wood": _rng.randi_range(2, 4)}
+	if _rng.randf() < 0.25:
+		mats["rope"] = 1
+	var got := add_materials(mats)
+	SaveGame.write(save)
+	audio.play("thud", -6.0, 1.2)
+	audio.play("step_wood", -4.0)
+	hud.toast("Gathered driftwood: %s." % got)
+
+
+# --- the fishmonger's catch of the day ---------------------------------------------------
+
+## Three fish the fishmongers pay double for today (the same in every town).
+func hot_today() -> Array:
+	var day := int(floor(sea.now() / 1440.0))
+	if day == _hot_day:
+		return _hot
+	_hot_day = day
+	_hot = []
+	var pool: Array = []
+	for e in sea.items:
+		if e.cat == "fish" and e.how != "pot" and int(e.r) <= 2 and e.z in ["harbour", "shallows", "estuary", "reef", "kelp", "seagrass"]:
+			pool.append(e.id)
+	pool.sort()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = day * 7919 + 13
+	for i in 3:
+		if pool.is_empty():
+			break
+		_hot.append(pool.pop_at(rng.randi() % pool.size()))
+	return _hot
+
+
+func is_hot(id: String) -> bool:
+	return hot_today().has(id)
+
+
+func _fishmonger(keeper: String, _title: String, _kind: String) -> void:
+	var names: Array[String] = []
+	for id in hot_today():
+		names.append(_name_of(str(id)))
+	if names.is_empty():
+		_say(keeper, "Bring me your catch any time.")
+		return
+	_say(keeper, "Catch of the day: %s. I'll pay double for those, wherever you land them." % ", ".join(names))
+
+
 func _dig(spot: Sprite3D) -> void:
 	_comb.erase(spot)
 	spot.queue_free()
@@ -505,6 +632,9 @@ func _dig(spot: Sprite3D) -> void:
 	else:
 		audio.play("coin", -4.0)
 	var line := "Dug up %s! +%d Shells" % [_with_article(str(found.n)), value]
+	if _rng.randf() < 0.3:
+		line += ", " + add_materials({"wood": 1})
+		SaveGame.write(save)
 	if is_new:
 		line += "  New in your Logbook!"
 	hud.toast(line)

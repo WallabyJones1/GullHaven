@@ -30,6 +30,9 @@ static func defaults() -> Dictionary:
 		"boat_pos": [],  # where she's moored: x, z, heading
 		"boat_paint": -1,  # -1 is her own colours
 		"boat_parts": {},  # deck lamp...
+		"materials": {"wood": 0, "rope": 0, "scrap": 0},
+		"furniture": [],  # placed in your hut: {id, x, z, rot} or {id, side, along}
+		"furniture_inv": {"crates": 1, "net_wall": 1},  # owned but not placed: id -> count
 	}
 
 
@@ -46,7 +49,7 @@ static func load_save() -> Dictionary:
 	for key in parsed:
 		var have: Variant = data.get(key)
 		var got: Variant = parsed[key]
-		if have is Dictionary and got is Dictionary and key not in ["log", "bait", "thanks", "visited", "permits"]:
+		if have is Dictionary and got is Dictionary and key not in ["log", "bait", "thanks", "visited", "permits", "furniture_inv"]:
 			for sub in got:
 				have[sub] = got[sub]
 		elif have == null or typeof(have) == typeof(got) or (have is float and got is int) or (have is int and got is float):

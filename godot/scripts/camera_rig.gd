@@ -17,6 +17,7 @@ var terrain: Node3D  # the world, for keeping the camera above the ground
 var yaw := 0.0  # 0 looks north (toward -Z)
 var distance := 16.0
 var indoor := false  # tighter, lower framing inside buildings
+var lock_turn := false  # Q / E are busy with something else (arranging furniture)
 var _attrs: CameraAttributesPractical
 var _yaw_goal := 0.0
 var _dist_goal := 16.0
@@ -88,7 +89,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _process(delta: float) -> void:
 	if not target:
 		return
-	var turn := Input.get_axis("rotate_left", "rotate_right")
+	var turn := 0.0 if lock_turn else Input.get_axis("rotate_left", "rotate_right")
 	_yaw_goal += turn * TURN_SPEED * delta
 	if indoor:
 		_yaw_goal = clampf(_yaw_goal, -0.55, 0.55)  # rooms are open only at the front

@@ -73,6 +73,8 @@ var _minute := -1
 var _shown_shells := 0.0
 var _target_shells := 0.0
 var _block_until := 0
+var modal := false  # a mode (arranging furniture) has the controls
+var mats_label: Label
 
 
 func setup(s: Node, sv: Dictionary) -> void:
@@ -105,6 +107,9 @@ func setup(s: Node, sv: Dictionary) -> void:
 	col.add_child(clock_label)
 	col.add_child(env_label)
 	col.add_child(log_label)
+	mats_label = UI.label("", 18, Color(0.85, 0.78, 0.62))
+	mats_label.visible = false
+	col.add_child(mats_label)
 	area_label = UI.label("", 18, UI.CREAM)
 	col.add_child(area_label)
 
@@ -230,6 +235,7 @@ func setup(s: Node, sv: Dictionary) -> void:
 	_target_shells = _shown_shells
 	set_shells(save.shells)
 	set_requests(save.requests)
+	set_materials(save.materials)
 
 
 func _process(delta: float) -> void:
@@ -268,7 +274,16 @@ func block_input(seconds: float) -> void:
 
 
 func input_blocked() -> bool:
-	return Time.get_ticks_msec() < _block_until or get_tree().paused
+	return modal or Time.get_ticks_msec() < _block_until or get_tree().paused
+
+
+## Driftwood, rope and scrap metal on hand (hidden until you have some).
+func set_materials(m: Dictionary) -> void:
+	var w := int(m.get("wood", 0))
+	var r := int(m.get("rope", 0))
+	var s := int(m.get("scrap", 0))
+	mats_label.visible = w + r + s > 0
+	mats_label.text = "Wood %d   Rope %d   Scrap %d" % [w, r, s]
 
 
 func set_shells(n: Variant) -> void:
