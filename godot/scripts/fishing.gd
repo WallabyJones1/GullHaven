@@ -214,6 +214,9 @@ func _idle() -> void:
 		if Input.is_action_just_pressed("action"):
 			town.interact(it)
 		return
+	if harbour.indoor:
+		hud.set_prompt("")
+		return
 	var f: Vector3 = player.facing
 	var pos: Vector3 = player.global_position
 	var near_water: bool = harbour.is_water(pos.x + f.x * 3.0, pos.z + f.z * 3.0) or harbour.is_water(pos.x + f.x * 6.0, pos.z + f.z * 6.0)

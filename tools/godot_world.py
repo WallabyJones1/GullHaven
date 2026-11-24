@@ -306,7 +306,7 @@ def towns():
     g['people'] = [
         dict(name='Hale', sheet='hale', x=437.5, z=559.0, role='shop:tackle', inside='tackle'),
         dict(name='Mags', sheet='fishmonger', x=437.5, z=575.0, role='shop:fishmonger', inside='fishmonger'),
-        dict(name='Old Marlo', sheet='marlo', x=476.0, z=578.5, role='ask:harbour'),
+        dict(name='Old Marlo', sheet='marlo', x=476.0, z=577.0, role='ask:harbour'),
         dict(name='Juniper', sheet='juniper', x=409.0, z=559.0, role='ask:any', inside='bakery'),
         dict(name='Bosun Pell', sheet='boatwright', x=420.5, z=551.0, role='shop:boatyard', inside='boatyard'),
         dict(name='Tess', sheet='carpenter', x=409.0, z=575.0, role='shop:carpenter', inside='carpenter'),
@@ -315,6 +315,10 @@ def towns():
         dict(name='Harbourmaster Quill', sheet='villager_d', x=392.0, z=578.0, role='shop:harbourmaster', inside='harbourmaster'),
         dict(name='Nell', sheet='villager_a', x=398.0, z=566.0, role='tips'),
         dict(name='Pip', sheet='pip', x=431.0, z=692.0, role='ask:shallows'),  # down on the beach by your hut
+        dict(name='Bram', sheet='villager_b', x=464.0, z=594.0, role='tips'),
+        dict(name='Lottie', sheet='kid_b', x=416.0, z=566.0, role='tips'),
+        dict(name='Granny Wick', sheet='villager_d', x=396.0, z=589.0, role='tips'),
+        dict(name='Sam', sheet='villager_c', x=421.0, z=606.0, role='tips'),
     ]
     g['props'] = [['crates', 443, 560], ['barrels', 443, 571], ['crates', 443, 588], ['nets', 443, 600], ['stall', 422, 566]]
     T.append(g)
@@ -342,6 +346,8 @@ def towns():
         dict(name='Barnaby', sheet='villager_c', x=322.0, z=227.0, role='shop:general', inside='general'),
         dict(name='Ranger Hollis', sheet='ranger', x=340.0, z=246.0, role='shop:ranger', inside='ranger'),
         dict(name='Ivy', sheet='kid_b', x=304.0, z=250.0, role='ask:estuary'),
+        dict(name='Hattie', sheet='villager_a', x=326.0, z=244.0, role='tips'),
+        dict(name='Old Jonas', sheet='villager_b', x=302.0, z=252.0, role='tips'),
     ]
     T.append(w)
 

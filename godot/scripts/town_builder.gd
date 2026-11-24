@@ -288,7 +288,7 @@ func folk(parent: Node3D, p: Dictionary, t: Dictionary) -> void:
 		path = "res://art/chars2/villager_a.png"
 	var s := Billboard.sprite(load(path), 1.0 / 26.0, 5, 4, 46.0)
 	var pos := Vector3(float(p.x), 0.0, float(p.z))
-	pos.y = world.height_at(pos.x, pos.z)
+	pos.y = world.stand_height(pos.x, pos.z)
 	s.position = pos
 	parent.add_child(s)
 	var who := str(p.name)

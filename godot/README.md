@@ -21,6 +21,7 @@ catalogue) and uses its own synthesized music and sound.
 | Zoom                                    | Mouse wheel, - / =               | Right stick up/down  |
 | Cast (hold, release), strike, reel      | Space, F or left click           | A                    |
 | Talk, shop, pet a cat, dig              | Space or F (while facing them)   | A                    |
+| Go inside (facing a door)               | Space or F; walk out to leave    | A                    |
 | Steer against a run                     | A/D or left/right                | Left stick           |
 | Change bait                             | R                                | Y                    |
 | Logbook                                 | L or Tab                         | Back                 |
@@ -43,6 +44,12 @@ catalogue) and uses its own synthesized music and sound.
   the **Kelp Forest**, the **Wreck Graveyard**, the **Turquoise Lagoon**, the **Open Blue**,
   **The Deep** and freshwater **Mirrorlake**. The corner of the screen tells you where
   you are and which water you'd be fishing; each new place gets a banner the first time.
+- **Every building has an inside.** Face a door and press Space. Shops, taverns, the
+  boatyard, the carpenter, the bakery, the harbourmaster, the mill, the lighthouse, every
+  cottage and your own hut are furnished rooms; shopkeepers wait behind their counters.
+  The aquarium's tanks fill with the fish you've caught, your hut's trophy board shows
+  your biggest catch, and you can sleep in your hut (or rent a bed at the inn or the
+  lodge) to skip to dawn. The harbourmaster's notice board says what's locked and why.
 - **Locked places.** The hills past the ranger gate need a permit from Ranger Hollis in
   Willowford, the bridge over the estuary is broken, and Ember Isle is off limits for now.
   (Boats, unlock quests and the islands' ferries are the next update.)
@@ -89,6 +96,7 @@ godot/
     sea.gd                the shared rules: clock, tide, weather, what bites
     world.gd              the big map: terrain streaming, collision, sea, lake, plants, queries
     town_builder.gd       towns, buildings, docks, lamps, folk, the hut and the bridge
+    interiors.gd          doors and the furnished room inside every building
     player.gd             the fisher and footsteps
     fishing.gd            cast, bite, fight styles, catch
     fish_school.gd        fish shadows and feeding frenzies
@@ -118,10 +126,11 @@ python3 tools/export_godot_assets.py
 python3 tools/export_godot_audio.py
 ```
 
-The pixel art for characters, cats, plants and fish, and the world map itself, are
-drawn by two more scripts (they need Python with `pillow` and `numpy`):
+The pixel art for characters, cats, plants, fish and interiors, and the world map itself,
+are drawn by three more scripts (they need Python with `pillow` and `numpy`):
 
 ```
 python3 tools/godot_art.py      # art/chars2, art/cats2, art/plants, art/fish2
 python3 tools/godot_world.py    # world/ and the extra terrain textures
+python3 tools/godot_interior_art.py   # floors, walls and decor for the interiors
 ```

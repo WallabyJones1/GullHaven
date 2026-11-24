@@ -61,6 +61,12 @@ func snap() -> void:
 	_place(0.0)
 
 
+## Turn to face a direction (radians, 0 = looking north) straight away on the next snap().
+func set_yaw(y: float) -> void:
+	_yaw_goal = y
+	yaw = y
+
+
 ## Camera-relative directions on the ground: right and forward (away from the camera).
 func ground_right() -> Vector3:
 	return Vector3(cos(yaw), 0.0, -sin(yaw))
@@ -75,6 +81,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		_dragging = event.pressed
 	elif event is InputEventMouseMotion and _dragging:
 		_yaw_goal -= event.relative.x * DRAG_SPEED
+		if indoor:
+			_yaw_goal = clampf(_yaw_goal, -0.55, 0.55)
 
 
 func _process(delta: float) -> void:
@@ -82,6 +90,8 @@ func _process(delta: float) -> void:
 		return
 	var turn := Input.get_axis("rotate_left", "rotate_right")
 	_yaw_goal += turn * TURN_SPEED * delta
+	if indoor:
+		_yaw_goal = clampf(_yaw_goal, -0.55, 0.55)  # rooms are open only at the front
 	if Input.is_action_just_pressed("zoom_in"):
 		_dist_goal = maxf(DIST_MIN, _dist_goal * 0.88)
 	if Input.is_action_just_pressed("zoom_out"):

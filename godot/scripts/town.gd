@@ -54,6 +54,7 @@ var audio: Node
 var sea: Node
 var save: Dictionary
 var shop: CanvasLayer
+var interiors: Node  # doors, and things to use inside
 var services := {}  # shop kind -> Callable(keeper: String, title: String, kind: String)
 var _bubbles := {}  # name -> Label3D
 var _bubble_t := {}
@@ -121,7 +122,8 @@ func nearest(pos: Vector3, facing := Vector3.ZERO) -> Dictionary:
 			var role := str(f.role)
 			var text := "Space: Talk to %s" % who
 			if role.begins_with("shop:"):
-				text = "Space: %s" % _shop_title(who, f)
+				if services.has(role.substr(5)):
+					text = "Space: Shop with %s" % who
 			var req := _request_of(who)
 			if not req.is_empty() and req.held:
 				text = "Space: Give %s the %s" % [who, _name_of(req.id)]
@@ -129,15 +131,20 @@ func nearest(pos: Vector3, facing := Vector3.ZERO) -> Dictionary:
 	for c: Sprite3D in harbour.cats:
 		var cp := c.global_position
 		var d := Vector2(pos.x - cp.x, pos.z - cp.z).length()
-		if d < CAT_RANGE and d < best_d and _facing(pos, cp, facing):
+		if d < CAT_RANGE and d < best_d and absf(pos.y - cp.y) < 2.0 and _facing(pos, cp, facing):
 			best_d = d
 			best = {"kind": "cat", "node": c, "text": "Space: Pet the cat"}
 	for spot in _comb:
 		var sp := spot.global_position
 		var d := Vector2(pos.x - sp.x, pos.z - sp.z).length()
-		if d < COMB_RANGE and d < best_d and _facing(pos, sp, facing):
+		if d < COMB_RANGE and d < best_d and absf(pos.y - sp.y) < 2.0 and _facing(pos, sp, facing):
 			best_d = d
 			best = {"kind": "comb", "node": spot, "text": "Space: Dig in the sand"}
+	if interiors:
+		for it: Dictionary in [interiors.door_near(pos, facing), interiors.thing_near(pos, facing)]:
+			if not it.is_empty() and float(it.dist) < best_d:
+				best_d = float(it.dist)
+				best = it
 	return best
 
 
@@ -149,6 +156,9 @@ func interact(it: Dictionary) -> void:
 			_dig(it.node)
 		"folk":
 			_talk(str(it.who))
+		_:
+			if interiors:
+				interiors.use(it)
 
 
 ## Called when you land something. If it fills a request, it's kept for that person and
@@ -173,12 +183,13 @@ func _facing(pos: Vector3, target: Vector3, facing: Vector3) -> bool:
 	return Vector2(facing.x, facing.z).normalized().dot(to.normalized()) > 0.3
 
 
+## The name over the door of someone's shop ("Hale's Tackle"), or their own name.
 func _shop_title(who: String, f: Dictionary) -> String:
 	var kind := str(f.role).substr(5)
 	for b in harbour.buildings:
 		if b.role == kind and b.town == f.town:
-			return "Visit %s" % b.name
-	return "Talk to %s" % who
+			return str(b.name)
+	return who
 
 
 func _talk(who: String) -> void:
@@ -191,7 +202,7 @@ func _talk(who: String) -> void:
 		return
 	if role.begins_with("shop:"):
 		var kind := role.substr(5)
-		var title := _shop_title(who, f).trim_prefix("Visit ")
+		var title := _shop_title(who, f)
 		if services.has(kind):
 			audio.play("click")
 			services[kind].call(who, title, kind)

@@ -20,6 +20,7 @@ const Audio := preload("res://scripts/audio.gd")
 const Shop := preload("res://scripts/shop.gd")
 const Town := preload("res://scripts/town.gd")
 const Logbook := preload("res://scripts/logbook.gd")
+const Interiors := preload("res://scripts/interiors.gd")
 
 var env: Environment
 var world_env: WorldEnvironment
@@ -38,6 +39,7 @@ var audio: Node
 var shop: CanvasLayer
 var town: Node
 var logbook: CanvasLayer
+var interiors: Node3D
 var save: Dictionary
 var quality_high := true
 var _area := ""
@@ -111,6 +113,12 @@ func _ready() -> void:
 	add_child(day_night)
 	day_night.setup(sun, moon, env, sky_mat, harbour, sea, audio, player)
 
+	interiors = Interiors.new()
+	interiors.name = "Interiors"
+	add_child(interiors)
+	interiors.setup(harbour, player, cam, hud, audio, sea, save, day_night)
+	town.interiors = interiors
+
 	fishing = Fishing.new()
 	fishing.name = "Fishing"
 	add_child(fishing)
@@ -152,7 +160,10 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_APPLICATION_PAUSED:
 		if sea:
 			save.clock_offset = sea.offset
-		if player and player.is_on_floor():
+		if interiors and interiors.is_inside():
+			var door: Vector3 = interiors.inside.door
+			save.pos = [door.x, door.y, door.z]
+		elif player and player.is_on_floor():
 			var p := player.global_position
 			save.pos = [p.x, p.y, p.z]
 		SaveGame.write(save)
@@ -178,7 +189,10 @@ func _start_point() -> Vector3:
 
 ## Keep track of where you are, and greet each new place with a banner.
 func _update_area(first: bool) -> void:
+	if interiors and interiors.is_inside():
+		return
 	var p := player.global_position
+	day_night.sea_near = _sea_near(p)
 	var place: String = harbour.area_name(p.x, p.z)
 	var water := _water_near(p)
 	var corner := place
@@ -201,6 +215,19 @@ func _update_area(first: bool) -> void:
 		SaveGame.write(save)
 	hud.show_area(place, subtitle, true)
 	hud.area_label.text = corner
+
+
+## How close the open sea is: 1 on the coast, fading to 0 about 60 m inland.
+func _sea_near(p: Vector3) -> float:
+	var best := 999.0
+	for i in 16:
+		var a := TAU * float(i) / 16.0
+		for r in [6.0, 20.0, 40.0, 60.0]:
+			var x: float = p.x + cos(a) * r
+			var z: float = p.z + sin(a) * r
+			if r < best and harbour.is_water(x, z) and harbour.zone_at(x, z) not in ["lake", "estuary"]:
+				best = r
+	return clampf(1.0 - (best - 10.0) / 50.0, 0.0, 1.0)
 
 
 ## The fishing ground you'd cast into from here, if any.

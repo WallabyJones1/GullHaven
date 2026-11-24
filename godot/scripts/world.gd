@@ -47,6 +47,7 @@ var spinners: Array = []
 var permits := {}  # unlocks from the save: permit_ranger, permit_ember, bridge
 var hut_tier := 0
 var focus: Node3D
+var indoor := false  # the world is hidden while you're inside a building
 var bridge_node: Node3D
 var hut_node: Node3D
 var builder: RefCounted
@@ -109,6 +110,12 @@ func build() -> void:
 	_update_vegetation(spawn_point)
 
 
+## Hide (or show again) everything outdoors while you're inside a building.
+func set_indoor(on: bool) -> void:
+	indoor = on
+	visible = not on
+
+
 ## Rebuild the bridge (repaired) or the hut (a new tier) after an unlock.
 func rebuild_bridge() -> void:
 	if bridge_node:
@@ -140,6 +147,8 @@ func _process(delta: float) -> void:
 	_sea.position = Vector3(snappedf(sea_at.x, 16.0), sea_level, snappedf(sea_at.z, 16.0))
 	_stream(at)
 	_update_vegetation(at)
+	if indoor:
+		return
 	for w in walkers:
 		_update_walker(w, delta, cam)
 	for s in spinners:
@@ -168,6 +177,16 @@ func _byte(arr: PackedByteArray, x: float, z: float) -> int:
 	if ix < 0 or iz < 0 or ix >= W or iz >= H:
 		return 0
 	return arr[iz * W + ix]
+
+
+## The height you'd stand at here: a dock's deck if there is one, otherwise the ground.
+func stand_height(x: float, z: float) -> float:
+	var h := height_at(x, z)
+	for d in docks:
+		var r: Rect2 = d.rect
+		if r.grow(0.05).has_point(Vector2(x, z)):
+			h = maxf(h, float(d.y))
+	return h
 
 
 func flags_at(x: float, z: float) -> int:
@@ -596,7 +615,7 @@ func _build_waterfall() -> void:
 
 func _update_walker(w: Dictionary, delta: float, cam: Camera3D) -> void:
 	var s: Sprite3D = w.node
-	if not is_instance_valid(s):
+	if not is_instance_valid(s) or not s.visible:
 		return
 	if cam and s.global_position.distance_to(cam.global_position) > 120.0:
 		return
