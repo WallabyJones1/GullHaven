@@ -1,7 +1,9 @@
 extends CanvasLayer
-## The title screen and the game menu, plus settings that belong to this computer (not the
+## The main menu and the game menu, plus settings that belong to this computer (not the
 ## save): music and effects volume, fullscreen, graphics quality and your keys.
-## The title shows over the live world when the game starts: Continue, New game, Quit.
+## The main menu sits over the live world (the camera drifting round the harbour at dawn,
+## see opening.gd): the logo, Continue (with where your story's got to), New game,
+## Settings, Controls, Watch the opening, Credits and Quit.
 ## Esc (or Start) opens the game menu: Resume, then Fisher, Bag, Logbook, Journal, Map,
 ## Controls, Settings, Save and quit. Screens opened from it come back to it when closed.
 
@@ -23,13 +25,35 @@ var hud: CanvasLayer
 var audio: Node
 var player: CharacterBody3D
 var cam: Camera3D
-var mode := ""  # "title", "pause", "screen" (something opened from the menu) or ""
-var settings := {"music": 0.8, "effects": 1.0, "fullscreen": false, "quality": true}
+const CREDITS := """[center][color=#ffd24d][b]Gullhaven[/b][/color]
+A cosy fishing game of tides, islands and one old mystery
+
+[color=#ffd24d][b]Made by[/b][/color]
+WallabyJones
+
+[color=#ffd24d][b]Built with[/b][/color]
+Godot Engine 4.6 (godotengine.org)
+Pixel art, music and sound made in code for this game
+Fonts: Pixelify Sans, Silkscreen and Jersey 10 (SIL Open Font License)
+
+[color=#ffd24d][b]Thank you[/b][/color]
+to everyone playing the beta. Tell us what you find!
+[/center]"""
+
+static var fresh_start := false  # New game: skip the menu after the reload and go straight in
+
+var mode := ""  # "title", "intro", "pause", "screen" (something opened from the menu) or ""
+var settings := {"music": 0.8, "effects": 1.0, "fullscreen": false, "quality": true, "seen_opening": false}
 var _root: Control
 var _box: VBoxContainer
-var _title: Label
 var _sub: Label
-var _orbit := false
+var _pbox: VBoxContainer  # the game menu's column
+var _psub: Label
+var _title_root: Control  # the main menu
+var _tbox: VBoxContainer
+var _theading: Label
+var _logo: TextureRect
+var _from := "pause"  # which menu Settings and Controls go back to
 var _screen: Node = null  # opened from the menu: come back when it closes
 var _page := ""  # which page of the game menu is showing
 var _waiting := ""  # the action waiting for a new key
@@ -47,6 +71,7 @@ func setup(m: Node, h: CanvasLayer, a: Node, p: CharacterBody3D, c: Camera3D) ->
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_load_settings()
 	_apply_settings()
+	# the game menu: a panel in the middle of the screen
 	_root = Control.new()
 	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(_root)
@@ -62,26 +87,83 @@ func setup(m: Node, h: CanvasLayer, a: Node, p: CharacterBody3D, c: Camera3D) ->
 	col.alignment = BoxContainer.ALIGNMENT_CENTER
 	col.add_theme_constant_override("separation", 14)
 	center.add_child(col)
-	_title = UI.label("GULLHAVEN", 96, UI.GOLD, true)
-	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_title.add_theme_constant_override("outline_size", 18)
-	_title.add_theme_color_override("font_outline_color", Color(0.05, 0.06, 0.12))
-	col.add_child(_title)
-	_sub = UI.label("", 22, UI.CREAM)
-	_sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	col.add_child(_sub)
+	_psub = UI.label("", 22, UI.CREAM)
+	_psub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(_psub)
 	var panel := UI.panel(18.0)
 	panel.custom_minimum_size = Vector2(520.0, 0.0)
 	col.add_child(panel)
-	_box = VBoxContainer.new()
-	_box.add_theme_constant_override("separation", 8)
-	panel.add_child(_box)
+	_pbox = VBoxContainer.new()
+	_pbox.add_theme_constant_override("separation", 8)
+	panel.add_child(_pbox)
+	_box = _pbox
+	_sub = _psub
+	_build_title()
+	visible = false
+
+
+## The main menu: the logo top left over a soft shadow, the choices beneath it.
+func _build_title() -> void:
+	_title_root = Control.new()
+	_title_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(_title_root)
+	var grad := Gradient.new()
+	grad.set_color(0, Color(0.02, 0.03, 0.08, 0.82))
+	grad.set_color(1, Color(0.02, 0.03, 0.08, 0.0))
+	var gt := GradientTexture2D.new()
+	gt.gradient = grad
+	gt.fill_from = Vector2(0.0, 0.5)
+	gt.fill_to = Vector2(1.0, 0.5)
+	var shade := TextureRect.new()
+	shade.texture = gt
+	shade.set_anchors_preset(Control.PRESET_LEFT_WIDE)
+	shade.offset_right = 1000.0
+	shade.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	shade.stretch_mode = TextureRect.STRETCH_SCALE
+	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_title_root.add_child(shade)
+	var col := VBoxContainer.new()
+	col.position = Vector2(90.0, 64.0)
+	col.add_theme_constant_override("separation", 10)
+	_title_root.add_child(col)
+	_logo = TextureRect.new()
+	_logo.texture = load("res://art/ui/logo.png")
+	_logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT
+	_logo.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	if _logo.texture:
+		_logo.custom_minimum_size = _logo.texture.get_size() * 4.0
+	col.add_child(_logo)
+	var tag := UI.label("Tides, islands and one old mystery", 24, UI.CREAM)
+	tag.add_theme_constant_override("outline_size", 8)
+	tag.add_theme_color_override("font_outline_color", Color(0.04, 0.05, 0.1))
+	col.add_child(tag)
+	var gap := Control.new()
+	gap.custom_minimum_size = Vector2(0.0, 26.0)
+	col.add_child(gap)
+	_theading = UI.label("", 24, UI.GOLD, true)
+	_theading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_theading.custom_minimum_size = Vector2(560.0, 0.0)
+	col.add_child(_theading)
+	_tbox = VBoxContainer.new()
+	_tbox.add_theme_constant_override("separation", 8)
+	_tbox.custom_minimum_size = Vector2(440.0, 0.0)
+	col.add_child(_tbox)
 	var version := UI.label("%s   Feedback and bugs: tell whoever sent you the game, or open an issue on GitHub" % version_text(), 16, UI.DIM)
 	version.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	version.position = Vector2(16.0, -34.0)
-	version.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	_root.add_child(version)
-	visible = false
+	version.offset_left = 18.0
+	version.offset_top = -36.0
+	version.offset_bottom = -12.0
+	_title_root.add_child(version)
+	var hint := Glyphs.bind(UI.label("", 18, UI.DIM), "{updown} choose   {action} select")
+	hint.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	hint.offset_left = -420.0
+	hint.offset_right = -18.0
+	hint.offset_top = -36.0
+	hint.offset_bottom = -12.0
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_title_root.add_child(hint)
+	_title_root.visible = false
 
 
 static func version_text() -> String:
@@ -92,20 +174,34 @@ static func version_text() -> String:
 
 func show_title() -> void:
 	mode = "title"
+	_page = ""
 	visible = true
+	_root.visible = false
+	_title_root.visible = true
+	_box = _tbox
+	_sub = _theading
+	_from = "title"
 	hud.modal = true
 	hud.visible = false
 	player.can_move = false
-	_orbit = true
-	_title.visible = true
-	_sub.text = "A fishing game of tides, islands and one old mystery"
+	var opening: Node = main.get("opening")
+	if opening:
+		opening.call("drift")
 	_clear()
+	_theading.text = ""
 	if FileAccess.file_exists(SaveGame.PATH):
 		_button("Continue", _start)
+		var summary := UI.label(str(main.save_summary()) if main.has_method("save_summary") else "", 18, UI.SKY)
+		summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		summary.custom_minimum_size = Vector2(560.0, 0.0)
+		_tbox.add_child(summary)
 		_button("New game", _confirm_new)
 	else:
-		_button("Start", _start)
+		_button("Start a new game", _start)
 	_button("Settings", _settings_page.bind("title"))
+	_button("Controls", _controls_page.bind("title"))
+	_button("Watch the opening", _replay_opening)
+	_button("Credits", _credits_page)
 	_button("Quit", _quit)
 	_focus_first()
 
@@ -113,17 +209,51 @@ func show_title() -> void:
 func _start() -> void:
 	mode = ""
 	visible = false
-	_orbit = false
+	_title_root.visible = false
+	_root.visible = true
+	_box = _pbox
+	_sub = _psub
+	_from = "pause"
 	hud.modal = false
 	hud.visible = true
 	hud.block_input(0.4)
 	player.can_move = true
+	var opening: Node = main.get("opening")
+	if opening:
+		opening.call("release")
 	audio.play("fanfare1", -6.0)
 	main.welcome()
 
 
+## After New game reloads the scene: straight in, no menu.
+func begin_new() -> void:
+	_start()
+
+
+func _replay_opening() -> void:
+	mode = "intro"
+	visible = false
+	var opening: Node = main.get("opening")
+	if opening:
+		opening.set("drifting", false)
+		opening.call("play", show_title)
+
+
+func _credits_page() -> void:
+	_clear()
+	_page = "credits"
+	_theading.text = ""
+	var t := _rich(CREDITS, 560.0)
+	t.add_theme_font_size_override("normal_font_size", 21)
+	t.add_theme_font_size_override("bold_font_size", 23)
+	_box.add_child(t)
+	_button("Back", show_title)
+	_focus_first()
+
+
 func _confirm_new() -> void:
 	_clear()
+	_page = "confirm"
 	_sub.text = "Start again from the beginning? This erases your save."
 	_button("Yes, start a new game", _new_game)
 	_button("No, go back", show_title)
@@ -133,6 +263,7 @@ func _confirm_new() -> void:
 func _new_game() -> void:
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(SaveGame.PATH))
 	main.skip_save = true
+	fresh_start = true
 	get_tree().reload_current_scene()
 
 
@@ -141,7 +272,11 @@ func _new_game() -> void:
 func open_pause() -> void:
 	mode = "pause"
 	visible = true
-	_title.visible = false
+	_title_root.visible = false
+	_root.visible = true
+	_box = _pbox
+	_sub = _psub
+	_from = "pause"
 	get_tree().paused = true
 	_pause_page()
 
@@ -209,7 +344,9 @@ func _fisher_page() -> void:
 	_focus_first()
 
 
-func _controls_page() -> void:
+func _controls_page(from := "") -> void:
+	if from != "":
+		_from = from
 	_clear()
 	_page = "controls"
 	_waiting = ""
@@ -240,7 +377,7 @@ func _controls_page() -> void:
 	col.add_child(UI.label("Gamepad", 20, UI.GOLD, true))
 	col.add_child(_rich(PAD_CONTROLS, 600.0))
 	_button("Put the keys back how they were", _reset_keys)
-	_button("Back", _pause_page)
+	_button("Back", show_title if _from == "title" else _pause_page)
 	_focus_first()
 
 
@@ -327,6 +464,7 @@ func _rich(text: String, width: float) -> RichTextLabel:
 # --- settings -------------------------------------------------------------------------------
 
 func _settings_page(from: String) -> void:
+	_from = from
 	_clear()
 	_page = "settings"
 	_sub.text = "Settings"
@@ -455,9 +593,7 @@ func _quit() -> void:
 	get_tree().quit()
 
 
-func _process(delta: float) -> void:
-	if _orbit and cam:
-		cam.set_yaw(cam.yaw + delta * 0.06)
+func _process(_delta: float) -> void:
 	if _screen != null and mode == "screen" and not bool(_screen.get("is_open")):
 		_screen = null
 		call_deferred("_back_from_screen")
@@ -484,6 +620,7 @@ func _input(event: InputEvent) -> void:
 			close_pause()
 		else:
 			_pause_page()
-	elif mode == "title" and event.is_action_pressed("cancel"):
+	elif mode == "title" and event.is_action_pressed("cancel") and _page != "":
 		get_viewport().set_input_as_handled()
+		_page = ""
 		show_title()

@@ -35,7 +35,10 @@ func _process(delta: float) -> void:
 
 func pick() -> String:
 	var menus: Node = main.menus
-	if menus and str(menus.mode) == "title":
+	if menus and str(menus.mode) in ["title", "intro"]:
+		return "title"
+	var opening: Node = main.opening
+	if opening and (bool(opening.playing) or bool(opening.drifting)):
 		return "title"
 	var wardrobe: Node = main.wardrobe
 	if wardrobe and bool(wardrobe.is_open) and str(wardrobe.mode) == "create":

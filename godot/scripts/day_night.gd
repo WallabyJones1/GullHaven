@@ -31,6 +31,7 @@ var audio: Node
 var focus: Node3D  # the rain follows this (the player)
 var indoor := false  # inside a building: no sun, no rain, muffled weather
 var music_base := "day"  # day, night or storm
+var look_hour := -1.0  # the opening and main menu show a calm dawn (just the look, not the rules)
 var sea_near := 1.0  # how close the open sea is (0 far inland), for the sound of waves
 var _beam_angle := 0.0
 var _sky_t := 0.0
@@ -85,8 +86,8 @@ func _process(delta: float) -> void:
 
 func _apply(delta: float) -> void:
 	var E: Dictionary = sea.env
-	hour = float(E.hour)
-	var sky_kind := str(E.sky)
+	hour = float(E.hour) if look_hour < 0.0 else look_hour
+	var sky_kind := str(E.sky) if look_hour < 0.0 else "calm"
 	var blend := 1.0 if delta <= 0.0 else minf(delta * 0.15, 1.0)  # weather eases in over a few seconds
 	_overcast = lerpf(_overcast, float(OVERCAST.get(sky_kind, 0.0)), blend)
 	_fog = lerpf(_fog, 1.0 if sky_kind == "fog" else 0.0, blend)

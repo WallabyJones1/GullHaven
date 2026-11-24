@@ -168,7 +168,7 @@ func _announce(lv: int) -> void:
 	var sub := "+1 skill point. Spend it in the game menu, under Fisher."
 	if UNLOCKS.has(lv):
 		sub = "%s.   +1 skill point" % str(UNLOCKS[lv])
-	hud.banner("Fisher level %d!" % lv, sub)
+	hud.show_banner("Fisher level %d!" % lv, sub)
 	if UNLOCKS.has(lv):
 		hud.toast("New at level %d: %s." % [lv, str(UNLOCKS[lv])])
 	SaveGame.write(save)

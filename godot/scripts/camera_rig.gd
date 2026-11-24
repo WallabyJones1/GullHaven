@@ -18,6 +18,7 @@ var yaw := 0.0  # 0 looks north (toward -Z)
 var distance := 16.0
 var indoor := false  # tighter, lower framing inside buildings
 var lock_turn := false  # Q / E are busy with something else (arranging furniture)
+var cinematic := false  # the opening and the main menu fly the camera themselves (aim())
 var _attrs: CameraAttributesPractical
 var _yaw_goal := 0.0
 var _dist_goal := 16.0
@@ -68,6 +69,23 @@ func set_yaw(y: float) -> void:
 	yaw = y
 
 
+## Put the camera at `at`, looking at `look`, with the focus blur set for that distance.
+func aim(at: Vector3, look: Vector3) -> void:
+	global_position = at
+	if at.distance_to(look) > 0.01:
+		look_at(look, Vector3.UP)
+	if _attrs:
+		var d := at.distance_to(look)
+		_attrs.dof_blur_far_distance = d + 30.0 + d * 0.4
+		_attrs.dof_blur_near_distance = maxf(d * 0.35, 1.0)
+
+
+## Back to following the fisher.
+func release() -> void:
+	cinematic = false
+	snap()
+
+
 ## Camera-relative directions on the ground: right and forward (away from the camera).
 func ground_right() -> Vector3:
 	return Vector3(cos(yaw), 0.0, -sin(yaw))
@@ -87,7 +105,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _process(delta: float) -> void:
-	if not target:
+	if not target or cinematic:
 		return
 	var turn := 0.0 if lock_turn else Input.get_axis("rotate_left", "rotate_right")
 	_yaw_goal += turn * TURN_SPEED * delta

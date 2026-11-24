@@ -214,7 +214,7 @@ func _gear_rows(gear_kind: String) -> Array[Button]:
 			status = "Owned"
 		else:
 			status = "%d Shells" % int(g.price)
-		var locked := progress != null and i > cur and not progress.gear_ok(gear_kind, i)
+		var locked: bool = progress != null and i > cur and not bool(progress.gear_ok(gear_kind, i))
 		if locked:
 			status = "Needs Fisher Lv %d" % progress.gear_level(gear_kind, i)
 		b.text = "%s   %s\n    %s" % [g.n, status, _describe(gear_kind, g, i)]
@@ -296,7 +296,7 @@ func _kit_rows() -> Array[Button]:
 		var lv := 1
 		if progress:
 			lv = int(progress.KIT_LEVEL.get(k, 1))
-		var locked := progress != null and not progress.kit_ok(k)
+		var locked: bool = progress != null and not bool(progress.kit_ok(k))
 		if have >= int(item.max):
 			row.text = "%s   %s\n    %s" % [item.n, "Owned" if int(item.max) == 1 else "You have %d (the most you can use)" % have, item.d]
 			row.disabled = true

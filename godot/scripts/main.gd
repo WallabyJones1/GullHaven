@@ -43,6 +43,7 @@ const Spearfishing := preload("res://scripts/spearfishing.gd")
 const Story := preload("res://scripts/story.gd")
 const Wardrobe := preload("res://scripts/wardrobe.gd")
 const Music := preload("res://scripts/music.gd")
+const Opening := preload("res://scripts/opening.gd")
 
 var env: Environment
 var world_env: WorldEnvironment
@@ -83,6 +84,7 @@ var spear: CanvasLayer
 var story: Node3D
 var wardrobe: CanvasLayer
 var music: Node
+var opening: CanvasLayer
 var _first_time := false
 var skip_save := false  # starting a new game: don't write the old save back on the way out
 var save: Dictionary
@@ -328,6 +330,11 @@ func _ready() -> void:
 	menus.setup(self, hud, audio, player, cam)
 	set_quality(bool(menus.settings.quality), false)
 
+	opening = Opening.new()
+	opening.name = "Opening"
+	add_child(opening)
+	opening.setup(self)
+
 	music = Music.new()
 	music.name = "Music"
 	add_child(music)
@@ -335,7 +342,18 @@ func _ready() -> void:
 
 	_first_time = save.visited.is_empty()
 	_update_area(true)
-	menus.show_title()
+	if Menus.fresh_start:
+		# New game from the menu: straight into making your fisher
+		Menus.fresh_start = false
+		menus.call_deferred("begin_new")
+	elif not bool(menus.settings.get("seen_opening", false)):
+		# the very first time: the opening, then the menu
+		menus.settings["seen_opening"] = true
+		menus._save_settings()
+		menus.mode = "intro"
+		opening.play(menus.show_title)
+	else:
+		menus.show_title()
 
 
 func _process(delta: float) -> void:
@@ -366,7 +384,7 @@ func _process(delta: float) -> void:
 		bag.open()
 	if Input.is_action_just_pressed("menu") and not hud.input_blocked() and fishing.state == 0 and menus.mode == "":
 		# Esc on a keyboard is also "back": aboard by a jetty it steps you ashore instead
-		var esc_lands := Input.is_action_just_pressed("cancel") and boats.aboard and boats.can_land()
+		var esc_lands: bool = Input.is_action_just_pressed("cancel") and bool(boats.aboard) and bool(boats.can_land())
 		if not esc_lands and not player.swimming:
 			menus.open_pause()
 	# Hear a feeding frenzy bubbling as you get close to it.
@@ -454,6 +472,19 @@ func _bag_kit() -> String:
 		if int(k.get(pair[0], 0)) > 0:
 			out += "%s\n" % pair[1]
 	return out
+
+
+## Under Continue on the main menu: where your story's got to, your level and Shells.
+func save_summary() -> String:
+	var bits: Array[String] = []
+	if story:
+		bits.append(str(story.summary()))
+	if progress:
+		bits.append("Fisher level %d" % int(progress.level()))
+	bits.append("%d Shells" % int(save.shells))
+	var found: Dictionary = save.log
+	bits.append("%d in your Logbook" % found.size())
+	return "   ".join(bits)
 
 
 ## The line under the game menu's heading: day, time, where you are, your shells.

@@ -171,6 +171,14 @@ func current() -> Dictionary:
 	return steps[clampi(step_i(), 0, steps.size() - 1)]
 
 
+## Where the story's got to, in a few words (for the main menu).
+func summary() -> String:
+	if finished():
+		return "The story is told"
+	var ch: Dictionary = CHAPTERS[chapter()]
+	return "%s: %s" % [str(ch.title), str(ch.name)]
+
+
 ## A brand-new game: Gran's letter.
 func intro() -> void:
 	if chapter() != 0 or step_i() != 0:
@@ -185,7 +193,7 @@ func intro() -> void:
 
 func _intro_done(_c: int) -> void:
 	_busy = false
-	hud.banner("Prologue", "Gran's Hut")
+	hud.show_banner("Prologue", "Gran's Hut")
 	_refresh()
 
 
@@ -328,12 +336,12 @@ func _next_chapter(quiet: bool) -> void:
 	SaveGame.write(save)
 	if finished():
 		if not quiet:
-			hud.banner("The story is told", "...but the sea isn't finished with you")
+			hud.show_banner("The story is told", "...but the sea isn't finished with you")
 			_note(END)
 		return
 	var ch: Dictionary = CHAPTERS[chapter()]
 	if not quiet:
-		hud.banner(str(ch.title), str(ch.name))
+		hud.show_banner(str(ch.title), str(ch.name))
 		var note: Array = ch.get("note", [])
 		if not note.is_empty():
 			_note(note)

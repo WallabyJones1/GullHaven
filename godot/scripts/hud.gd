@@ -361,7 +361,7 @@ func show_area(title: String, subtitle := "", announce := true) -> void:
 
 
 ## A big announcement across the top (a new level, a new chapter).
-func banner(title: String, subtitle := "") -> void:
+func show_banner(title: String, subtitle := "") -> void:
 	banner_title.text = title
 	banner_sub.text = subtitle
 	banner_sub.visible = subtitle != ""
