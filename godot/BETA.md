@@ -31,7 +31,7 @@ lists what you can do right now. You can change keyboard keys in the game menu (
 |---|---|---|
 | Walk | WASD or arrows | Left stick |
 | Turn the camera | Q / E, or drag with the right mouse button | Right stick, bumpers |
-| Zoom | Mouse wheel, - / = | Right stick |
+| Zoom | Mouse wheel, trackpad pinch or two-finger scroll, - / = | Right stick |
 | Cast (hold to charge), reel, talk, open doors, board boats, dig | Space, F or left click | A |
 | Reel in, step ashore, back | Esc | B |
 | Game menu | Esc | Start |
