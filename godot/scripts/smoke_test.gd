@@ -531,7 +531,7 @@ func _fall_in() -> void:
 			# land within 8 m of this water spot?
 			for k2 in 16:
 				var a2 := TAU * k2 / 16.0
-				for d in [4.0, 6.0, 8.0]:
+				for d: float in [4.0, 6.0, 8.0]:
 					var l := q + Vector3(cos(a2), 0.0, sin(a2)) * d
 					if not bool(w.is_water(l.x, l.z)) and float(w.height_at(l.x, l.z)) < float(w.sea_level) + 2.5:
 						best = q
