@@ -35,8 +35,13 @@ float swell(vec2 p, float t) {
 }
 
 vec3 view_from_depth(vec2 uv, float raw, mat4 inv_proj) {
-	// Godot 4.3+ uses reversed-Z: the raw depth is already the NDC z.
+#if CURRENT_RENDERER == RENDERER_COMPATIBILITY
+	// The web / Compatibility renderer (OpenGL): depth runs 0..1 and NDC z runs -1..1.
+	vec4 v = inv_proj * vec4(uv * 2.0 - 1.0, raw * 2.0 - 1.0, 1.0);
+#else
+	// Forward+ and Mobile (Godot 4.3+) use reversed-Z: the raw depth is already the NDC z.
 	vec4 v = inv_proj * vec4(uv * 2.0 - 1.0, raw, 1.0);
+#endif
 	return v.xyz / v.w;
 }
 

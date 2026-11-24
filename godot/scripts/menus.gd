@@ -189,7 +189,9 @@ func show_title() -> void:
 		opening.call("drift")
 	_clear()
 	_theading.text = ""
-	if FileAccess.file_exists(SaveGame.PATH):
+	# a game you've started (made your fisher), not just the file the first launch writes
+	var started: bool = FileAccess.file_exists(SaveGame.PATH) and not (main.save.get("look", {}) as Dictionary).is_empty()
+	if started:
 		_button("Continue", _start)
 		var summary := UI.label(str(main.save_summary()) if main.has_method("save_summary") else "", 18, UI.SKY)
 		summary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
