@@ -1,9 +1,25 @@
 # Sharing the Gullhaven beta
 
 Every beta build is made on GitHub's computers by `.github/workflows/gullhaven-beta.yml`, so
-nobody has to export by hand. There are three places to put it: a GitHub release (works
-straight away), itch.io (the best home for a beta) and Steam (later; it takes a few weeks
-to set up).
+nobody has to export by hand. There are four places to put it: the website (play in the
+browser, nothing to install), a GitHub release (works straight away), itch.io (the best home
+for a beta) and Steam (later; it takes a few weeks to set up).
+
+## 0. The website (play in the browser)
+
+The game also builds for the web. On every push to `hd2d`, once the smoke test passes with
+no failures and the web build plays in a real browser (Chromium), the web files go to the
+`godot-web` branch. Railway's **gullhaven-3d** service (in the Gullhaven project) deploys
+that branch automatically, so the site always has the latest build that passed.
+
+- It plays in desktop browsers (Chrome, Edge, Firefox, Safari) with a keyboard, mouse or
+  controller. Phones and tablets load it but there are no touch controls yet.
+- The browser version uses Godot's lighter web renderer (WebGL 2), so it has fewer effects
+  than the downloads, such as no ambient occlusion or light shafts, and softer-edged shadows.
+- Saves live in the visitor's browser storage. Clearing site data wipes them.
+- A custom domain (for example `play.gullhaven.com`) can be added in Railway under the
+  service's **Settings > Networking**. Railway shows the DNS record to add.
+- The old web game on `main` keeps its own site and isn't touched.
 
 ## 1. Make a beta build
 
@@ -11,8 +27,8 @@ Push a tag that starts with `beta-` (for example `beta-0.5`), or on github.com o
 **Releases > Draft a new release**, type a new tag such as `beta-0.5`, set the target to
 **hd2d**, tick **Set as a pre-release**, and publish.
 
-About ten minutes later the release has three zips attached (Windows, macOS, Linux), each
-with the tester guide. The release link is shareable as it is: anyone with the link can
+About ten minutes later the release has four zips attached (Windows, macOS, Linux and the
+web build), the desktop ones with the tester guide. The release link is shareable as it is: anyone with the link can
 download it.
 
 Every push to `hd2d` also builds all three (without publishing anything), so you can grab
@@ -46,6 +62,9 @@ You can do this by hand or automatically.
 
 - **By hand:** on the project's **Edit** page, **Upload files**, and add the three zips
   from the GitHub release. Tick the right platform (Windows, macOS, Linux) for each.
+- **To play in the browser on itch.io:** set **Kind of project** to **HTML**, upload the
+  `-web.zip` and tick **This file will be played in the browser**. Set the embed size to
+  1280 x 720 and tick **Fullscreen button**. You can keep the downloads on the same page.
 - **Automatically, on every beta tag:**
   1. On itch.io, **Settings > API keys > Generate new API key**, and copy it.
   2. On github.com, open the repo's **Settings > Secrets and variables > Actions**.
@@ -53,8 +72,8 @@ You can do this by hand or automatically.
      paste the key.
   4. Under **Variables**, click **New repository variable**. Name it `ITCH_GAME`, with the
      value `your-itch-username/gullhaven`.
-  5. From then on, every `beta-` tag uploads to the Windows, Mac and Linux channels of your
-     itch page by itself. The itch.io app keeps testers updated automatically.
+  5. From then on, every `beta-` tag uploads to the Windows, Mac, Linux and HTML5 channels
+     of your itch page by itself. The itch.io app keeps testers updated automatically.
 
 Keep the API key secret: paste it only into GitHub's secret box, not into chats or files.
 

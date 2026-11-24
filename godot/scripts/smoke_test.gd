@@ -16,8 +16,12 @@ var _i := 0
 var _wait := 0
 
 
-func setup(m: Node) -> void:
+var _quick := false  # the short browser check: into the game, look around, stop
+
+
+func setup(m: Node, quick := false) -> void:
 	main = m
+	_quick = quick
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_steps = [
 		["let the opening play", _noop, 90],
@@ -102,16 +106,34 @@ func _process(_delta: float) -> void:
 	if _wait > 0:
 		_wait -= 1
 		return
+	if _quick and _i == 0 and _steps.size() > 9:
+		# opening, menus, a new game, the fisher creator and Gran's letter; then look about
+		_steps = _steps.slice(0, 8)
+		_steps.append(["look around the harbour", _look_around, 360])
+		_steps.append(["how it ran", _look_report, 5])
 	if _i >= _steps.size():
 		print("SMOKE DONE, %d checks failed" % _fails)
-		get_tree().quit()
 		set_process(false)
+		if not _quick:
+			get_tree().quit()
 		return
 	var s: Array = _steps[_i]
 	_i += 1
 	print("SMOKE ", str(s[0]))
 	(s[1] as Callable).call()
 	_wait = int(s[2])
+
+
+func _look_around() -> void:
+	_check(main.player.can_move, "standing in the harbour, free to move")
+	Input.action_press("rotate_right", 0.4)
+
+
+func _look_report() -> void:
+	Input.action_release("rotate_right")
+	print("  renderer %s, %s, %.0f fps, %d draw calls" % [RenderingServer.get_current_rendering_method(),
+		RenderingServer.get_video_adapter_name(), Engine.get_frames_per_second(),
+		RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME)])
 
 
 func _noop() -> void:

@@ -10,13 +10,16 @@
 #        variable (for example wallabyjones/gullhaven) -- see godot/SHARING.md;
 #     3. uploads them to Steam, if the repo has a STEAM_APP_ID variable plus STEAM_USERNAME
 #        and STEAM_CONFIG_VDF secrets -- also in godot/SHARING.md.
+# - It also builds a web version and plays it in a browser. When everything passes on a
+#   push to hd2d, the web build goes to the godot-web branch, which Railway serves as the
+#   public site (see godot/SHARING.md).
 # - You can also run it by hand from the Actions tab (Run workflow, branch hd2d).
 name: Gullhaven beta builds
 
 on:
   push:
     branches: [hd2d]
-    paths: ["godot/**", ".github/workflows/gullhaven-beta.yml"]
+    paths: ["godot/**", ".github/workflows/gullhaven-beta.yml", ".github/scripts/**"]
     tags: ["beta-*"]
   release:
     types: [published]
@@ -75,8 +78,10 @@ jobs:
           fi
 
       - name: Play through the game with no one at the controls (smoke test)
+        id: smoke
         run: |
           timeout 600 ./godot-bin --headless --fixed-fps 60 --path godot -- --smoke > smoke.log 2>&1 || true
+          echo "failed=$(grep -oP 'SMOKE DONE, \K[0-9]+' smoke.log || echo unfinished)" >> "$GITHUB_OUTPUT"
           echo "$(grep -c 'SMOKE CHECK ok' smoke.log) checks passed"
           # (headless Godot can't name keys from the keyboard layout: that noise is dropped)
           grep -v -E "Not supported by this display server|keyboard_get_keycode_from_physical" smoke.log > smoke-clean.log || true
@@ -95,15 +100,37 @@ jobs:
             godot-check.log
             smoke.log
 
-      - name: Export Windows, macOS and Linux
+      - name: Export Windows, macOS, Linux and the web
         run: |
-          mkdir -p godot/build/windows godot/build/mac godot/build/linux
+          mkdir -p godot/build/windows godot/build/mac godot/build/linux godot/build/web
           ./godot-bin --headless --path godot --export-release "Windows Desktop" build/windows/Gullhaven.exe
           ./godot-bin --headless --path godot --export-release "macOS" build/mac/Gullhaven.zip
           ./godot-bin --headless --path godot --export-release "Linux" build/linux/Gullhaven.x86_64
+          ./godot-bin --headless --path godot --export-release "Web" build/web/index.html
           test -s godot/build/windows/Gullhaven.exe
           test -s godot/build/mac/Gullhaven.zip
           test -s godot/build/linux/Gullhaven.x86_64
+          test -s godot/build/web/index.html && test -s godot/build/web/index.pck && test -s godot/build/web/index.wasm
+          ls -la godot/build/web
+
+      - name: Play the web build in a browser (Chromium, software WebGL)
+        id: browser
+        run: |
+          (cd godot/build/web && python3 -m http.server 8060 > /dev/null 2>&1 &)
+          npm install --no-save --no-audit --no-fund playwright@1.49.1 > /dev/null
+          npx playwright install --with-deps chromium > /dev/null
+          if timeout 1500 node .github/scripts/web_check.mjs http://localhost:8060 web-check; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            echo "## The web build didn't pass the browser check" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: web-check
+          path: web-check/
 
       - name: Package
         run: |
@@ -113,13 +140,36 @@ jobs:
           cp ../BETA.md linux/README.md
           (cd windows && zip -qr "../Gullhaven-${NAME}-windows.zip" .)
           (cd linux && chmod +x Gullhaven.x86_64 && zip -qr "../Gullhaven-${NAME}-linux.zip" .)
-          mv mac/Gullhaven.zip "Gullhaven-${NAME}-mac.zip"
+          (cd web && zip -qr "../Gullhaven-${NAME}-web.zip" .)
+          cp mac/Gullhaven.zip "Gullhaven-${NAME}-mac.zip"
           ls -la
 
       - uses: actions/upload-artifact@v4
         with:
           name: gullhaven-builds
           path: godot/build/*.zip
+
+      # The site: Railway's "gullhaven-3d" service deploys whatever is on the godot-web branch.
+      # Only a build that passed every smoke check and plays in the browser goes there.
+      - name: Publish the web build to the godot-web branch (the live site)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/hd2d' && steps.smoke.outputs.failed == '0' && steps.browser.outputs.ok == 'true'
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          SITE="$RUNNER_TEMP/site"
+          mkdir -p "$SITE/ci"
+          cp -r godot/build/web/. "$SITE/"
+          cp godot/web_host/Dockerfile godot/web_host/Caddyfile "$SITE/"
+          cp web-check/*.png "$SITE/ci/" 2>/dev/null || true
+          echo "Built from ${GITHUB_SHA} on $(date -u +%Y-%m-%dT%H:%MZ)" > "$SITE/ci/BUILD.txt"
+          cd "$SITE"
+          git init -q -b godot-web
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Web build of ${GITHUB_SHA::7}"
+          git push -q -f "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" godot-web
+          echo "Published to the godot-web branch."
 
       - name: Attach to the release
         if: startsWith(github.ref, 'refs/tags/beta-') || github.event_name == 'release'
@@ -151,6 +201,7 @@ jobs:
           ./butler push "builds/Gullhaven-${NAME}-windows.zip" "${{ vars.ITCH_GAME }}:windows" --userversion "$NAME"
           ./butler push "builds/Gullhaven-${NAME}-mac.zip" "${{ vars.ITCH_GAME }}:mac" --userversion "$NAME"
           ./butler push "builds/Gullhaven-${NAME}-linux.zip" "${{ vars.ITCH_GAME }}:linux" --userversion "$NAME"
+          ./butler push "builds/Gullhaven-${NAME}-web.zip" "${{ vars.ITCH_GAME }}:html5" --userversion "$NAME"
 
   steam:
     needs: export

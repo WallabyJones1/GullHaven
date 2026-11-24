@@ -342,12 +342,14 @@ func _ready() -> void:
 
 	_first_time = save.visited.is_empty()
 	_update_area(true)
-	if "--smoke" in OS.get_cmdline_user_args():
-		# the build machine's tour of the game (see smoke_test.gd)
+	# the build machine's tour of the game (see smoke_test.gd); in a browser, a short version
+	# when the page is opened with ?ci-check
+	var web_check: bool = OS.has_feature("web") and str(JavaScriptBridge.eval("window.location.search", true)).contains("ci-check")
+	if "--smoke" in OS.get_cmdline_user_args() or web_check:
 		var smoke: Node = load("res://scripts/smoke_test.gd").new()
 		smoke.name = "SmokeTest"
 		add_child(smoke)
-		smoke.call("setup", self)
+		smoke.call("setup", self, web_check)
 	if Menus.fresh_start:
 		# New game from the menu: straight into making your fisher
 		Menus.fresh_start = false

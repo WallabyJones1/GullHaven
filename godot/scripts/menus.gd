@@ -202,8 +202,10 @@ func show_title() -> void:
 	_button("Controls", _controls_page.bind("title"))
 	_button("Watch the opening", _replay_opening)
 	_button("Credits", _credits_page)
-	_button("Quit", _quit)
+	if not OS.has_feature("web"):  # (a browser tab is closed, not quit)
+		_button("Quit", _quit)
 	_focus_first()
+	print("Gullhaven: title menu")
 
 
 func _start() -> void:
@@ -295,7 +297,7 @@ func _pause_page() -> void:
 	_box.add_child(grid)
 	for pair in [["Fisher", _fisher_page], ["Bag", _open_screen.bind("bag")], ["Logbook", _open_screen.bind("logbook")],
 			["Journal", _open_screen.bind("journal")], ["Map", _open_screen.bind("map_screen")], ["Controls", _controls_page],
-			["Settings", _settings_page.bind("pause")], ["Save and quit", _quit]]:
+			["Settings", _settings_page.bind("pause")], ["Save" if OS.has_feature("web") else "Save and quit", _quit]]:
 		var b := UI.button(str(pair[0]), 24)
 		b.alignment = HORIZONTAL_ALIGNMENT_CENTER
 		b.custom_minimum_size = Vector2(250.0, 0.0)
@@ -592,6 +594,11 @@ func _focus_first() -> void:
 
 func _quit() -> void:
 	main.save_now()
+	if OS.has_feature("web"):
+		# in a browser the game keeps your save in the browser's storage; just say so
+		close_pause()
+		main.hud.toast("Saved. Your game is kept in this browser.")
+		return
 	get_tree().quit()
 
 
