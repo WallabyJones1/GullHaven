@@ -12,11 +12,13 @@ signal frenzy_started(at: Vector3)
 signal frenzy_ended
 
 const COUNT := 8  # the water shader draws up to 8
-const AREA := Rect2(-34.0, 1.6, 64.0, 18.0)  # where shadows roam (x, z)
+const RANGE := 34.0  # shadows roam within this distance of you
+const LOST := 70.0  # shadows further than this drift back in near you
 const FRENZY_TIME := 60.0
 const FRENZY_RADIUS := 3.5
 
 var harbour: Node3D
+var focus: Node3D  # the player: shadows stay around them
 var roller: Callable  # (pos: Vector2) -> size class; set by Fishing
 var fish: Array[Dictionary] = []
 var lure := Vector2.ZERO
@@ -30,6 +32,7 @@ var _taker := -1  # index of the fish going for the bait
 var _wait := 0.0  # time until a fish takes an interest
 var _rng := RandomNumberGenerator.new()
 var _t := 0.0
+var _lost_t := 0.0
 
 
 func setup(h: Node3D) -> void:
@@ -134,6 +137,16 @@ func _process(delta: float) -> void:
 		_wait -= delta
 		if _wait <= 0.0:
 			_choose_taker()
+	_lost_t -= delta
+	if _lost_t <= 0.0:
+		_lost_t = 0.5
+		var here := _here()
+		for i in fish.size():
+			var fp: Vector2 = fish[i].pos
+			if fish[i].mode == "wander" and fp.distance_to(here) > LOST:
+				var p := _random_point()
+				if p.distance_to(here) < LOST:
+					fish[i] = _new_fish(p)
 	for f in fish:
 		_step(f, delta)
 	_push_to_shader()
@@ -157,7 +170,11 @@ func _update_frenzy(delta: float) -> void:
 	frenzy_on = true
 	_frenzy_t = FRENZY_TIME
 	frenzy_at = _random_point()
-	_bubbles.global_position = Vector3(frenzy_at.x, harbour.sea_level + 0.05, frenzy_at.y)
+	if not _swimmable(frenzy_at):
+		frenzy_on = false
+		_frenzy_wait = 30.0
+		return
+	_bubbles.global_position = Vector3(frenzy_at.x, harbour.water_level_at(frenzy_at.x, frenzy_at.y) + 0.05, frenzy_at.y)
 	_bubbles.emitting = true
 	# Pull the four nearest free shadows in, and make them bigger fish.
 	var order: Array = []
@@ -320,12 +337,22 @@ func _swimmable(p: Vector2) -> bool:
 	return harbour.water_depth(p.x, p.y) > 0.45
 
 
+func _here() -> Vector2:
+	if focus:
+		return Vector2(focus.global_position.x, focus.global_position.z)
+	return Vector2(476.0, 576.0)
+
+
 func _random_point() -> Vector2:
-	for i in 40:
-		var p := Vector2(_rng.randf_range(AREA.position.x, AREA.end.x), _rng.randf_range(AREA.position.y, AREA.end.y))
+	var here := _here()
+	for i in 50:
+		var a := _rng.randf() * TAU
+		var r := sqrt(_rng.randf()) * RANGE + 3.0
+		var p := here + Vector2(cos(a), sin(a)) * r
 		if _swimmable(p) and _swimmable(p + Vector2(1.0, 0.0)) and _swimmable(p - Vector2(1.0, 0.0)):
 			return p
-	return Vector2(-6.0, 6.0)
+	# nowhere wet nearby: park it out of sight; it'll come back when you reach the water
+	return here + Vector2(0.0, 500.0)
 
 
 func _far_point() -> Vector2:

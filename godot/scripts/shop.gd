@@ -1,28 +1,54 @@
 extends CanvasLayer
-## Hale's Tackle: rods, reels, lines and bait, at the web game's prices.
-## Up/down picks, E (or Enter, Space, pad A, a click) buys, left/right changes tab,
-## Q or Esc leaves. The game pauses while you browse.
+## The tackle and bait shops: Hale's Tackle in Gullhaven sells rods, reels, lines and bait;
+## the general store and the island tea houses sell the baits their waters call for.
+## All at the web game's prices. Up/down picks, Space (or Enter, pad A, a click) buys,
+## left/right changes tab, Esc leaves. The game pauses while you browse.
 
 const UI := preload("res://scripts/ui_kit.gd")
 const SaveGame := preload("res://scripts/save_game.gd")
 
-const TABS := ["Rods", "Reels", "Lines", "Bait"]
+const TAB_NAMES := {"rod": "Rods", "reel": "Reels", "line": "Lines", "bait": "Bait"}
 const KINDS := ["rod", "reel", "line"]
-# Baits that make sense in the harbour and on the beach.
-const BAIT_STOCK := ["worm", "prawn", "pilchard", "weedbait", "squidjig", "metal", "livebait", "glow"]
-const GREETINGS := [
-	"Line's cheap, fish aren't. What'll it be?",
-	"Back again? The fish must be biting.",
-	"Mind the hooks. What can I get you?",
-	"Worms are fresh today. Mostly.",
-]
+# What each kind of shop sells: its tabs and the baits its waters call for.
+const STOCK := {
+	"tackle": {"tabs": ["rod", "reel", "line", "bait"], "bait": ["worm", "prawn", "pilchard", "weedbait", "squidjig", "metal", "livebait", "glow"]},
+	"general": {"tabs": ["line", "bait"], "bait": ["worm", "prawn", "weedbait", "crabbait"]},
+	"baittea": {"tabs": ["bait"], "bait": ["worm", "prawn", "pilchard", "squid", "crabbait", "livebait"]},
+	"kelptea": {"tabs": ["bait"], "bait": ["squid", "crabbait", "squidjig", "popper", "glow"]},
+}
+const GREETINGS := {
+	"tackle": [
+		"Line's cheap, fish aren't. What'll it be?",
+		"Back again? The fish must be biting.",
+		"Mind the hooks. What can I get you?",
+		"Worms are fresh today. Mostly.",
+	],
+	"general": [
+		"A bit of everything, and fresh worms by the door.",
+		"River fish like a worm. Bream like a prawn.",
+	],
+	"baittea": [
+		"Tea's on the pot and the prawns are lively. Take your pick, love.",
+		"The shallows round here are thick with whiting. Worms, I'd say.",
+	],
+	"kelptea": [
+		"Squid in the kelp take a jig. Patience takes tea.",
+		"The deep things like a glow. Pricey, but they work.",
+	],
+}
 
 var sea: Node
 var save: Dictionary
 var audio: Node
 var hud: CanvasLayer
 var is_open := false
+var kind := "tackle"
+var keeper := "Hale"
+var _tabs_here: Array = ["rod", "reel", "line", "bait"]
+var _bait_here: Array = []
 var _tab := 0
+var _title: Label
+var _tab_row: HBoxContainer
 var _shells: Label
 var _greeting: Label
 var _message: Label
@@ -50,7 +76,8 @@ func setup(s: Node, sv: Dictionary, a: Node, h: CanvasLayer) -> void:
 	panel.add_child(col)
 
 	var top := HBoxContainer.new()
-	top.add_child(UI.label("Hale's Tackle", 34, UI.GOLD, true))
+	_title = UI.label("Hale's Tackle", 34, UI.GOLD, true)
+	top.add_child(_title)
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(spacer)
@@ -61,17 +88,9 @@ func setup(s: Node, sv: Dictionary, a: Node, h: CanvasLayer) -> void:
 	_greeting.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	col.add_child(_greeting)
 
-	var tabs := HBoxContainer.new()
-	tabs.add_theme_constant_override("separation", 8)
-	for i in TABS.size():
-		var t := UI.button(TABS[i], 22)
-		t.alignment = HORIZONTAL_ALIGNMENT_CENTER
-		t.custom_minimum_size = Vector2(120.0, 0.0)
-		t.focus_mode = Control.FOCUS_NONE
-		t.pressed.connect(_show_tab.bind(i))
-		tabs.add_child(t)
-		_tabs.append(t)
-	col.add_child(tabs)
+	_tab_row = HBoxContainer.new()
+	_tab_row.add_theme_constant_override("separation", 8)
+	col.add_child(_tab_row)
 
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size = Vector2(0.0, 330.0)
@@ -88,13 +107,40 @@ func setup(s: Node, sv: Dictionary, a: Node, h: CanvasLayer) -> void:
 	col.add_child(UI.label("Up/down choose   Space buy   Left/right change tab   Esc leave", 18, UI.DIM))
 
 
-func open() -> void:
+## Open a shop: who's behind the counter, the sign over the door, and what kind of shop.
+func open(who := "Hale", title := "Hale's Tackle", shop_kind := "tackle") -> void:
+	if not STOCK.has(shop_kind):
+		shop_kind = "tackle"
+	if shop_kind != kind:
+		_tab = 0
+	kind = shop_kind
+	keeper = who
+	_tabs_here = STOCK[kind].tabs
+	_bait_here = STOCK[kind].bait
+	_title.text = title
+	_make_tabs()
 	is_open = true
 	visible = true
 	get_tree().paused = true
-	_greeting.text = "Hale: \"%s\"" % GREETINGS[randi() % GREETINGS.size()]
+	var lines: Array = GREETINGS.get(kind, GREETINGS.tackle)
+	_greeting.text = "%s: \"%s\"" % [keeper, lines[randi() % lines.size()]]
 	_message.text = ""
-	_show_tab(_tab)
+	_show_tab(mini(_tab, _tabs_here.size() - 1))
+
+
+func _make_tabs() -> void:
+	for t in _tabs:
+		t.queue_free()
+	_tabs.clear()
+	for i in _tabs_here.size():
+		var t := UI.button(str(TAB_NAMES[_tabs_here[i]]), 22)
+		t.alignment = HORIZONTAL_ALIGNMENT_CENTER
+		t.custom_minimum_size = Vector2(120.0, 0.0)
+		t.focus_mode = Control.FOCUS_NONE
+		t.pressed.connect(_show_tab.bind(i))
+		_tab_row.add_child(t)
+		_tabs.append(t)
+	_tab_row.visible = _tabs_here.size() > 1
 
 
 func close() -> void:
@@ -113,10 +159,10 @@ func _input(event: InputEvent) -> void:
 		close()
 	elif event.is_action_pressed("move_left"):
 		get_viewport().set_input_as_handled()
-		_show_tab((_tab + TABS.size() - 1) % TABS.size())
+		_show_tab((_tab + _tabs_here.size() - 1) % _tabs_here.size())
 	elif event.is_action_pressed("move_right"):
 		get_viewport().set_input_as_handled()
-		_show_tab((_tab + 1) % TABS.size())
+		_show_tab((_tab + 1) % _tabs_here.size())
 
 
 func _show_tab(i: int, focus_row := 0) -> void:
@@ -127,10 +173,11 @@ func _show_tab(i: int, focus_row := 0) -> void:
 	for c in _list.get_children():
 		c.queue_free()
 	var rows: Array[Button] = []
-	if i < 3:
-		rows = _gear_rows(KINDS[i])
-	else:
+	var what := str(_tabs_here[i])
+	if what == "bait":
 		rows = _bait_rows()
+	else:
+		rows = _gear_rows(what)
 	var focusable: Array[Button] = []
 	for b in rows:
 		_list.add_child(b)
@@ -141,10 +188,10 @@ func _show_tab(i: int, focus_row := 0) -> void:
 	audio.play("click", -8.0)
 
 
-func _gear_rows(kind: String) -> Array[Button]:
+func _gear_rows(gear_kind: String) -> Array[Button]:
 	var out: Array[Button] = []
-	var list: Array = sea.gear.get(kind, [])
-	var cur := int(save.gear.get(kind, 0))
+	var list: Array = sea.gear.get(gear_kind, [])
+	var cur := int(save.gear.get(gear_kind, 0))
 	for i in list.size():
 		var g: Dictionary = list[i]
 		var b := UI.button("", 20)
@@ -155,20 +202,20 @@ func _gear_rows(kind: String) -> Array[Button]:
 			status = "Owned"
 		else:
 			status = "%d Shells" % int(g.price)
-		b.text = "%s   %s\n    %s" % [g.n, status, _describe(kind, g, i)]
+		b.text = "%s   %s\n    %s" % [g.n, status, _describe(gear_kind, g, i)]
 		if i <= cur:
 			b.disabled = true
 			b.focus_mode = Control.FOCUS_NONE
 		else:
-			b.pressed.connect(_buy_gear.bind(kind, i))
+			b.pressed.connect(_buy_gear.bind(gear_kind, i))
 			if int(save.shells) < int(g.price):
 				b.add_theme_color_override("font_color", UI.DIM)
 		out.append(b)
 	return out
 
 
-func _describe(kind: String, g: Dictionary, i: int) -> String:
-	match kind:
+func _describe(gear_kind: String, g: Dictionary, i: int) -> String:
+	match gear_kind:
 		"rod":
 			var text := "Casts %d m, fish pull %d%% less" % [int(4.0 + 10.0 * float(g.cast)), int(round((1.0 - 1.0 / pow(float(g.power), 0.6)) * 100.0))]
 			if i >= 2:
@@ -187,7 +234,7 @@ func _bait_rows() -> Array[Button]:
 	dough.disabled = true
 	dough.focus_mode = Control.FOCUS_NONE
 	out.append(dough)
-	for k in BAIT_STOCK:
+	for k in _bait_here:
 		if not sea.bait.has(k):
 			continue
 		var b: Dictionary = sea.bait[k]
@@ -209,14 +256,14 @@ func _bait_rows() -> Array[Button]:
 	return out
 
 
-func _buy_gear(kind: String, i: int) -> void:
-	var g: Dictionary = sea.gear[kind][i]
+func _buy_gear(gear_kind: String, i: int) -> void:
+	var g: Dictionary = sea.gear[gear_kind][i]
 	var price := int(g.price)
 	if int(save.shells) < price:
 		_fail("You need %d more Shells for the %s." % [price - int(save.shells), g.n])
 		return
 	save.shells = int(save.shells) - price
-	save.gear[kind] = i
+	save.gear[gear_kind] = i
 	_done("Bought the %s!" % g.n)
 	_show_tab(_tab, 0)
 
@@ -231,7 +278,7 @@ func _buy_bait(k: String) -> void:
 	save.bait[k] = int(save.bait.get(k, 0)) + (1 if b.has("lure") else int(b.pack))
 	save.bait_sel = k
 	_done("Bought %s. It's on your hook now (R switches bait)." % str(b.n).to_lower())
-	var row := BAIT_STOCK.find(k)
+	var row := _bait_here.find(k)
 	_show_tab(_tab, row)
 
 

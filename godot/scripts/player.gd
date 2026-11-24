@@ -12,6 +12,8 @@ const WADE := 0.35  # how deep you can walk into the water
 const COLS := 5  # stand, walk A, walk B, cast, cheer
 const WALK := [0, 1, 0, 2]
 
+signal gate_blocked(text: String)  # walked into somewhere locked (with why)
+
 var facing := Vector3(0.0, 0.0, -1.0)  # world direction you last walked or turned to
 var can_move := true
 var pose := ""  # "" walks and stands; "cast" or "cheer" hold a pose
@@ -25,6 +27,7 @@ var _moving := false
 var _held: Sprite3D
 var _held_t := 0.0
 var _last_safe := Vector3.ZERO
+var _gate_t := 0.0
 
 
 func _ready() -> void:
@@ -50,6 +53,7 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	_gate_t = maxf(0.0, _gate_t - delta)
 	var input := Vector2.ZERO
 	if can_move:
 		input = Input.get_vector("move_left", "move_right", "move_up", "move_down")
@@ -80,14 +84,14 @@ func _physics_process(delta: float) -> void:
 	else:
 		velocity.y -= GRAVITY * delta
 	move_and_slide()
-	var floor_y: float = harbour.sea_level - 3.0 if harbour else -1.0
+	var floor_y: float = harbour.height_at(global_position.x, global_position.z) - 4.0 if harbour else -1.0
 	if global_position.y < floor_y:
 		global_position = _last_safe  # never end up out at sea
 		velocity = Vector3.ZERO
 	var step: int = WALK[int(_walk_t) % 4] if _moving else 0
 	if step != 0 and step != _last_step and audio and harbour:
 		var surface: String = harbour.surface_at(global_position.x, global_position.z)
-		if global_position.y < float(harbour.sea_level) + 0.05:
+		if global_position.y < float(harbour.water_level_at(global_position.x, global_position.z)) + 0.05:
 			surface = "sand"
 		audio.play("step_" + surface, -10.0, 1.0, 0.12)
 	_last_step = step
@@ -149,7 +153,10 @@ func _keep_on_land(vel: Vector3) -> Vector3:
 
 ## Is there ground here that's dry or shallow enough to wade?
 func _ground_at(p: Vector3) -> bool:
-	if harbour and harbour.has_method("walkable") and not harbour.walkable(p.x, p.z):
+	if harbour and not harbour.walkable(p.x, p.z):
+		if _gate_t <= 0.0:
+			_gate_t = 4.0
+			gate_blocked.emit(str(harbour.gate_text(p.x, p.z)))
 		return false
 	var space := get_world_3d().direct_space_state
 	var q := PhysicsRayQueryParameters3D.create(p + Vector3(0.0, 2.0, 0.0), p + Vector3(0.0, -4.0, 0.0), 1)
@@ -157,5 +164,5 @@ func _ground_at(p: Vector3) -> bool:
 	if hit.is_empty():
 		return false
 	var at: Vector3 = hit.position
-	var water: float = harbour.sea_level if harbour else 0.0
+	var water: float = harbour.water_level_at(p.x, p.z) if harbour else 0.0
 	return at.y > water - WADE

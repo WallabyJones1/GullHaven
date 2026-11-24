@@ -4,7 +4,7 @@ extends Node
 ##     sets how far you can cast. The bait on your hook (R to change) shifts what bites.
 ##   Wait: a shadow comes over and nibbles. Striking early spooks it.
 ##   Bite: the "!" gives you 0.9 s to strike. What's on the line is rolled from the web
-##     game's rules: where you cast (harbour or Sandy Shallows), the time, tide, weather,
+##     game's rules: which water you cast into, the time, tide, weather,
 ##     season, your bait, your rod, and the size of the shadow that bit.
 ##   Fight: hold to reel. Every fish has a style (runner, jumper, diver, sulker...) that
 ##     decides how it fights. Steer against runs, ease off for dives, and let go while it
@@ -271,7 +271,7 @@ func _start_cast() -> void:
 
 func _casting(delta: float) -> void:
 	_cast_t = minf(_cast_t + delta / 0.55, 1.0)
-	var water_y: float = harbour.sea_level
+	var water_y: float = harbour.water_level_at(_cast_to.x, _cast_to.z)
 	var p := _cast_from.lerp(Vector3(_cast_to.x, water_y, _cast_to.z), _cast_t)
 	p.y += sin(_cast_t * PI) * (1.2 + power * 2.0)
 	bobber.global_position = p
@@ -281,7 +281,10 @@ func _casting(delta: float) -> void:
 		zone = harbour.zone_at(_cast_to.x, _cast_to.z)
 		_use_bait()
 		school.lure_landed(Vector2(_cast_to.x, _cast_to.z))
-		var where := "the Sandy Shallows" if zone == "shallows" else "the harbour"
+		var info: Dictionary = sea.zones.get(zone, {})
+		var where := str(info.get("n", "the water"))
+		if zone == "harbour":
+			where = "the harbour"
 		hud.set_prompt("Fishing %s...   Esc to reel in" % where)
 		_set_state(State.WAITING)
 
@@ -298,7 +301,8 @@ func _waiting(delta: float) -> void:
 
 func _biting(_delta: float) -> void:
 	var p := bobber.global_position
-	p.y = harbour.sea_level - 0.14 + sin(_bob_t * 30.0) * 0.03  # dragged under, thrashing
+	var level: float = harbour.water_level_at(p.x, p.z)
+	p.y = level - 0.14 + sin(_bob_t * 30.0) * 0.03  # dragged under, thrashing
 	bobber.global_position = p
 	alert.global_position = player.global_position + Vector3(0.0, 2.35, 0.0)
 	alert.visible = true
@@ -494,7 +498,7 @@ func _move_bobber(delta: float) -> void:
 	var b := bobber.global_position.lerp(Vector3(want.x, 0.0, want.z), minf(delta * 2.0, 1.0))
 	if not harbour.is_water(b.x, b.z):
 		b = bobber.global_position
-	var water_y: float = harbour.sea_level
+	var water_y: float = harbour.water_level_at(b.x, b.z)
 	b.y = water_y - 0.06 + sin(_bob_t * 18.0) * 0.03 - (0.1 if phase == "dive" else 0.0)
 	bobber.global_position = b
 	school.move_lure(Vector2(b.x, b.z))
@@ -927,7 +931,7 @@ func _update_gear() -> void:
 func _float_bobber(delta: float) -> void:
 	_dip = move_toward(_dip, 0.0, delta * 0.4)
 	var p := bobber.global_position
-	var water_y: float = harbour.sea_level
+	var water_y: float = harbour.water_level_at(p.x, p.z)
 	p.y = water_y + sin(_bob_t * 2.6) * 0.025 - _dip
 	bobber.global_position = p
 
@@ -956,7 +960,7 @@ func _float_text(text: String, at: Vector3) -> void:
 
 
 func _splash(at: Vector3) -> void:
-	var water_y: float = harbour.sea_level
+	var water_y: float = harbour.water_level_at(at.x, at.z)
 	splash.global_position = Vector3(at.x, water_y + 0.02, at.z)
 	splash.restart()
 

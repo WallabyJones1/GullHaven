@@ -1,11 +1,13 @@
 extends Node3D
-## Gullhaven HD-2D: a harbour and a beach to fish, townsfolk, a tackle shop, weather,
-## tides and feeding frenzies, all on the web game's rules and sounds.
+## Gullhaven HD-2D: a big coast to explore, from the harbour town of Gullhaven up the
+## river to Willowford and Mirrorlake and out across the bay to the islands. Fish every
+## kind of water, meet the townsfolk, and unlock the rest of the map as you go. Weather,
+## tides and feeding frenzies all run on the web game's rules and sounds.
 ## Everything is assembled here in code so placeholder shapes can be swapped for
 ## Blender models (see res://models/README.md) without touching the scene file.
 
 const InputSetup := preload("res://scripts/input_setup.gd")
-const Harbour := preload("res://scripts/harbour.gd")
+const World := preload("res://scripts/world.gd")
 const DayNight := preload("res://scripts/day_night.gd")
 const CameraRig := preload("res://scripts/camera_rig.gd")
 const Player := preload("res://scripts/player.gd")
@@ -24,7 +26,7 @@ var world_env: WorldEnvironment
 var sky_mat: ProceduralSkyMaterial
 var sun: DirectionalLight3D
 var moon: DirectionalLight3D
-var harbour: Node3D
+var harbour: Node3D  # the world (other scripts still call it harbour)
 var day_night: Node
 var player: CharacterBody3D
 var cam: Camera3D
@@ -38,6 +40,8 @@ var town: Node
 var logbook: CanvasLayer
 var save: Dictionary
 var quality_high := true
+var _area := ""
+var _area_t := 0.0
 
 
 func _ready() -> void:
@@ -52,9 +56,12 @@ func _ready() -> void:
 	add_child(audio)
 	_build_environment()
 
-	harbour = Harbour.new()
-	harbour.name = "Harbour"
+	harbour = World.new()
+	harbour.name = "World"
 	add_child(harbour)
+	harbour.load_world()
+	harbour.permits = save.permits
+	harbour.hut_tier = int(save.hut_tier)
 	harbour.build()
 
 	player = Player.new()
@@ -62,11 +69,14 @@ func _ready() -> void:
 	player.harbour = harbour
 	player.audio = audio
 	add_child(player)
-	player.global_position = harbour.spawn_point
+	player.global_position = _start_point()
+	harbour.focus = player
+	player.gate_blocked.connect(_on_gate_blocked)
 
 	cam = CameraRig.new()
 	cam.name = "Camera"
 	add_child(cam)
+	cam.terrain = harbour
 	cam.setup(player, world_env.camera_attributes)
 	player.cam = cam
 
@@ -74,6 +84,7 @@ func _ready() -> void:
 	school.name = "FishShadows"
 	add_child(school)
 	school.setup(harbour)
+	school.focus = player
 
 	hud = Hud.new()
 	hud.name = "HUD"
@@ -105,12 +116,19 @@ func _ready() -> void:
 	add_child(fishing)
 	fishing.setup(player, school, hud, cam, harbour, save, sea, audio, town)
 
-	hud.toast("Welcome to Gullhaven! Walk with WASD, turn the camera with Q and E. Hold Space to cast.")
-	hud.toast("Hale's stall on the quay sells bait and better gear. Townsfolk have requests.")
+	if save.visited.is_empty():
+		hud.toast("Welcome to Gullhaven! Walk with WASD, turn the camera with Q and E. Hold Space to cast.")
+		hud.toast("Hale's Tackle on the quay sells bait and better gear. Townsfolk have requests.")
+		hud.toast("Follow the coast road north to the river. The islands across the bay will need a boat.")
+	_update_area(true)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	hud.set_clock(day_night.hour)
+	_area_t -= delta
+	if _area_t <= 0.0:
+		_area_t = 0.5
+		_update_area(false)
 	if Input.is_action_just_pressed("time_skip"):
 		sea.skip_hours(1.0)
 		save.clock_offset = sea.offset
@@ -134,7 +152,78 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST or what == NOTIFICATION_APPLICATION_PAUSED:
 		if sea:
 			save.clock_offset = sea.offset
+		if player and player.is_on_floor():
+			var p := player.global_position
+			save.pos = [p.x, p.y, p.z]
 		SaveGame.write(save)
+
+
+func _on_gate_blocked(text: String) -> void:
+	if text != "":
+		hud.toast(text)
+		audio.play("error", -8.0)
+
+
+## Where you left off (if it's still somewhere you can stand), or the town square.
+func _start_point() -> Vector3:
+	var pos: Array = save.get("pos", [])
+	if pos.size() == 3:
+		var x := float(pos[0])
+		var z := float(pos[2])
+		var ground: float = harbour.height_at(x, z)
+		if harbour.walkable(x, z) and ground > float(harbour.water_level_at(x, z)) - 0.3:
+			return Vector3(x, maxf(float(pos[1]), ground) + 0.2, z)
+	return harbour.spawn_point
+
+
+## Keep track of where you are, and greet each new place with a banner.
+func _update_area(first: bool) -> void:
+	var p := player.global_position
+	var place: String = harbour.area_name(p.x, p.z)
+	var water := _water_near(p)
+	var corner := place
+	if water != "":
+		corner = water if place == "" else "%s, %s" % [place, water]
+	if place == _area:
+		hud.show_area(corner, "", false)
+		return
+	_area = place
+	if place == "":
+		hud.show_area(corner, "", false)
+		return
+	var visited: Dictionary = save.visited
+	var subtitle := water
+	if not visited.has(place):
+		visited[place] = true
+		subtitle = "Discovered!" if not first else water
+		if not first:
+			audio.play("fanfare1", -8.0)
+		SaveGame.write(save)
+	hud.show_area(place, subtitle, true)
+	hud.area_label.text = corner
+
+
+## The fishing ground you'd cast into from here, if any.
+func _water_near(p: Vector3) -> String:
+	var counts := {}
+	for i in 12:
+		var a := TAU * float(i) / 12.0
+		for r in [3.0, 8.0]:
+			var x: float = p.x + cos(a) * r
+			var z: float = p.z + sin(a) * r
+			var zone: String = harbour.zone_at(x, z)
+			if zone != "" and harbour.is_water(x, z):
+				counts[zone] = int(counts.get(zone, 0)) + 1
+	var best := ""
+	var most := 0
+	for zone in counts:
+		if int(counts[zone]) > most:
+			most = int(counts[zone])
+			best = zone
+	if best == "":
+		return ""
+	var z: Dictionary = sea.zones.get(best, {})
+	return str(z.get("n", best))
 
 
 # --- lighting and the HD-2D look -------------------------------------------------

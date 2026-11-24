@@ -2,7 +2,8 @@ extends Camera3D
 ## The diorama camera: high and a little telephoto, following the fisher smoothly. You can
 ## turn it all the way round (Q / E, a gamepad's bumpers or right stick, or drag with the
 ## right mouse button) and zoom (mouse wheel, - / =, right stick). It keeps the tilt-shift
-## focus on the fisher and leans in toward the line during a fight.
+## focus on the fisher and leans in toward the line during a fight, and rises over hills
+## rather than burying itself in them.
 
 const PITCH := deg_to_rad(36.0)
 const LOOK_HEIGHT := 0.8
@@ -12,6 +13,7 @@ const TURN_SPEED := 2.2  # radians per second when held
 const DRAG_SPEED := 0.006  # radians per pixel of right-mouse drag
 
 var target: Node3D
+var terrain: Node3D  # the world, for keeping the camera above the ground
 var yaw := 0.0  # 0 looks north (toward -Z)
 var distance := 16.0
 var indoor := false  # tighter, lower framing inside buildings
@@ -25,6 +27,7 @@ var _zoom_goal := 1.0
 var _pos := Vector3.ZERO
 var _shake := 0.0
 var _dragging := false
+var _lift := 0.0
 
 
 func setup(follow: Node3D, attr: CameraAttributes) -> void:
@@ -110,7 +113,16 @@ func _place(delta: float) -> void:
 	var back := -ground_forward()
 	var offset := back * cos(pitch) * d + Vector3.UP * sin(pitch) * d
 	var look := _pos + Vector3(0.0, LOOK_HEIGHT, 0.0)
-	global_position = look + offset + jitter
+	# Rise over any hill between the camera and the fisher (outdoors).
+	var need := 0.0
+	if terrain and not indoor:
+		for t in [0.35, 0.65, 1.0]:
+			var p: Vector3 = look + offset * t
+			var ground: float = terrain.height_at(p.x, p.z) + 1.4
+			need = maxf(need, (ground - p.y) / t)
+	var rise := 1.0 if delta <= 0.0 else 1.0 - exp(-delta * (10.0 if need > _lift else 2.0))
+	_lift = lerpf(_lift, need, rise)
+	global_position = look + offset + Vector3.UP * _lift + jitter
 	look_at(look + jitter, Vector3.UP)
 	if _attrs:
 		_attrs.dof_blur_far_distance = d + 9.0 + d * 0.3
