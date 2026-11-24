@@ -1,0 +1,5 @@
+# Godot 4 cache and import data (regenerated when the project opens)
+.godot/
+*.translation
+export_presets.cfg.bak
+builds/

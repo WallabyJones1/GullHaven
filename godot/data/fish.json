@@ -1,0 +1,3445 @@
+{
+ "zones": {
+  "harbour": {
+   "n": "Harbour and Piers",
+   "short": "Harbour",
+   "depth": 2,
+   "need": 0,
+   "col": "#4f9fd0"
+  },
+  "shallows": {
+   "n": "Sandy Shallows",
+   "short": "Shallows",
+   "depth": 2,
+   "need": 0,
+   "col": "#7fd0d8"
+  },
+  "estuary": {
+   "n": "Mangrove Estuary",
+   "short": "Estuary",
+   "depth": 1,
+   "need": 1,
+   "col": "#6a9a7a"
+  },
+  "reef": {
+   "n": "Coral Reef",
+   "short": "Reef",
+   "depth": 4,
+   "need": 2,
+   "col": "#3fc0c8"
+  },
+  "kelp": {
+   "n": "Kelp Forest",
+   "short": "Kelp",
+   "depth": 7,
+   "need": 2,
+   "col": "#3f8a6a"
+  },
+  "wreck": {
+   "n": "Wreck Graveyard",
+   "short": "Wrecks",
+   "depth": 12,
+   "need": 3,
+   "col": "#4a6a8a"
+  },
+  "blue": {
+   "n": "Open Blue",
+   "short": "Open Blue",
+   "depth": 30,
+   "need": 4,
+   "col": "#2f5fb0"
+  },
+  "deep": {
+   "n": "The Deep",
+   "short": "The Deep",
+   "depth": 80,
+   "need": 5,
+   "col": "#26265a"
+  },
+  "lake": {
+   "n": "Mirrorlake",
+   "short": "Mirrorlake",
+   "depth": 3,
+   "need": 0,
+   "col": "#5cb8a8",
+   "fresh": 1
+  },
+  "seagrass": {
+   "n": "Seagrass Meadows",
+   "short": "Seagrass",
+   "depth": 2,
+   "need": 1,
+   "col": "#6aa87a"
+  },
+  "lagoon": {
+   "n": "Turquoise Lagoon",
+   "short": "Lagoon",
+   "depth": 2,
+   "need": 2,
+   "col": "#5ad8d0"
+  },
+  "beach": {
+   "n": "Beach",
+   "short": "Beach"
+  },
+  "rocks": {
+   "n": "Rock platform",
+   "short": "Rocks"
+  },
+  "any": {
+   "n": "Anywhere",
+   "short": "Anywhere"
+  },
+  "unknown": {
+   "n": "Unknown",
+   "short": "?"
+  }
+ },
+ "order": [
+  "harbour",
+  "shallows",
+  "estuary",
+  "reef",
+  "kelp",
+  "wreck",
+  "blue",
+  "deep",
+  "lake",
+  "seagrass",
+  "lagoon"
+ ],
+ "rarity": [
+  "Common",
+  "Uncommon",
+  "Rare",
+  "Legendary"
+ ],
+ "fish": [
+  {
+   "id": "yellowtail_scad",
+   "n": "Yellowtail Scad",
+   "cat": "fish",
+   "z": "harbour",
+   "r": 0,
+   "c": "any",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    14,
+    30
+   ],
+   "price": 12,
+   "what": ""
+  },
+  {
+   "id": "silver_mullet",
+   "n": "Silver Mullet",
+   "cat": "fish",
+   "z": "harbour",
+   "r": 0,
+   "c": "day",
+   "cp": {
+    "time": "day",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    20,
+    45
+   ],
+   "price": 12,
+   "what": ""
+  },
+  {
+   "id": "garfish",
+   "n": "Garfish",
+   "cat": "fish",
+   "z": "harbour",
+   "r": 0,
+   "c": "day calm",
+   "cp": {
+    "time": "day",
+    "tide": null,
+    "sky": "calm",
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    20,
+    40
+   ],
+   "price": 12,
+   "what": ""
+  },
+  {
+   "id": "leatherjacket",
+   "n": "Leatherjacket",
+   "cat": "fish",
+   "z": "harbour",
+   "r": 0,
+   "c": "any",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    15,
+    35
+   ],
+   "price": 12,
+   "what": ""
+  },
+  {
+   "id": "tarwhine",
+   "n": "Tarwhine",
+   "cat": "fish",
+   "z": "harbour",
+   "r": 0,
+   "c": "day",
+   "cp": {
+    "time": "day",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    18,
+    35
+   ],
+   "price": 12,
+   "what": ""
+  },
+  {
+   "id": "yellowfin_bream",
+   "n": "Yellowfin Bream",
+   "cat": "fish",
+   "z": "harbour",
+   "r": 1,
+   "c": "dawn/dusk rising",
+   "cp": {
+    "time": "dawn/dusk",
+    "tide": "rising",
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    20,
+    45
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "luderick",
+   "n": "Luderick",
+   "cat": "fish",
+   "z": "harbour",
+   "r": 1,
+   "c": "day high weedbait",
+   "cp": {
+    "time": "day",
+    "tide": "high",
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": "weedbait",
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    25,
+    50
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "old_wife",
+   "n": "Old Wife",
+   "cat": "fish",
+   "z": "harbour",
+   "r": 1,
+   "c": "night",
+   "cp": {
+    "time": "night",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    20,
+    40
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "southern_calamari",
+   "n": "Southern Calamari",
+   "cat": "fish",
+   "z": "harbour",
+   "r": 1,
+   "c": "dusk/night squidjig",
+   "cp": {
+    "time": "dusk/night",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": "squidjig",
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    20,
+    45
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "fiddler_ray",
+   "n": "Fiddler Ray",
+   "cat": "fish",
+   "z": "harbour",
+   "r": 2,
+   "c": "night low",
+   "cp": {
+    "time": "night",
+    "tide": "low",
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    60,
+    120
+   ],
+   "price": 110,
+   "what": ""
+  },
+  {
+   "id": "port_jackson_shark",
+   "n": "Port Jackson Shark",
+   "cat": "fish",
+   "z": "harbour",
+   "r": 2,
+   "c": "night winter",
+   "cp": {
+    "time": "night",
+    "tide": null,
+    "sky": null,
+    "season": "winter",
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    80,
+    165
+   ],
+   "price": 110,
+   "what": ""
+  },
+  {
+   "id": "pot_bellied_seahorse",
+   "n": "Pot-bellied Seahorse",
+   "cat": "fish",
+   "z": "harbour",
+   "r": 3,
+   "c": "day calm summer release",
+   "cp": {
+    "time": "day",
+    "tide": null,
+    "sky": "calm",
+    "season": "summer",
+    "moon": null,
+    "method": [
+     "release"
+    ],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    15,
+    35
+   ],
+   "price": 380,
+   "what": ""
+  },
+  {
+   "id": "sand_whiting",
+   "n": "Sand Whiting",
+   "cat": "fish",
+   "z": "shallows",
+   "r": 0,
+   "c": "day rising",
+   "cp": {
+    "time": "day",
+    "tide": "rising",
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    20,
+    45
+   ],
+   "price": 12,
+   "what": ""
+  },
+  {
+   "id": "swallowtail_dart",
+   "n": "Swallowtail Dart",
+   "cat": "fish",
+   "z": "shallows",
+   "r": 0,
+   "c": "day",
+   "cp": {
+    "time": "day",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    25,
+    50
+   ],
+   "price": 12,
+   "what": ""
+  },
+  {
+   "id": "tailor",
+   "n": "Tailor",
+   "cat": "fish",
+   "z": "shallows",
+   "r": 0,
+   "c": "dawn/dusk",
+   "cp": {
+    "time": "dawn/dusk",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    30,
+    70
+   ],
+   "price": 12,
+   "what": ""
+  },
+  {
+   "id": "australian_salmon",
+   "n": "Australian Salmon",
+   "cat": "fish",
+   "z": "shallows",
+   "r": 1,
+   "c": "autumn windy",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": "windy",
+    "season": "autumn",
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    40,
+    80
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "dusky_flathead",
+   "n": "Dusky Flathead",
+   "cat": "fish",
+   "z": "shallows",
+   "r": 1,
+   "c": "day low",
+   "cp": {
+    "time": "day",
+    "tide": "low",
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    35,
+    90
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "trumpeter_whiting",
+   "n": "Trumpeter Whiting",
+   "cat": "fish",
+   "z": "shallows",
+   "r": 1,
+   "c": "spring",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": null,
+    "season": "spring",
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    20,
+    35
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "blue_swimmer_crab",
+   "n": "Blue Swimmer Crab",
+   "cat": "fish",
+   "z": "shallows",
+   "r": 1,
+   "c": "pot summer",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": null,
+    "season": "summer",
+    "moon": null,
+    "method": [
+     "pot"
+    ],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    12,
+    20
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "gummy_shark",
+   "n": "Gummy Shark",
+   "cat": "fish",
+   "z": "shallows",
+   "r": 2,
+   "c": "night",
+   "cp": {
+    "time": "night",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    80,
+    160
+   ],
+   "price": 110,
+   "what": ""
+  },
+  {
+   "id": "shovelnose_ray",
+   "n": "Shovelnose Ray",
+   "cat": "fish",
+   "z": "shallows",
+   "r": 2,
+   "c": "day calm",
+   "cp": {
+    "time": "day",
+    "tide": null,
+    "sky": "calm",
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    70,
+    140
+   ],
+   "price": 110,
+   "what": ""
+  },
+  {
+   "id": "mulloway",
+   "n": "Mulloway",
+   "cat": "fish",
+   "z": "shallows",
+   "r": 2,
+   "c": "night rising rain",
+   "cp": {
+    "time": "night",
+    "tide": "rising",
+    "sky": "rain",
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    60,
+    150
+   ],
+   "price": 110,
+   "what": ""
+  },
+  {
+   "id": "smooth_stingray",
+   "n": "Smooth Stingray",
+   "cat": "fish",
+   "z": "shallows",
+   "r": 3,
+   "c": "night winter",
+   "cp": {
+    "time": "night",
+    "tide": null,
+    "sky": null,
+    "season": "winter",
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    120,
+    250
+   ],
+   "price": 380,
+   "what": ""
+  },
+  {
+   "id": "bronze_whaler",
+   "n": "Bronze Whaler",
+   "cat": "fish",
+   "z": "shallows",
+   "r": 3,
+   "c": "dusk storm",
+   "cp": {
+    "time": "dusk",
+    "tide": null,
+    "sky": "storm",
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    150,
+    300
+   ],
+   "price": 380,
+   "what": ""
+  },
+  {
+   "id": "diamond_scale_mullet",
+   "n": "Diamond-scale Mullet",
+   "cat": "fish",
+   "z": "estuary",
+   "r": 0,
+   "c": "any",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    25,
+    55
+   ],
+   "price": 12,
+   "what": ""
+  },
+  {
+   "id": "grunter_bream",
+   "n": "Grunter Bream",
+   "cat": "fish",
+   "z": "estuary",
+   "r": 0,
+   "c": "day",
+   "cp": {
+    "time": "day",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    20,
+    40
+   ],
+   "price": 12,
+   "what": ""
+  },
+  {
+   "id": "toadfish",
+   "n": "Toadfish",
+   "cat": "fish",
+   "z": "estuary",
+   "r": 0,
+   "c": "any",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    10,
+    25
+   ],
+   "price": 12,
+   "what": ""
+  },
+  {
+   "id": "archerfish",
+   "n": "Archerfish",
+   "cat": "fish",
+   "z": "estuary",
+   "r": 1,
+   "c": "day summer",
+   "cp": {
+    "time": "day",
+    "tide": null,
+    "sky": null,
+    "season": "summer",
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    15,
+    30
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "estuary_cod",
+   "n": "Estuary Cod",
+   "cat": "fish",
+   "z": "estuary",
+   "r": 1,
+   "c": "dawn",
+   "cp": {
+    "time": "dawn",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    40,
+    90
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "mud_crab",
+   "n": "Mud Crab",
+   "cat": "fish",
+   "z": "estuary",
+   "r": 1,
+   "c": "pot rain",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": "rain",
+    "season": null,
+    "moon": null,
+    "method": [
+     "pot"
+    ],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    15,
+    25
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "mangrove_jack",
+   "n": "Mangrove Jack",
+   "cat": "fish",
+   "z": "estuary",
+   "r": 2,
+   "c": "night summer",
+   "cp": {
+    "time": "night",
+    "tide": null,
+    "sky": null,
+    "season": "summer",
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    30,
+    70
+   ],
+   "price": 110,
+   "what": ""
+  },
+  {
+   "id": "barramundi",
+   "n": "Barramundi",
+   "cat": "fish",
+   "z": "estuary",
+   "r": 2,
+   "c": "night rain",
+   "cp": {
+    "time": "night",
+    "tide": null,
+    "sky": "rain",
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    50,
+    120
+   ],
+   "price": 110,
+   "what": ""
+  },
+  {
+   "id": "threadfin_salmon",
+   "n": "Threadfin Salmon",
+   "cat": "fish",
+   "z": "estuary",
+   "r": 2,
+   "c": "rising",
+   "cp": {
+    "time": null,
+    "tide": "rising",
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    40,
+    100
+   ],
+   "price": 110,
+   "what": ""
+  },
+  {
+   "id": "tarpon",
+   "n": "Tarpon",
+   "cat": "fish",
+   "z": "estuary",
+   "r": 3,
+   "c": "dawn summer",
+   "cp": {
+    "time": "dawn",
+    "tide": null,
+    "sky": null,
+    "season": "summer",
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    80,
+    180
+   ],
+   "price": 380,
+   "what": ""
+  },
+  {
+   "id": "bull_shark",
+   "n": "Bull Shark",
+   "cat": "fish",
+   "z": "estuary",
+   "r": 3,
+   "c": "night storm",
+   "cp": {
+    "time": "night",
+    "tide": null,
+    "sky": "storm",
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    150,
+    300
+   ],
+   "price": 380,
+   "what": ""
+  },
+  {
+   "id": "green_sawfish",
+   "n": "Green Sawfish",
+   "cat": "fish",
+   "z": "estuary",
+   "r": 3,
+   "c": "summer rain release",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": "rain",
+    "season": "summer",
+    "moon": null,
+    "method": [
+     "release"
+    ],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    200,
+    500
+   ],
+   "price": 380,
+   "what": ""
+  },
+  {
+   "id": "clownfish",
+   "n": "Clownfish",
+   "cat": "fish",
+   "z": "reef",
+   "r": 0,
+   "c": "day",
+   "cp": {
+    "time": "day",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    6,
+    11
+   ],
+   "price": 12,
+   "what": ""
+  },
+  {
+   "id": "blue_tang",
+   "n": "Blue Tang",
+   "cat": "fish",
+   "z": "reef",
+   "r": 0,
+   "c": "day",
+   "cp": {
+    "time": "day",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    15,
+    30
+   ],
+   "price": 12,
+   "what": ""
+  },
+  {
+   "id": "moorish_idol",
+   "n": "Moorish Idol",
+   "cat": "fish",
+   "z": "reef",
+   "r": 1,
+   "c": "day",
+   "cp": {
+    "time": "day",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    15,
+    23
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "triggerfish",
+   "n": "Triggerfish",
+   "cat": "fish",
+   "z": "reef",
+   "r": 1,
+   "c": "day",
+   "cp": {
+    "time": "day",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    25,
+    50
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "parrotfish",
+   "n": "Parrotfish",
+   "cat": "fish",
+   "z": "reef",
+   "r": 1,
+   "c": "day high",
+   "cp": {
+    "time": "day",
+    "tide": "high",
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    30,
+    70
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "spangled_emperor",
+   "n": "Spangled Emperor",
+   "cat": "fish",
+   "z": "reef",
+   "r": 1,
+   "c": "dawn",
+   "cp": {
+    "time": "dawn",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    30,
+    80
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "painted_sweetlips",
+   "n": "Painted Sweetlips",
+   "cat": "fish",
+   "z": "reef",
+   "r": 1,
+   "c": "dusk",
+   "cp": {
+    "time": "dusk",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    30,
+    70
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "coral_trout",
+   "n": "Coral Trout",
+   "cat": "fish",
+   "z": "reef",
+   "r": 2,
+   "c": "dawn/dusk",
+   "cp": {
+    "time": "dawn/dusk",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    40,
+    100
+   ],
+   "price": 110,
+   "what": ""
+  },
+  {
+   "id": "red_emperor",
+   "n": "Red Emperor",
+   "cat": "fish",
+   "z": "reef",
+   "r": 2,
+   "c": "night",
+   "cp": {
+    "time": "night",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    40,
+    100
+   ],
+   "price": 110,
+   "what": ""
+  },
+  {
+   "id": "lionfish",
+   "n": "Lionfish",
+   "cat": "fish",
+   "z": "reef",
+   "r": 2,
+   "c": "night calm",
+   "cp": {
+    "time": "night",
+    "tide": null,
+    "sky": "calm",
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    20,
+    38
+   ],
+   "price": 110,
+   "what": ""
+  },
+  {
+   "id": "giant_trevally",
+   "n": "Giant Trevally",
+   "cat": "fish",
+   "z": "reef",
+   "r": 3,
+   "c": "dawn windy",
+   "cp": {
+    "time": "dawn",
+    "tide": null,
+    "sky": "windy",
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    70,
+    170
+   ],
+   "price": 380,
+   "what": ""
+  },
+  {
+   "id": "humphead_wrasse",
+   "n": "Humphead Wrasse",
+   "cat": "fish",
+   "z": "reef",
+   "r": 3,
+   "c": "day summer release",
+   "cp": {
+    "time": "day",
+    "tide": null,
+    "sky": null,
+    "season": "summer",
+    "moon": null,
+    "method": [
+     "release"
+    ],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    100,
+    230
+   ],
+   "price": 380,
+   "what": ""
+  },
+  {
+   "id": "sweep",
+   "n": "Sweep",
+   "cat": "fish",
+   "z": "kelp",
+   "r": 0,
+   "c": "day",
+   "cp": {
+    "time": "day",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    20,
+    40
+   ],
+   "price": 12,
+   "what": ""
+  },
+  {
+   "id": "morwong",
+   "n": "Morwong",
+   "cat": "fish",
+   "z": "kelp",
+   "r": 0,
+   "c": "day",
+   "cp": {
+    "time": "day",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    30,
+    60
+   ],
+   "price": 12,
+   "what": ""
+  },
+  {
+   "id": "herring_cale",
+   "n": "Herring Cale",
+   "cat": "fish",
+   "z": "kelp",
+   "r": 0,
+   "c": "day",
+   "cp": {
+    "time": "day",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    25,
+    50
+   ],
+   "price": 12,
+   "what": ""
+  },
+  {
+   "id": "tommy_ruff",
+   "n": "Tommy Ruff",
+   "cat": "fish",
+   "z": "kelp",
+   "r": 0,
+   "c": "dusk",
+   "cp": {
+    "time": "dusk",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    15,
+    30
+   ],
+   "price": 12,
+   "what": ""
+  },
+  {
+   "id": "magpie_perch",
+   "n": "Magpie Perch",
+   "cat": "fish",
+   "z": "kelp",
+   "r": 1,
+   "c": "day",
+   "cp": {
+    "time": "day",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    25,
+    45
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "crimson_banded_wrasse",
+   "n": "Crimson-banded Wrasse",
+   "cat": "fish",
+   "z": "kelp",
+   "r": 1,
+   "c": "day",
+   "cp": {
+    "time": "day",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    25,
+    50
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "boarfish",
+   "n": "Boarfish",
+   "cat": "fish",
+   "z": "kelp",
+   "r": 1,
+   "c": "winter",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": null,
+    "season": "winter",
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    30,
+    60
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "southern_rock_lobster",
+   "n": "Southern Rock Lobster",
+   "cat": "fish",
+   "z": "kelp",
+   "r": 1,
+   "c": "pot winter",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": null,
+    "season": "winter",
+    "moon": null,
+    "method": [
+     "pot"
+    ],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    25,
+    50
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "pink_snapper",
+   "n": "Pink Snapper",
+   "cat": "fish",
+   "z": "kelp",
+   "r": 2,
+   "c": "dawn afterstorm",
+   "cp": {
+    "time": "dawn",
+    "tide": null,
+    "sky": "afterstorm",
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    40,
+    120
+   ],
+   "price": 110,
+   "what": ""
+  },
+  {
+   "id": "john_dory",
+   "n": "John Dory",
+   "cat": "fish",
+   "z": "kelp",
+   "r": 2,
+   "c": "dusk calm",
+   "cp": {
+    "time": "dusk",
+    "tide": null,
+    "sky": "calm",
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    30,
+    65
+   ],
+   "price": 110,
+   "what": ""
+  },
+  {
+   "id": "eastern_blue_groper",
+   "n": "Eastern Blue Groper",
+   "cat": "fish",
+   "z": "kelp",
+   "r": 2,
+   "c": "day crabbait",
+   "cp": {
+    "time": "day",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": "crabbait",
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    50,
+    120
+   ],
+   "price": 110,
+   "what": ""
+  },
+  {
+   "id": "weedy_seadragon",
+   "n": "Weedy Seadragon",
+   "cat": "fish",
+   "z": "kelp",
+   "r": 3,
+   "c": "calm release",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": "calm",
+    "season": null,
+    "moon": null,
+    "method": [
+     "release"
+    ],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    30,
+    45
+   ],
+   "price": 380,
+   "what": ""
+  },
+  {
+   "id": "batfish",
+   "n": "Batfish",
+   "cat": "fish",
+   "z": "wreck",
+   "r": 0,
+   "c": "day",
+   "cp": {
+    "time": "day",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    25,
+    50
+   ],
+   "price": 12,
+   "what": ""
+  },
+  {
+   "id": "squirrelfish",
+   "n": "Squirrelfish",
+   "cat": "fish",
+   "z": "wreck",
+   "r": 0,
+   "c": "night",
+   "cp": {
+    "time": "night",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    15,
+    30
+   ],
+   "price": 12,
+   "what": ""
+  },
+  {
+   "id": "moray_eel",
+   "n": "Moray Eel",
+   "cat": "fish",
+   "z": "wreck",
+   "r": 1,
+   "c": "night",
+   "cp": {
+    "time": "night",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    80,
+    200
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "cuttlefish",
+   "n": "Cuttlefish",
+   "cat": "fish",
+   "z": "wreck",
+   "r": 1,
+   "c": "dusk",
+   "cp": {
+    "time": "dusk",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    20,
+    50
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "octopus",
+   "n": "Octopus",
+   "cat": "fish",
+   "z": "wreck",
+   "r": 1,
+   "c": "pot",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [
+     "pot"
+    ],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    40,
+    120
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "amberjack",
+   "n": "Amberjack",
+   "cat": "fish",
+   "z": "wreck",
+   "r": 1,
+   "c": "day",
+   "cp": {
+    "time": "day",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    50,
+    120
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "samson_fish",
+   "n": "Samson Fish",
+   "cat": "fish",
+   "z": "wreck",
+   "r": 1,
+   "c": "dawn",
+   "cp": {
+    "time": "dawn",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    60,
+    150
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "pearl_perch",
+   "n": "Pearl Perch",
+   "cat": "fish",
+   "z": "wreck",
+   "r": 2,
+   "c": "night",
+   "cp": {
+    "time": "night",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    30,
+    70
+   ],
+   "price": 110,
+   "what": ""
+  },
+  {
+   "id": "goldband_snapper",
+   "n": "Goldband Snapper",
+   "cat": "fish",
+   "z": "wreck",
+   "r": 2,
+   "c": "dawn",
+   "cp": {
+    "time": "dawn",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    40,
+    90
+   ],
+   "price": 110,
+   "what": ""
+  },
+  {
+   "id": "black_jewfish",
+   "n": "Black Jewfish",
+   "cat": "fish",
+   "z": "wreck",
+   "r": 2,
+   "c": "night newmoon",
+   "cp": {
+    "time": "night",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": "newmoon",
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    80,
+    150
+   ],
+   "price": 110,
+   "what": ""
+  },
+  {
+   "id": "spotted_wobbegong",
+   "n": "Spotted Wobbegong",
+   "cat": "fish",
+   "z": "wreck",
+   "r": 2,
+   "c": "night",
+   "cp": {
+    "time": "night",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    120,
+    300
+   ],
+   "price": 110,
+   "what": ""
+  },
+  {
+   "id": "spotted_eagle_ray",
+   "n": "Spotted Eagle Ray",
+   "cat": "fish",
+   "z": "wreck",
+   "r": 3,
+   "c": "day calm",
+   "cp": {
+    "time": "day",
+    "tide": null,
+    "sky": "calm",
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    150,
+    300
+   ],
+   "price": 380,
+   "what": ""
+  },
+  {
+   "id": "flying_fish",
+   "n": "Flying Fish",
+   "cat": "fish",
+   "z": "blue",
+   "r": 0,
+   "c": "day calm",
+   "cp": {
+    "time": "day",
+    "tide": null,
+    "sky": "calm",
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    20,
+    40
+   ],
+   "price": 12,
+   "what": ""
+  },
+  {
+   "id": "skipjack_tuna",
+   "n": "Skipjack Tuna",
+   "cat": "fish",
+   "z": "blue",
+   "r": 0,
+   "c": "day schools",
+   "cp": {
+    "time": "day",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": "schools",
+    "flags": []
+   },
+   "sz": [
+    40,
+    90
+   ],
+   "price": 12,
+   "what": ""
+  },
+  {
+   "id": "bonito",
+   "n": "Bonito",
+   "cat": "fish",
+   "z": "blue",
+   "r": 0,
+   "c": "dawn",
+   "cp": {
+    "time": "dawn",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    40,
+    80
+   ],
+   "price": 12,
+   "what": ""
+  },
+  {
+   "id": "mahi_mahi",
+   "n": "Mahi-mahi",
+   "cat": "fish",
+   "z": "blue",
+   "r": 1,
+   "c": "summer debris",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": null,
+    "season": "summer",
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": "debris",
+    "flags": []
+   },
+   "sz": [
+    70,
+    150
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "yellowtail_kingfish",
+   "n": "Yellowtail Kingfish",
+   "cat": "fish",
+   "z": "blue",
+   "r": 1,
+   "c": "dawn/dusk",
+   "cp": {
+    "time": "dawn/dusk",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    70,
+    150
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "spanish_mackerel",
+   "n": "Spanish Mackerel",
+   "cat": "fish",
+   "z": "blue",
+   "r": 1,
+   "c": "autumn",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": null,
+    "season": "autumn",
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    80,
+    180
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "wahoo",
+   "n": "Wahoo",
+   "cat": "fish",
+   "z": "blue",
+   "r": 2,
+   "c": "windy",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": "windy",
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    100,
+    200
+   ],
+   "price": 110,
+   "what": ""
+  },
+  {
+   "id": "yellowfin_tuna",
+   "n": "Yellowfin Tuna",
+   "cat": "fish",
+   "z": "blue",
+   "r": 2,
+   "c": "dawn birds",
+   "cp": {
+    "time": "dawn",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": "birds",
+    "flags": []
+   },
+   "sz": [
+    80,
+    200
+   ],
+   "price": 110,
+   "what": ""
+  },
+  {
+   "id": "striped_marlin",
+   "n": "Striped Marlin",
+   "cat": "fish",
+   "z": "blue",
+   "r": 3,
+   "c": "day summer",
+   "cp": {
+    "time": "day",
+    "tide": null,
+    "sky": null,
+    "season": "summer",
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    200,
+    350
+   ],
+   "price": 380,
+   "what": ""
+  },
+  {
+   "id": "sailfish",
+   "n": "Sailfish",
+   "cat": "fish",
+   "z": "blue",
+   "r": 3,
+   "c": "calm summer",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": "calm",
+    "season": "summer",
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    180,
+    300
+   ],
+   "price": 380,
+   "what": ""
+  },
+  {
+   "id": "southern_bluefin_tuna",
+   "n": "Southern Bluefin Tuna",
+   "cat": "fish",
+   "z": "blue",
+   "r": 3,
+   "c": "winter",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": null,
+    "season": "winter",
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    150,
+    240
+   ],
+   "price": 380,
+   "what": ""
+  },
+  {
+   "id": "shortfin_mako",
+   "n": "Shortfin Mako",
+   "cat": "fish",
+   "z": "blue",
+   "r": 3,
+   "c": "storm",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": "storm",
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    200,
+    380
+   ],
+   "price": 380,
+   "what": ""
+  },
+  {
+   "id": "lanternfish",
+   "n": "Lanternfish",
+   "cat": "fish",
+   "z": "deep",
+   "r": 0,
+   "c": "night",
+   "cp": {
+    "time": "night",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    5,
+    15
+   ],
+   "price": 12,
+   "what": ""
+  },
+  {
+   "id": "hagfish",
+   "n": "Hagfish",
+   "cat": "fish",
+   "z": "deep",
+   "r": 0,
+   "c": "any",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    30,
+    80
+   ],
+   "price": 12,
+   "what": ""
+  },
+  {
+   "id": "gemfish",
+   "n": "Gemfish",
+   "cat": "fish",
+   "z": "deep",
+   "r": 1,
+   "c": "winter",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": null,
+    "season": "winter",
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    60,
+    120
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "pink_ling",
+   "n": "Pink Ling",
+   "cat": "fish",
+   "z": "deep",
+   "r": 1,
+   "c": "any",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    60,
+    150
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "frostfish",
+   "n": "Frostfish",
+   "cat": "fish",
+   "z": "deep",
+   "r": 1,
+   "c": "night winter",
+   "cp": {
+    "time": "night",
+    "tide": null,
+    "sky": null,
+    "season": "winter",
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    100,
+    200
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "blue_eye_trevalla",
+   "n": "Blue-eye Trevalla",
+   "cat": "fish",
+   "z": "deep",
+   "r": 2,
+   "c": "dawn deepreel",
+   "cp": {
+    "time": "dawn",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [
+     "deepreel"
+    ],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    60,
+    140
+   ],
+   "price": 110,
+   "what": ""
+  },
+  {
+   "id": "hapuku",
+   "n": "Hapuku",
+   "cat": "fish",
+   "z": "deep",
+   "r": 2,
+   "c": "deepreel",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [
+     "deepreel"
+    ],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    80,
+    180
+   ],
+   "price": 110,
+   "what": ""
+  },
+  {
+   "id": "ghost_shark",
+   "n": "Ghost Shark",
+   "cat": "fish",
+   "z": "deep",
+   "r": 2,
+   "c": "night",
+   "cp": {
+    "time": "night",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    60,
+    120
+   ],
+   "price": 110,
+   "what": ""
+  },
+  {
+   "id": "anglerfish",
+   "n": "Anglerfish",
+   "cat": "fish",
+   "z": "deep",
+   "r": 3,
+   "c": "night lamp",
+   "cp": {
+    "time": "night",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [
+     "lamp"
+    ],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    30,
+    100
+   ],
+   "price": 380,
+   "what": ""
+  },
+  {
+   "id": "gulper_eel",
+   "n": "Gulper Eel",
+   "cat": "fish",
+   "z": "deep",
+   "r": 3,
+   "c": "night newmoon",
+   "cp": {
+    "time": "night",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": "newmoon",
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    60,
+    180
+   ],
+   "price": 380,
+   "what": ""
+  },
+  {
+   "id": "oarfish",
+   "n": "Oarfish",
+   "cat": "fish",
+   "z": "deep",
+   "r": 3,
+   "c": "storm",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": "storm",
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    300,
+    800
+   ],
+   "price": 380,
+   "what": ""
+  },
+  {
+   "id": "bluntnose_sixgill_shark",
+   "n": "Bluntnose Sixgill Shark",
+   "cat": "fish",
+   "z": "deep",
+   "r": 3,
+   "c": "night winter",
+   "cp": {
+    "time": "night",
+    "tide": null,
+    "sky": null,
+    "season": "winter",
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    300,
+    480
+   ],
+   "price": 380,
+   "what": ""
+  },
+  {
+   "id": "old_gravel_jaw",
+   "n": "Old Gravel-Jaw",
+   "cat": "legend",
+   "z": "wreck",
+   "r": 4,
+   "c": "storm",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": "storm",
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    220,
+    260
+   ],
+   "price": 2500,
+   "what": "A 2.5-metre groper that has broken every line in town"
+  },
+  {
+   "id": "the_lantern_queen",
+   "n": "The Lantern Queen",
+   "cat": "legend",
+   "z": "deep",
+   "r": 4,
+   "c": "midnight newmoon",
+   "cp": {
+    "time": "midnight",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": "newmoon",
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    120,
+    160
+   ],
+   "price": 2500,
+   "what": "A giant anglerfish whose lure lights the whole trench"
+  },
+  {
+   "id": "silverback",
+   "n": "Silverback",
+   "cat": "legend",
+   "z": "blue",
+   "r": 4,
+   "c": "dawn winter",
+   "cp": {
+    "time": "dawn",
+    "tide": null,
+    "sky": null,
+    "season": "winter",
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    260,
+    300
+   ],
+   "price": 2500,
+   "what": "A record southern bluefin that leads the winter run"
+  },
+  {
+   "id": "mangrove_marjorie",
+   "n": "Mangrove Marjorie",
+   "cat": "legend",
+   "z": "estuary",
+   "r": 4,
+   "c": "night rain summer",
+   "cp": {
+    "time": "night",
+    "tide": null,
+    "sky": "rain",
+    "season": "summer",
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    170,
+    190
+   ],
+   "price": 2500,
+   "what": "A 1.8-metre barramundi the old-timers named after a lost boat"
+  },
+  {
+   "id": "the_pale_duchess",
+   "n": "The Pale Duchess",
+   "cat": "legend",
+   "z": "shallows",
+   "r": 4,
+   "c": "fog low",
+   "cp": {
+    "time": null,
+    "tide": "low",
+    "sky": "fog",
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    260,
+    300
+   ],
+   "price": 2500,
+   "what": "An albino stingray that glides through the fog"
+  },
+  {
+   "id": "kingtide",
+   "n": "Kingtide",
+   "cat": "legend",
+   "z": "harbour",
+   "r": 4,
+   "c": "kingtide",
+   "cp": {
+    "time": null,
+    "tide": "kingtide",
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    150,
+    180
+   ],
+   "price": 2500,
+   "what": "A golden kingfish that swims under the piers once a moon"
+  },
+  {
+   "id": "the_bell_ringer",
+   "n": "The Bell Ringer",
+   "cat": "legend",
+   "z": "wreck",
+   "r": 4,
+   "c": "midnight",
+   "cp": {
+    "time": "midnight",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    350,
+    450
+   ],
+   "price": 2500,
+   "what": "A giant octopus living in a sunken bell tower"
+  },
+  {
+   "id": "the_shelf_leviathan",
+   "n": "The Shelf Leviathan",
+   "cat": "legend",
+   "z": "deep",
+   "r": 4,
+   "c": "storm night fullmoon",
+   "cp": {
+    "time": "night",
+    "tide": null,
+    "sky": "storm",
+    "season": null,
+    "moon": "fullmoon",
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    900,
+    1300
+   ],
+   "price": 2500,
+   "what": "A giant squid that rises past the shelf edge"
+  },
+  {
+   "id": "the_odd_one",
+   "n": "The Odd One",
+   "cat": "legend",
+   "z": "unknown",
+   "r": 4,
+   "c": "oddone",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": [
+     "oddone"
+    ]
+   },
+   "sz": [
+    111,
+    111
+   ],
+   "price": 2500,
+   "what": "Nobody has a photo. Everybody has a story."
+  },
+  {
+   "id": "silver_perch",
+   "n": "Silver Perch",
+   "cat": "fish",
+   "z": "lake",
+   "r": 0,
+   "c": "any",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    15,
+    35
+   ],
+   "price": 12,
+   "what": ""
+  },
+  {
+   "id": "redfin",
+   "n": "Redfin",
+   "cat": "fish",
+   "z": "lake",
+   "r": 0,
+   "c": "day",
+   "cp": {
+    "time": "day",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    15,
+    35
+   ],
+   "price": 12,
+   "what": ""
+  },
+  {
+   "id": "rainbow_trout",
+   "n": "Rainbow Trout",
+   "cat": "fish",
+   "z": "lake",
+   "r": 1,
+   "c": "dawn/dusk",
+   "cp": {
+    "time": "dawn/dusk",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    25,
+    60
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "golden_perch",
+   "n": "Golden Perch",
+   "cat": "fish",
+   "z": "lake",
+   "r": 1,
+   "c": "rain",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": "rain",
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    30,
+    60
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "australian_bass",
+   "n": "Australian Bass",
+   "cat": "fish",
+   "z": "lake",
+   "r": 1,
+   "c": "night",
+   "cp": {
+    "time": "night",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    25,
+    50
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "longfin_eel",
+   "n": "Longfin Eel",
+   "cat": "fish",
+   "z": "lake",
+   "r": 1,
+   "c": "night rain",
+   "cp": {
+    "time": "night",
+    "tide": null,
+    "sky": "rain",
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    60,
+    150
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "brown_trout",
+   "n": "Brown Trout",
+   "cat": "fish",
+   "z": "lake",
+   "r": 2,
+   "c": "dawn fog",
+   "cp": {
+    "time": "dawn",
+    "tide": null,
+    "sky": "fog",
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    35,
+    75
+   ],
+   "price": 110,
+   "what": ""
+  },
+  {
+   "id": "murray_cod",
+   "n": "Murray Cod",
+   "cat": "fish",
+   "z": "lake",
+   "r": 2,
+   "c": "any",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    60,
+    130
+   ],
+   "price": 110,
+   "what": ""
+  },
+  {
+   "id": "saratoga",
+   "n": "Saratoga",
+   "cat": "fish",
+   "z": "lake",
+   "r": 3,
+   "c": "day summer calm",
+   "cp": {
+    "time": "day",
+    "tide": null,
+    "sky": "calm",
+    "season": "summer",
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    50,
+    90
+   ],
+   "price": 380,
+   "what": ""
+  },
+  {
+   "id": "king_george_whiting",
+   "n": "King George Whiting",
+   "cat": "fish",
+   "z": "seagrass",
+   "r": 0,
+   "c": "day",
+   "cp": {
+    "time": "day",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    20,
+    45
+   ],
+   "price": 12,
+   "what": ""
+  },
+  {
+   "id": "six_spined_leatherjacket",
+   "n": "Six-spined Leatherjacket",
+   "cat": "fish",
+   "z": "seagrass",
+   "r": 0,
+   "c": "any",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    15,
+    40
+   ],
+   "price": 12,
+   "what": ""
+  },
+  {
+   "id": "rock_flathead",
+   "n": "Rock Flathead",
+   "cat": "fish",
+   "z": "seagrass",
+   "r": 0,
+   "c": "day low",
+   "cp": {
+    "time": "day",
+    "tide": "low",
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    25,
+    50
+   ],
+   "price": 12,
+   "what": ""
+  },
+  {
+   "id": "snook",
+   "n": "Snook",
+   "cat": "fish",
+   "z": "seagrass",
+   "r": 1,
+   "c": "dawn/dusk",
+   "cp": {
+    "time": "dawn/dusk",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    40,
+    90
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "sea_sweep",
+   "n": "Sea Sweep",
+   "cat": "fish",
+   "z": "seagrass",
+   "r": 1,
+   "c": "day",
+   "cp": {
+    "time": "day",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    20,
+    40
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "globefish",
+   "n": "Globefish",
+   "cat": "fish",
+   "z": "seagrass",
+   "r": 1,
+   "c": "night",
+   "cp": {
+    "time": "night",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    20,
+    50
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "southern_eagle_ray",
+   "n": "Southern Eagle Ray",
+   "cat": "fish",
+   "z": "seagrass",
+   "r": 2,
+   "c": "day calm",
+   "cp": {
+    "time": "day",
+    "tide": null,
+    "sky": "calm",
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    80,
+    180
+   ],
+   "price": 110,
+   "what": ""
+  },
+  {
+   "id": "blue_groper",
+   "n": "Blue Groper",
+   "cat": "fish",
+   "z": "seagrass",
+   "r": 2,
+   "c": "any crabbait",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": "crabbait",
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    60,
+    120
+   ],
+   "price": 110,
+   "what": ""
+  },
+  {
+   "id": "leafy_seadragon",
+   "n": "Leafy Seadragon",
+   "cat": "fish",
+   "z": "seagrass",
+   "r": 3,
+   "c": "calm release",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": "calm",
+    "season": null,
+    "moon": null,
+    "method": [
+     "release"
+    ],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    20,
+    35
+   ],
+   "price": 380,
+   "what": ""
+  },
+  {
+   "id": "milkfish",
+   "n": "Milkfish",
+   "cat": "fish",
+   "z": "lagoon",
+   "r": 0,
+   "c": "any",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    40,
+    100
+   ],
+   "price": 12,
+   "what": ""
+  },
+  {
+   "id": "bonefish",
+   "n": "Bonefish",
+   "cat": "fish",
+   "z": "lagoon",
+   "r": 1,
+   "c": "day rising",
+   "cp": {
+    "time": "day",
+    "tide": "rising",
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    40,
+    80
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "bluefin_trevally",
+   "n": "Bluefin Trevally",
+   "cat": "fish",
+   "z": "lagoon",
+   "r": 1,
+   "c": "day",
+   "cp": {
+    "time": "day",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    30,
+    80
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "picasso_triggerfish",
+   "n": "Picasso Triggerfish",
+   "cat": "fish",
+   "z": "lagoon",
+   "r": 1,
+   "c": "day calm",
+   "cp": {
+    "time": "day",
+    "tide": null,
+    "sky": "calm",
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    15,
+    30
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "rainbow_runner",
+   "n": "Rainbow Runner",
+   "cat": "fish",
+   "z": "lagoon",
+   "r": 1,
+   "c": "birds",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": "birds",
+    "flags": []
+   },
+   "sz": [
+    60,
+    110
+   ],
+   "price": 35,
+   "what": ""
+  },
+  {
+   "id": "spotted_eagle_ray",
+   "n": "Spotted Eagle Ray",
+   "cat": "fish",
+   "z": "lagoon",
+   "r": 2,
+   "c": "day",
+   "cp": {
+    "time": "day",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    100,
+    220
+   ],
+   "price": 110,
+   "what": ""
+  },
+  {
+   "id": "bumphead_parrotfish",
+   "n": "Bumphead Parrotfish",
+   "cat": "fish",
+   "z": "lagoon",
+   "r": 2,
+   "c": "dawn",
+   "cp": {
+    "time": "dawn",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    70,
+    130
+   ],
+   "price": 110,
+   "what": ""
+  },
+  {
+   "id": "lemon_shark",
+   "n": "Lemon Shark",
+   "cat": "fish",
+   "z": "lagoon",
+   "r": 3,
+   "c": "dusk",
+   "cp": {
+    "time": "dusk",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    150,
+    280
+   ],
+   "price": 380,
+   "what": ""
+  },
+  {
+   "id": "the_mirror_cod",
+   "n": "The Mirror Cod",
+   "cat": "legend",
+   "z": "lake",
+   "r": 4,
+   "c": "night fullmoon",
+   "cp": {
+    "time": "night",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": "fullmoon",
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    150,
+    185
+   ],
+   "price": 2500,
+   "what": "A Murray cod so old its scales hold the moon"
+  }
+ ]
+}
