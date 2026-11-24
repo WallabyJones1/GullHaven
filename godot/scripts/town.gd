@@ -20,7 +20,7 @@ const COMB_SPOTS := 3
 const COMB_W := [30.0, 12.0, 4.5, 1.2, 0.2]
 const DRIFT_SPOTS := 2
 # Shops with a counter and a menu (the rest just talk).
-const MENU_SHOPS := ["tackle", "general", "baittea", "kelptea", "boatyard", "boatworks", "carpenter", "home", "salvager"]
+const MENU_SHOPS := ["tackle", "general", "baittea", "kelptea", "boatyard", "boatworks", "carpenter", "home", "salvager", "outfitter"]
 # Junk you fish up is worth something to a builder.
 const JUNK_MATS := {"tangled_line": {"rope": 2}, "tin_can": {"scrap": 1}, "broken_rod": {"wood": 1, "scrap": 1},
 	"car_tyre": {"scrap": 2}, "shopping_trolley": {"scrap": 3}, "bicycle": {"scrap": 3}, "old_boot": {"rope": 1}}

@@ -923,6 +923,88 @@ CRITTERS = {'gull': gull_frames, 'crab': crab_frames, 'butterfly': butterfly_fra
             'whale_tail': whale_tail, 'smoke': smoke}
 
 
+def clothes_rack():
+    """A rail of shirts and coats at the outfitter's."""
+    p = Pix(48, 44)
+    p.rect(4, 4, 43, 5, '#8a8a92')
+    p.rect(5, 6, 5, 41, '#6a6a72')
+    p.rect(42, 6, 42, 41, '#6a6a72')
+    p.rect(2, 41, 9, 42, '#5a5a62')
+    p.rect(38, 41, 45, 42, '#5a5a62')
+    cols = ['#c84a3a', '#e8b23a', '#2e3f6e', '#5f8f5a', '#f4f0e8', '#c87ac8', '#3aa8a0']
+    for i, c in enumerate(cols):
+        x = 8 + i * 5
+        p.line(x + 2, 5, x + 2, 8, '#3a3a40')
+        long = i % 3 == 1
+        p.box(x, 8, x + 4, 26 if not long else 32, c)
+        p.rect(x - 1, 9, x - 1, 15, shift(hx(c), -0.2))
+        p.rect(x + 5, 9, x + 5, 15, shift(hx(c), -0.2))
+        if i == 0:
+            for y in range(10, 26, 3):
+                p.rect(x, y, x + 4, y, '#f4f0e8')
+    return p.outline()
+
+
+def mirror():
+    """A tall standing mirror in a wooden frame."""
+    p = Pix(28, 52)
+    p.box(4, 2, 23, 46, '#8a5a34')
+    p.rect(7, 5, 20, 43, '#a8c8d8')
+    for i in range(8):
+        p.px(9 + i, 30 - i * 3, '#e8f4f8')
+        p.px(10 + i, 30 - i * 3, '#e8f4f8')
+    p.rect(7, 36, 20, 43, '#8aa8b8')
+    p.rect(6, 47, 9, 50, '#5a3a24')
+    p.rect(18, 47, 21, 50, '#5a3a24')
+    return p.outline()
+
+
+def hat_stand():
+    """A stand with hats hung on its pegs."""
+    p = Pix(32, 52)
+    p.rect(15, 6, 16, 47, '#6a4028')
+    p.rect(9, 47, 22, 49, '#5a3a24')
+    p.ellipse(15.5, 9, 7, 3.5, '#2f8a8a')  # a beanie
+    p.ellipse(15.5, 7, 4, 3.5, '#2f8a8a')
+    p.ellipse(15.5, 4, 1.8, 1.6, '#f4efe2')
+    p.ellipse(8, 22, 6.5, 1.6, '#e0c070')  # a straw hat
+    p.ellipse(8, 20, 3.5, 2.5, '#e0c070')
+    p.rect(5, 21, 11, 21, '#c84a3a')
+    p.rect(19, 30, 28, 32, '#24305a')  # a captain's cap
+    p.rect(19, 33, 28, 33, '#1a1a22')
+    p.px(23, 31, '#f0c840')
+    p.px(24, 31, '#f0c840')
+    return p.outline()
+
+
+def mannequin():
+    """A dressmaker's dummy wearing a striped top."""
+    p = Pix(28, 52)
+    p.ellipse(14, 6, 4, 4.5, '#e8dcc0')
+    p.rect(13, 10, 14, 12, '#e8dcc0')
+    p.box(6, 13, 21, 30, '#f4f0e8')
+    for y in range(15, 30, 3):
+        p.rect(6, y, 21, y, '#2e3f6e')
+    p.box(8, 31, 19, 36, '#c84a6a')
+    p.rect(13, 37, 14, 46, '#6a4028')
+    p.rect(8, 46, 19, 48, '#5a3a24')
+    return p.outline()
+
+
+def fabric_rolls():
+    """Bolts of cloth standing in a crate."""
+    p = Pix(40, 36)
+    cols = ['#c84a3a', '#3aa8a0', '#e8b23a', '#c87ac8', '#5f8f5a', '#7aa0d8']
+    for i, c in enumerate(cols):
+        x = 4 + i * 5
+        top = 4 + (i * 7) % 9
+        p.box(x, top, x + 4, 26, c)
+        p.ellipse(x + 2.5, top + 0.5, 2.5, 1.2, shift(hx(c), 0.15))
+    p.box(2, 22, 37, 33, '#8a5a34')
+    p.rect(3, 27, 36, 27, '#6a4028')
+    return p.outline()
+
+
 def bed_frame_texture():
     return quilt()
 
@@ -941,6 +1023,8 @@ DECOR = {
     'trophy_board': trophy_board, 'crates': crate_stack, 'boat_model': boat_model, 'driftwood': driftwood,
     'mark_stone': mark_stone, 'bottle': bottle, 'gulls_eye': gulls_eye, 'cave_mouth': cave_mouth,
     'dartboard': dartboard, 'skip_stone': skip_stone, 'eye_carving': eye_carving,
+    'clothes_rack': clothes_rack, 'mirror': mirror, 'hat_stand': hat_stand, 'mannequin': mannequin,
+    'fabric_rolls': fabric_rolls,
 }
 TEX = {
     'floor_wood': lambda: floor_wood(), 'floor_wood_dark': lambda: floor_wood('#7a5030', 2),

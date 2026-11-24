@@ -41,6 +41,7 @@ const Progress := preload("res://scripts/progress.gd")
 const Kit := preload("res://scripts/kit.gd")
 const Spearfishing := preload("res://scripts/spearfishing.gd")
 const Story := preload("res://scripts/story.gd")
+const Wardrobe := preload("res://scripts/wardrobe.gd")
 
 var env: Environment
 var world_env: WorldEnvironment
@@ -79,6 +80,7 @@ var progress: Node
 var kit: Node3D
 var spear: CanvasLayer
 var story: Node3D
+var wardrobe: CanvasLayer
 var _first_time := false
 var skip_save := false  # starting a new game: don't write the old save back on the way out
 var save: Dictionary
@@ -147,6 +149,12 @@ func _ready() -> void:
 	add_child(dialogue)
 	dialogue.setup(hud, audio, player)
 
+	wardrobe = Wardrobe.new()
+	wardrobe.name = "Wardrobe"
+	add_child(wardrobe)
+	wardrobe.setup(save, hud, audio, player)
+	wardrobe.apply()
+
 	shop = Shop.new()
 	shop.name = "Shop"
 	add_child(shop)
@@ -162,6 +170,7 @@ func _ready() -> void:
 	add_child(town)
 	town.setup(harbour, player, hud, audio, sea, save, shop)
 	town.dialogue = dialogue
+	town.register_service("outfitter", wardrobe.open_shop)
 	town.progress = progress
 	shop.progress = progress
 
@@ -502,6 +511,13 @@ func welcome() -> void:
 	if not _first_time:
 		return
 	_first_time = false
+	if (save.look as Dictionary).is_empty():
+		wardrobe.open_create(_created)
+	else:
+		_created()
+
+
+func _created() -> void:
 	hud.toast("Welcome to Gullhaven! Walk with {move}, turn the camera with {camera}. The gold corner says what to do next.")
 	story.intro()
 

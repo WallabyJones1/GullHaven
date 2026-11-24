@@ -35,6 +35,7 @@ const CHAPTERS := [
 		{"goal": "Tell Old Marlo how it went", "t": "talk", "who": MARLO, "at": MARLO, "lines": [
 			"See? Different bait, different fish. Worms for whiting and bream, prawns and pilchards for the bigger mouths.",
 			"Your Logbook ({logbook}) shows what bites where, and when. Townsfolk want fish too: their requests are up in the corner.",
+			"And if Gran's old jacket isn't you, Odette at Threads & Tides, behind the tavern, sells clothes and hats.",
 			"Now. Your gran's hut is out on the point, south of town past the beach. It's yours. Go and have a look."]},
 		{"goal": "Go inside Gran's hut on the point", "t": "hut", "at": [420.0, 676.0], "gift": {"pot": 1},
 			"done_who": "Gran's hut", "done": [

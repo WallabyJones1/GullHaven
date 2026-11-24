@@ -220,11 +220,16 @@ LOOKS = {
                        shoes='#2a2020', glasses=True),
     'kid_b': dict(skin='tan', hair='#2a1a14', style='bun', shirt='#f0d050', pants='#d8604a', shoes='#f0f0f0', kid=True,
                   dress=True),
+    # Odette at Threads & Tides, the outfitter
+    'tailor': dict(skin='brown', hair='#c84a6a', style='bob', shirt='#f4f0e8', stripes='#2e3f6e', top='vest', vest='#c84a6a',
+                   pants='#3a3a48', shoes='#6a3a2a', glasses=True),
 }
 
 
-def draw_person(look, direction, pose):
-    """direction: down, up, left. pose: stand, walk_a, walk_b, cast, cheer."""
+def draw_person(look, direction, pose, only=None, outline=True):
+    """direction: down, up, left. pose: stand, walk_a, walk_b, cast, cheer.
+    only: draw just some layers (hair_back, body, glasses, beard, hair_front, hat) for the
+    wardrobe (tools/godot_wardrobe.py); outline=False leaves the outline to be added later."""
     L = dict(look)
     c = Canvas(FW, FH)
     kid = L.get('kid', False)
@@ -388,8 +393,6 @@ def draw_person(look, direction, pose):
                 c.dots([(12, ey + 2), (13, ey + 3)], ramp(skin)[1])
             else:
                 c.dots([(12, ey + 2)], '#f0a0a0')
-            if L.get('glasses'):
-                c.dots([(9, ey - 1), (10, ey - 1), (11, ey - 1), (12, ey - 1), (12, ey), (13, ey), (14, ey), (15, ey), (16, ey)], '#8a6a5a')
             return
         for ex in (12, 19):
             c.dots([(ex, ey), (ex + 1, ey), (ex, ey + 1), (ex + 1, ey + 1), (ex, ey + 2), (ex + 1, ey + 2)], eye)
@@ -399,10 +402,17 @@ def draw_person(look, direction, pose):
             c.dots([(11, ey + 3), (13, ey + 4), (19, ey + 4), (21, ey + 3)], ramp(skin)[1])
         else:
             c.dots([(11, ey + 3), (21, ey + 3)], '#f2a2a2')
-        if L.get('glasses'):
-            for ex in (11, 18):
-                c.dots([(ex + i, ey - 1) for i in range(4)] + [(ex, ey + j) for j in range(3)] + [(ex + 3, ey + j) for j in range(3)], '#8a6a5a')
-            c.dots([(15, ey), (16, ey)], '#8a6a5a')
+
+    def glasses():
+        if not L.get('glasses') or back:
+            return
+        ey = int(head_cy + 1)
+        if side:
+            c.dots([(9, ey - 1), (10, ey - 1), (11, ey - 1), (12, ey - 1), (12, ey), (13, ey), (14, ey), (15, ey), (16, ey)], '#8a6a5a')
+            return
+        for ex in (11, 18):
+            c.dots([(ex + i, ey - 1) for i in range(4)] + [(ex, ey + j) for j in range(3)] + [(ex + 3, ey + j) for j in range(3)], '#8a6a5a')
+        c.dots([(15, ey), (16, ey)], '#8a6a5a')
 
     def beard():
         b = L.get('beard')
@@ -556,39 +566,57 @@ def draw_person(look, direction, pose):
                 c.paint(poly(FW, FH, [(kx - 1, head_cy - 3), (kx + 3, head_cy + 1), (kx, head_cy + 1)]), col, line=True)
             c.dots([(11, int(head_cy) - 5), (14, int(head_cy) - 6), (18, int(head_cy) - 5)], '#e8e4dc')
 
+    def want(k):
+        return only is None or k in only
+
     # back to front
-    hair(False)
+    if want('hair_back'):
+        hair(False)
     if side:
-        legs()
-        if pose == 'cheer':
-            pass
-        torso()
-        head()
-        face()
-        beard()
-        hair(True)
-        hat()
-        arms(True)
+        if want('body'):
+            legs()
+            torso()
+            head()
+            face()
+        if want('glasses'):
+            glasses()
+        if want('beard'):
+            beard()
+        if want('hair_front'):
+            hair(True)
+        if want('hat'):
+            hat()
+        if want('body'):
+            arms(True)
     elif back:
-        legs()
-        torso()
-        arms(True)
-        head()
-        hair(True)
-        hat()
+        if want('body'):
+            legs()
+            torso()
+            arms(True)
+            head()
+        if want('hair_front'):
+            hair(True)
+        if want('hat'):
+            hat()
     else:
-        legs()
-        torso()
-        if pose != 'cheer':
+        if want('body'):
+            legs()
+            torso()
+            if pose != 'cheer':
+                arms(True)
+            head()
+            face()
+        if want('glasses'):
+            glasses()
+        if want('beard'):
+            beard()
+        if want('hair_front'):
+            hair(True)
+        if want('hat'):
+            hat()
+        if want('body') and pose == 'cheer':
             arms(True)
-        head()
-        face()
-        beard()
-        hair(True)
-        hat()
-        if pose == 'cheer':
-            arms(True)
-    return c.finish()
+    return c.finish(outline)
 
 
 POSES = ['stand', 'walk_a', 'walk_b', 'cast', 'cheer']
