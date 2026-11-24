@@ -618,12 +618,15 @@ func _steer_check() -> void:
 
 ## Every dock and jetty: stand on the ground just past its landward end and walk on.
 func _plan_docks() -> void:
+	# (with every permit, as you'd have by the time you sail to the far islands)
+	for k: String in ["permit_ranger", "permit_ember", "bridge"]:
+		main.harbour.permits[k] = true
 	var at := _i
 	var n := 0
 	for d: Dictionary in main.harbour.docks:
 		n += 1
 		_steps.insert(at, ["go to dock %d" % n, _dock_start.bind(d), 20])
-		_steps.insert(at + 1, ["walk onto dock %d" % n, _dock_walk.bind(d, n), 75])
+		_steps.insert(at + 1, ["walk onto dock %d" % n, _dock_walk.bind(d, n), 50])
 		_steps.insert(at + 2, ["check dock %d" % n, _dock_check.bind(d, n), 3])
 		at += 3
 
@@ -631,12 +634,12 @@ func _plan_docks() -> void:
 var _dock_skip := false
 
 
-## The two points 2.5 m past each end of a dock, along its length.
+## The two points a metre past each end of a dock, along its length.
 func _dock_ends(d: Dictionary) -> Array[Vector3]:
 	var r: Rect2 = d.rect
 	var c := r.get_center()
 	var long_x := r.size.x >= r.size.y
-	var half := (r.size.x if long_x else r.size.y) * 0.5 + 2.5
+	var half := (r.size.x if long_x else r.size.y) * 0.5 + 1.0
 	var axis := Vector2(1.0, 0.0) if long_x else Vector2(0.0, 1.0)
 	var a := c + axis * half
 	var b := c - axis * half
@@ -671,7 +674,7 @@ func _dock_walk(d: Dictionary, n: int) -> void:
 	for e: Vector3 in _dock_ends(d):
 		var top := _top_at(e.x, e.z)
 		var wl := float(w.water_level_at(e.x, e.z))
-		if top > wl - 0.3 and top > best_y:
+		if top > wl - 0.3 and top < float(d.y) + 1.0 and top > best_y:  # (not a roof)
 			best_y = top
 			best = Vector3(e.x, top, e.z)
 	_dock_skip = best == Vector3.INF

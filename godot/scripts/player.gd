@@ -302,7 +302,8 @@ func _step_up(delta: float) -> void:
 	var up := Vector3(0.0, STEP_UP, 0.0)
 	if test_move(global_transform, up):
 		return  # no headroom
-	var ahead := motion.normalized() * maxf(motion.length(), 0.1)
+	# far enough on that the feet are over the step, not on its edge
+	var ahead := motion.normalized() * maxf(motion.length(), 0.34)
 	var raised := global_transform.translated(up)
 	if test_move(raised, ahead):
 		return  # taller than a step

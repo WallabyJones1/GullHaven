@@ -28,13 +28,14 @@ func build_town(t: Dictionary) -> void:
 	root.name = str(t.id)
 	world.add_child(root)
 	var y := float(t.h)
-	for b in t.buildings:
-		building(root, b, t)
+	# quays and docks first, so a building out over the water can run a boardwalk to them
 	for q in t.get("quays", []):
 		quay(root, q, y)
 	var has_quay: bool = not (t.get("quays", []) as Array).is_empty()
 	for dk in t.get("docks", []):
 		dock(root, dk, y, not has_quay)
+	for b in t.buildings:
+		building(root, b, t)
 	for l in t.get("lamps", []):
 		lamp(root, Vector3(float(l[0]), world.height_at(float(l[0]), float(l[1])), float(l[1])))
 	for p in t.get("props", []):
@@ -77,6 +78,7 @@ func building(parent: Node3D, b: Dictionary, t: Dictionary) -> void:
 	var door := pivot.global_transform * Vector3(0.0, 0.0, size.z * 0.5 + 0.9)
 	world.buildings.append({"name": str(b.name), "kind": kind, "role": str(b.role), "town": str(t.id), "door": door,
 		"rot": rot, "size": size, "node": pivot, "y": y})
+	_over_water(parent, pivot, size, y, door)
 	if kind == "house" and _use_model("house", pivot):
 		return
 	if kind == "mill":
@@ -203,6 +205,55 @@ func dock(parent: Node3D, dk: Dictionary, y: float, reach_shore := false) -> voi
 	else:
 		_box(parent, size, centre, null)
 	world.docks.append({"rect": Rect2(x0, z0, x1 - x0, z1 - z0), "y": top, "moor": dk.get("moor", null)})
+
+
+## A building the map set out over the water (Wrecker's Cove is half on stilts) stands on
+## pilings, and gets a boardwalk from its door to the nearest dock or dry ground at its level,
+## so you can always walk up to it and back.
+func _over_water(parent: Node3D, pivot: Node3D, size: Vector3, y: float, door: Vector3) -> void:
+	for cx: float in [-0.45, 0.45]:
+		for cz: float in [-0.45, 0.45]:
+			var corner := pivot.global_transform * Vector3(cx * size.x, 0.0, cz * size.z)
+			var g: float = world.height_at(corner.x, corner.z)
+			if g < y - 0.6:
+				var tall := y - g + 1.0
+				_cylinder(parent, 0.18, tall, Vector3(corner.x, y - tall * 0.5, corner.z), _mat("timber"))
+	if _stands_at(door.x, door.z, y):
+		return
+	var from := Vector2(door.x, door.z)
+	var best := INF
+	var way := Vector2.ZERO
+	for dir: Vector2 in [Vector2(1.0, 0.0), Vector2(-1.0, 0.0), Vector2(0.0, 1.0), Vector2(0.0, -1.0)]:
+		for i in range(1, 37):  # half-metre steps, up to 18 m
+			var p := from + dir * (float(i) * 0.5)
+			var local := pivot.global_transform.affine_inverse() * Vector3(p.x, y, p.y)
+			if absf(local.x) < size.x * 0.5 + 0.3 and absf(local.z) < size.z * 0.5 + 0.3:
+				break  # don't run the boards through the house
+			if _stands_at(p.x, p.y, y):
+				if float(i) * 0.5 < best:
+					best = float(i) * 0.5
+					way = dir
+				break
+	if best == INF:
+		return
+	var a := from - way * 0.9
+	var b := from + way * (best + 0.6)
+	var half := 0.85
+	var x0 := minf(a.x, b.x) - (half if way.x == 0.0 else 0.0)
+	var x1 := maxf(a.x, b.x) + (half if way.x == 0.0 else 0.0)
+	var z0 := minf(a.y, b.y) - (half if way.y == 0.0 else 0.0)
+	var z1 := maxf(a.y, b.y) + (half if way.y == 0.0 else 0.0)
+	dock(parent, {"rect": [x0, z0, x1, z1]}, y)
+
+
+## Is there something to stand on at about height y here: a dock's deck or the ground?
+func _stands_at(x: float, z: float, y: float) -> bool:
+	for d in world.docks:
+		var r: Rect2 = d.rect
+		if r.grow(-0.2).has_point(Vector2(x, z)) and absf(float(d.y) - (y - 0.1)) < 0.5:
+			return true
+	var g: float = world.height_at(x, z)
+	return g > y - 0.45 and not bool(world.is_water(x, z))
 
 
 ## A dock the map set down a little short of the shore, or at the foot of a bank, would
