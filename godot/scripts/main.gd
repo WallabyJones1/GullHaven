@@ -342,6 +342,12 @@ func _ready() -> void:
 
 	_first_time = save.visited.is_empty()
 	_update_area(true)
+	if "--smoke" in OS.get_cmdline_user_args():
+		# the build machine's tour of the game (see smoke_test.gd)
+		var smoke: Node = load("res://scripts/smoke_test.gd").new()
+		smoke.name = "SmokeTest"
+		add_child(smoke)
+		smoke.call("setup", self)
 	if Menus.fresh_start:
 		# New game from the menu: straight into making your fisher
 		Menus.fresh_start = false

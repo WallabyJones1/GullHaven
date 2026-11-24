@@ -60,6 +60,38 @@ jobs:
       - name: Import the project
         run: ./godot-bin --headless --path godot --import || ./godot-bin --headless --path godot --editor --quit-after 600
 
+      - name: Check every script with Godot
+        run: |
+          : > godot-check.log
+          for f in godot/scripts/*.gd; do
+            ./godot-bin --headless --path godot --check-only --script "res://scripts/$(basename "$f")" >> godot-check.log 2>&1 || echo "FAILED: $f" >> godot-check.log
+          done
+          if grep -E "ERROR|FAILED|Parse Error" godot-check.log > godot-problems.log; then
+            echo "## Script problems" >> "$GITHUB_STEP_SUMMARY"
+            sed 's/^/    /' godot-problems.log >> "$GITHUB_STEP_SUMMARY"
+            cat godot-problems.log
+          else
+            echo "All scripts load cleanly."
+          fi
+
+      - name: Play through the game with no one at the controls (smoke test)
+        run: |
+          timeout 600 ./godot-bin --headless --fixed-fps 60 --path godot -- --smoke > smoke.log 2>&1 || true
+          grep -E "SMOKE|SCRIPT ERROR|ERROR|   at: " smoke.log | head -600 || true
+          if grep -q "SMOKE DONE" smoke.log; then echo "Smoke test finished."; else echo "Smoke test did not finish."; fi
+          if grep -E "SCRIPT ERROR|ERROR" smoke.log > smoke-problems.log; then
+            echo "## Smoke test problems" >> "$GITHUB_STEP_SUMMARY"
+            head -100 smoke-problems.log | sed 's/^/    /' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: godot-test-logs
+          path: |
+            godot-check.log
+            smoke.log
+
       - name: Export Windows, macOS and Linux
         run: |
           mkdir -p godot/build/windows godot/build/mac godot/build/linux
