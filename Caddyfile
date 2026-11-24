@@ -1,0 +1,20 @@
+{
+	admin off
+	auto_https off
+}
+
+:{$PORT:8080} {
+	root * /srv
+	encode zstd gzip
+	header {
+		# lets the game use SharedArrayBuffer if a threaded build is ever served
+		Cross-Origin-Opener-Policy same-origin
+		Cross-Origin-Embedder-Policy require-corp
+		Cache-Control "no-cache"
+	}
+	header /health Cache-Control "no-store"
+	respond /health "ok" 200
+	@private path /Dockerfile /Caddyfile /ci/*
+	respond @private 404
+	file_server
+}
