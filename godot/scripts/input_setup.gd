@@ -4,11 +4,13 @@ extends RefCounted
 ##   WASD / arrows walk (relative to the camera), Q / E turn the camera (or drag with the
 ##   right mouse button), mouse wheel or - / = zooms.
 ##   Space, F or left click: cast, reel, talk, open doors, board boats, dig.
-##   Esc: reel in early, close menus (or open the pause menu). R bait, Tab or L Logbook,
+##   Esc: reel in early, close menus (or open the game menu). R bait, Tab or L Logbook,
 ##   J Journal, M map, B build, I bag.
 ## Gamepad:
 ##   Left stick walks, right stick turns and zooms the camera, bumpers turn in steps.
-##   A acts, B cancels, Y bait, X build, Back Logbook, Start map, left stick click Journal.
+##   A acts, B cancels, Y bait, X build, Start the game menu, Back the map,
+##   D-pad up Journal (or click the left stick), left Logbook, right bag.
+## Keys can be changed in the game menu (Controls); the changes live in settings.cfg.
 
 const KEYS := {
 	"move_left": [KEY_A, KEY_LEFT],
@@ -30,7 +32,16 @@ const KEYS := {
 	"journal": [KEY_J],
 	"build": [KEY_B],
 	"bag": [KEY_I],
+	"menu": [KEY_ESCAPE],
 }
+# the ones you can change in Controls, in the order they're listed
+# (Esc always stays back / menu, so there's always a way out)
+const REBINDABLE := ["move_up", "move_down", "move_left", "move_right", "action", "rotate_left", "rotate_right",
+	"bait", "bag", "journal", "logbook", "map", "build", "time_skip", "photo"]
+const NAMES := {"move_up": "Walk up", "move_down": "Walk down", "move_left": "Walk left", "move_right": "Walk right",
+	"action": "Cast, reel, talk, use", "rotate_left": "Turn camera left",
+	"rotate_right": "Turn camera right", "bait": "Change bait", "bag": "Bag", "journal": "Journal", "logbook": "Logbook",
+	"map": "Map", "build": "Arrange your hut", "time_skip": "Skip an hour", "photo": "Hide the HUD"}
 
 
 static func setup() -> void:
@@ -54,9 +65,12 @@ static func setup() -> void:
 	_pad_button("cancel", JOY_BUTTON_B)
 	_pad_button("bait", JOY_BUTTON_Y)
 	_pad_button("build", JOY_BUTTON_X)
-	_pad_button("logbook", JOY_BUTTON_BACK)
-	_pad_button("map", JOY_BUTTON_START)
+	_pad_button("menu", JOY_BUTTON_START)
+	_pad_button("map", JOY_BUTTON_BACK)
+	_pad_button("journal", JOY_BUTTON_DPAD_UP)
 	_pad_button("journal", JOY_BUTTON_LEFT_STICK)
+	_pad_button("logbook", JOY_BUTTON_DPAD_LEFT)
+	_pad_button("bag", JOY_BUTTON_DPAD_RIGHT)
 	_pad_button("rotate_left", JOY_BUTTON_LEFT_SHOULDER)
 	_pad_button("rotate_right", JOY_BUTTON_RIGHT_SHOULDER)
 	_pad_axis("move_left", JOY_AXIS_LEFT_X, -1.0)
@@ -85,3 +99,68 @@ static func _pad_axis(action: String, axis: JoyAxis, value: float) -> void:
 	ev.axis = axis
 	ev.axis_value = value
 	InputMap.action_add_event(action, ev)
+
+
+## The first keyboard key on an action (the one prompts show).
+static func primary(action: String) -> int:
+	if not InputMap.has_action(action):
+		return KEY_NONE
+	for ev in InputMap.action_get_events(action):
+		if ev is InputEventKey:
+			return int((ev as InputEventKey).physical_keycode)
+	return KEY_NONE
+
+
+## Which other action has this key first, if any.
+static func action_with(code: int, besides: String) -> String:
+	for a in REBINDABLE:
+		if a != besides and primary(a) == code:
+			return a
+	return ""
+
+
+## Put a key first on an action. It comes off every other action; the action keeps its
+## other usual keys (arrows, Tab...) unless something else now uses them.
+static func rebind(action: String, code: int) -> void:
+	for a in KEYS:
+		if a != action and a != "menu":
+			_drop_key(a, code)
+	for ev in InputMap.action_get_events(action):
+		if ev is InputEventKey:
+			InputMap.action_erase_event(action, ev)
+	_add_key(action, code)
+	var defaults: Array = KEYS.get(action, [])
+	for i in range(1, defaults.size()):
+		var k := int(defaults[i])
+		if k != code and _owner_of(k) == "":
+			_add_key(action, k)
+
+
+## Every key back to how it started.
+static func reset_keys() -> void:
+	for a in KEYS:
+		for ev in InputMap.action_get_events(a):
+			if ev is InputEventKey:
+				InputMap.action_erase_event(a, ev)
+		for k in KEYS[a]:
+			_add_key(a, int(k))
+
+
+static func _add_key(action: String, code: int) -> void:
+	var ev := InputEventKey.new()
+	ev.physical_keycode = code as Key
+	InputMap.action_add_event(action, ev)
+
+
+static func _drop_key(action: String, code: int) -> void:
+	for ev in InputMap.action_get_events(action):
+		if ev is InputEventKey and (ev as InputEventKey).physical_keycode == code:
+			InputMap.action_erase_event(action, ev)
+
+
+static func _owner_of(code: int) -> String:
+	for a in KEYS:
+		for ev in InputMap.action_get_events(a):
+			if ev is InputEventKey and (ev as InputEventKey).physical_keycode == code:
+				return a
+	return ""

@@ -4,6 +4,7 @@ extends CanvasLayer
 ## Marks you, your boat, your hut, every town you've found, and what's still locked.
 
 const UI := preload("res://scripts/ui_kit.gd")
+const Glyphs := preload("res://scripts/input_glyphs.gd")
 const SaveGame := preload("res://scripts/save_game.gd")
 
 const CELL := 32.0  # metres per fog cell
@@ -144,7 +145,7 @@ func setup(w: Node3D, p: CharacterBody3D, h: CanvasLayer, a: Node, sv: Dictionar
 	_marks = Marks.new()
 	_marks.screen = self
 	_frame.add_child(_marks)
-	col.add_child(UI.label("Yellow arrow: you   Blue: your boat   Orange: your hut   Red cross: locked   M or Esc to close", 17, UI.DIM))
+	col.add_child(Glyphs.bind(UI.label("", 17, UI.DIM), "Yellow arrow: you   Blue: your boat   Orange: your hut   Red cross: locked   {map} or {cancel} to close"))
 
 
 func _layout() -> void:
@@ -199,13 +200,17 @@ func mark(at: Vector3) -> void:
 		save.seen = s
 
 
-func open() -> void:
-	_layout()
-	_update_fog()
+func explored_pct() -> int:
 	var n := 0
 	for v in _seen:
 		n += int(v)
-	_count.text = "%d%% explored" % int(round(100.0 * n / maxf(1.0, float(_seen.size()))))
+	return int(round(100.0 * n / maxf(1.0, float(_seen.size()))))
+
+
+func open() -> void:
+	_layout()
+	_update_fog()
+	_count.text = "%d%% explored" % explored_pct()
 	is_open = true
 	visible = true
 	get_tree().paused = true

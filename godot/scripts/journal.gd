@@ -4,6 +4,7 @@ extends CanvasLayer
 ## you've collected. Q / E or left / right turn the page, Esc or J closes.
 
 const UI := preload("res://scripts/ui_kit.gd")
+const Glyphs := preload("res://scripts/input_glyphs.gd")
 const Mystery := preload("res://scripts/mystery.gd")
 
 const TABS := ["The Gull's Eye", "Quests and games", "Letters", "Collection"]
@@ -60,7 +61,7 @@ func setup(sv: Dictionary, s: Node, h: CanvasLayer, a: Node) -> void:
 	_text.add_theme_font_size_override("bold_font_size", 22)
 	_text.add_theme_color_override("default_color", UI.CREAM)
 	col.add_child(_text)
-	col.add_child(UI.label("Q / E turn the page   Up / down scroll   J or Esc close", 18, UI.DIM))
+	col.add_child(Glyphs.bind(UI.label("", 18, UI.DIM), "{rotate_left}/{rotate_right} turn the page   {updown} scroll   {journal} or {cancel} close"))
 
 
 func open() -> void:
@@ -85,16 +86,16 @@ func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("cancel") or event.is_action_pressed("journal"):
 		get_viewport().set_input_as_handled()
 		close()
-	elif event.is_action_pressed("rotate_left") or event.is_action_pressed("move_left"):
+	elif event.is_action_pressed("rotate_left") or (event.is_action_pressed("move_left") or event.is_action_pressed("ui_left")):
 		get_viewport().set_input_as_handled()
 		_show((_tab + TABS.size() - 1) % TABS.size())
-	elif event.is_action_pressed("rotate_right") or event.is_action_pressed("move_right"):
+	elif event.is_action_pressed("rotate_right") or (event.is_action_pressed("move_right") or event.is_action_pressed("ui_right")):
 		get_viewport().set_input_as_handled()
 		_show((_tab + 1) % TABS.size())
-	elif event.is_action_pressed("move_down"):
+	elif (event.is_action_pressed("move_down") or event.is_action_pressed("ui_down")):
 		get_viewport().set_input_as_handled()
 		_text.get_v_scroll_bar().value += 60.0
-	elif event.is_action_pressed("move_up"):
+	elif (event.is_action_pressed("move_up") or event.is_action_pressed("ui_up")):
 		get_viewport().set_input_as_handled()
 		_text.get_v_scroll_bar().value -= 60.0
 

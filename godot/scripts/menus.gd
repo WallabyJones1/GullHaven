@@ -1,41 +1,40 @@
 extends CanvasLayer
-## The title screen and the pause menu, plus settings that belong to this computer (not the
-## save): music and effects volume, fullscreen and graphics quality.
+## The title screen and the game menu, plus settings that belong to this computer (not the
+## save): music and effects volume, fullscreen, graphics quality and your keys.
 ## The title shows over the live world when the game starts: Continue, New game, Quit.
-## Esc (or B) when nothing else wants it opens the pause menu: Resume, Settings, Controls,
-## Save and quit.
+## Esc (or Start) opens the game menu: Resume, then Fisher, Bag, Logbook, Journal, Map,
+## Controls, Settings, Save and quit. Screens opened from it come back to it when closed.
 
 const UI := preload("res://scripts/ui_kit.gd")
 const SaveGame := preload("res://scripts/save_game.gd")
 const Audio := preload("res://scripts/audio.gd")
+const InputSetup := preload("res://scripts/input_setup.gd")
+const Glyphs := preload("res://scripts/input_glyphs.gd")
 
 const SETTINGS := "user://settings.cfg"
-const CONTROLS := """[b]Walk[/b]  WASD or arrows (left stick)
-[b]Turn the camera[/b]  Q / E, or drag with the right mouse button (right stick, bumpers)
-[b]Zoom[/b]  mouse wheel or - / = (right stick)
-[b]Cast, reel, talk, open doors, board, dig[/b]  Space, F or left click (A)
-[b]Reel in, step ashore, back[/b]  Esc (B)
-[b]Change bait[/b]  R (Y)
-[b]Logbook[/b]  L or Tab (Back)
-[b]Journal[/b]  J (click the left stick)
-[b]Map[/b]  M (Start)
-[b]Arrange your hut[/b]  B inside it (X)
-[b]Skip an hour[/b]  T
-[b]Hide the HUD for photos[/b]  P
-[b]Graphics quality[/b]  F2"""
+const PAD_CONTROLS := """[b]Walk / steer[/b]  left stick      [b]Camera[/b]  right stick, LB / RB
+[b]Cast, reel, talk, use[/b]  A      [b]Back, reel in, step ashore[/b]  B
+[b]Change bait[/b]  Y      [b]Arrange your hut[/b]  X
+[b]Game menu[/b]  Start      [b]Map[/b]  Back / View
+[b]Journal[/b]  D-pad up (or click the left stick)      [b]Logbook[/b]  D-pad left      [b]Bag[/b]  D-pad right"""
 
 var main: Node
 var hud: CanvasLayer
 var audio: Node
 var player: CharacterBody3D
 var cam: Camera3D
-var mode := ""  # "title", "pause" or ""
+var mode := ""  # "title", "pause", "screen" (something opened from the menu) or ""
 var settings := {"music": 0.8, "effects": 1.0, "fullscreen": false, "quality": true}
 var _root: Control
 var _box: VBoxContainer
 var _title: Label
 var _sub: Label
 var _orbit := false
+var _screen: Node = null  # opened from the menu: come back when it closes
+var _page := ""  # which page of the game menu is showing
+var _waiting := ""  # the action waiting for a new key
+var _waiting_btn: Button
+var keys := {}  # action -> physical keycode, only the ones you've changed
 
 
 func setup(m: Node, h: CanvasLayer, a: Node, p: CharacterBody3D, c: Camera3D) -> void:
@@ -137,7 +136,7 @@ func _new_game() -> void:
 	get_tree().reload_current_scene()
 
 
-# --- the pause menu -----------------------------------------------------------------------
+# --- the game menu -----------------------------------------------------------------------
 
 func open_pause() -> void:
 	mode = "pause"
@@ -148,12 +147,25 @@ func open_pause() -> void:
 
 
 func _pause_page() -> void:
+	mode = "pause"
+	_page = "hub"
+	_waiting = ""
 	_clear()
-	_sub.text = "Paused"
+	_sub.text = str(main.status_line()) if main.has_method("status_line") else "Paused"
 	_button("Resume", close_pause)
-	_button("Settings", _settings_page.bind("pause"))
-	_button("Controls", _controls_page)
-	_button("Save and quit", _quit)
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 8)
+	grid.add_theme_constant_override("v_separation", 8)
+	_box.add_child(grid)
+	for pair in [["Fisher", _fisher_page], ["Bag", _open_screen.bind("bag")], ["Logbook", _open_screen.bind("logbook")],
+			["Journal", _open_screen.bind("journal")], ["Map", _open_screen.bind("map_screen")], ["Controls", _controls_page],
+			["Settings", _settings_page.bind("pause")], ["Save and quit", _quit]]:
+		var b := UI.button(str(pair[0]), 24)
+		b.alignment = HORIZONTAL_ALIGNMENT_CENTER
+		b.custom_minimum_size = Vector2(250.0, 0.0)
+		b.pressed.connect(_press.bind(pair[1]))
+		grid.add_child(b)
 	_focus_first()
 	audio.play("click")
 
@@ -165,28 +177,146 @@ func close_pause() -> void:
 	hud.block_input(0.3)
 
 
+## Open the bag, logbook, journal or map on top of the game, then come back here.
+func _open_screen(which: String) -> void:
+	var screen: Node = main.get(which)
+	if screen == null:
+		return
+	mode = "screen"
+	visible = false
+	_screen = screen
+	screen.call("open")
+
+
+func _fisher_page() -> void:
+	_clear()
+	_page = "fisher"
+	_sub.text = "Fisher"
+	_box.add_child(_rich(str(main.fisher_text()) if main.has_method("fisher_text") else "", 560.0))
+	_button("Back", _pause_page)
+	_focus_first()
+
+
 func _controls_page() -> void:
 	_clear()
+	_page = "controls"
+	_waiting = ""
 	_sub.text = "Controls"
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(640.0, minf(520.0, get_viewport().get_visible_rect().size.y * 0.55))
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.follow_focus = true
+	_box.add_child(scroll)
+	var col := VBoxContainer.new()
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	col.add_theme_constant_override("separation", 6)
+	scroll.add_child(col)
+	col.add_child(UI.label("Keyboard (choose one to change it)", 20, UI.GOLD, true))
+	for action in InputSetup.REBINDABLE:
+		var row := HBoxContainer.new()
+		var l := UI.label(str(InputSetup.NAMES.get(action, action)), 20, UI.CREAM, true)
+		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(l)
+		var b := UI.button(_key_name(action), 20)
+		b.custom_minimum_size = Vector2(190.0, 0.0)
+		b.alignment = HORIZONTAL_ALIGNMENT_CENTER
+		b.pressed.connect(_start_rebind.bind(action, b))
+		row.add_child(b)
+		col.add_child(row)
+	col.add_child(_rich("[b]Always[/b]  Esc: back, reel in, step ashore, game menu.   Left click: cast and use.   " +
+		"Mouse wheel: zoom.   Right mouse drag: turn the camera.   F2: graphics quality.", 600.0))
+	col.add_child(UI.label("Gamepad", 20, UI.GOLD, true))
+	col.add_child(_rich(PAD_CONTROLS, 600.0))
+	_button("Put the keys back how they were", _reset_keys)
+	_button("Back", _pause_page)
+	_focus_first()
+
+
+func _key_name(action: String) -> String:
+	var was := Glyphs.device
+	Glyphs.device = "keyboard"
+	var k := Glyphs.key(action)
+	Glyphs.device = was
+	return k
+
+
+func _start_rebind(action: String, b: Button) -> void:
+	_waiting = action
+	_waiting_btn = b
+	b.text = "Press a key..."
+	_sub.text = "Press the new key for %s (Esc to keep it)" % str(InputSetup.NAMES.get(action, action)).to_lower()
+
+
+func _finish_rebind(code: int) -> void:
+	var action := _waiting
+	_waiting = ""
+	if code != KEY_NONE and code != KEY_ESCAPE:
+		var old := InputSetup.primary(action)
+		var other := InputSetup.action_with(code, action)
+		InputSetup.rebind(action, code)
+		keys[action] = int(code)
+		if other != "" and old != KEY_NONE:
+			InputSetup.rebind(other, old)
+			keys[other] = int(old)
+			hud.toast("%s moved to %s" % [str(InputSetup.NAMES.get(other, other)), _key_name(other)])
+		_save_settings()
+		Glyphs.refresh()
+		audio.play("pin", -4.0)
+	var focus_action := action
+	_controls_page()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_focus_rebind(focus_action)
+
+
+func _focus_rebind(action: String) -> void:
+	var kn := _key_name(action)
+	var label_text := str(InputSetup.NAMES.get(action, action))
+	for b in _find_buttons(_box):
+		var row := b.get_parent()
+		if row is HBoxContainer and row.get_child_count() == 2 and row.get_child(0) is Label:
+			if (row.get_child(0) as Label).text == label_text and b.text == kn:
+				b.grab_focus()
+				return
+
+
+func _find_buttons(n: Node) -> Array[Button]:
+	var out: Array[Button] = []
+	for c in n.get_children():
+		if c is Button:
+			out.append(c)
+		out.append_array(_find_buttons(c))
+	return out
+
+
+func _reset_keys() -> void:
+	InputSetup.reset_keys()
+	keys.clear()
+	_save_settings()
+	Glyphs.refresh()
+	hud.toast("Keys are back to how they started.")
+	_controls_page()
+
+
+func _rich(text: String, width: float) -> RichTextLabel:
 	var t := RichTextLabel.new()
 	t.bbcode_enabled = true
 	t.fit_content = true
-	t.custom_minimum_size = Vector2(620.0, 0.0)
+	t.custom_minimum_size = Vector2(width, 0.0)
 	t.add_theme_font_override("normal_font", UI.font(false))
 	t.add_theme_font_override("bold_font", UI.font(true))
 	t.add_theme_font_size_override("normal_font_size", 19)
 	t.add_theme_font_size_override("bold_font_size", 19)
 	t.add_theme_color_override("default_color", UI.CREAM)
-	t.text = CONTROLS
-	_box.add_child(t)
-	_button("Back", _pause_page)
-	_focus_first()
+	t.text = text
+	return t
 
 
 # --- settings -------------------------------------------------------------------------------
 
 func _settings_page(from: String) -> void:
 	_clear()
+	_page = "settings"
 	_sub.text = "Settings"
 	_slider("Music", "music")
 	_slider("Sound effects", "effects")
@@ -255,12 +385,22 @@ func _load_settings() -> void:
 		return
 	for k in settings:
 		settings[k] = cfg.get_value("settings", k, settings[k])
+	if cfg.has_section("keys"):
+		for action in cfg.get_section_keys("keys"):
+			if action in InputSetup.REBINDABLE:
+				var code := int(cfg.get_value("keys", action, 0))
+				if code != KEY_NONE and code != KEY_ESCAPE:
+					keys[action] = code
+		for action in keys:
+			InputSetup.rebind(action, int(keys[action]))
 
 
 func _save_settings() -> void:
 	var cfg := ConfigFile.new()
 	for k in settings:
 		cfg.set_value("settings", k, settings[k])
+	for action in keys:
+		cfg.set_value("keys", action, int(keys[action]))
 	cfg.save(SETTINGS)
 
 
@@ -306,12 +446,32 @@ func _quit() -> void:
 func _process(delta: float) -> void:
 	if _orbit and cam:
 		cam.set_yaw(cam.yaw + delta * 0.06)
+	if _screen != null and mode == "screen" and not bool(_screen.get("is_open")):
+		_screen = null
+		call_deferred("_back_from_screen")
+
+
+func _back_from_screen() -> void:
+	visible = true
+	get_tree().paused = true
+	_pause_page()
 
 
 func _input(event: InputEvent) -> void:
-	if mode == "pause" and event.is_action_pressed("cancel"):
+	if _waiting != "":
+		if event is InputEventKey and event.is_pressed() and not event.is_echo():
+			get_viewport().set_input_as_handled()
+			_finish_rebind((event as InputEventKey).physical_keycode)
+		elif event is InputEventJoypadButton and event.is_pressed():
+			get_viewport().set_input_as_handled()
+			_finish_rebind(KEY_NONE)
+		return
+	if mode == "pause" and (event.is_action_pressed("cancel") or event.is_action_pressed("menu")):
 		get_viewport().set_input_as_handled()
-		close_pause()
+		if _page == "hub":
+			close_pause()
+		else:
+			_pause_page()
 	elif mode == "title" and event.is_action_pressed("cancel"):
 		get_viewport().set_input_as_handled()
 		show_title()

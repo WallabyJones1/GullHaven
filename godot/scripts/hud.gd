@@ -4,6 +4,7 @@ extends CanvasLayer
 ## the fight meters, the catch card, toasts and the banner when you reach a new place.
 
 const UI := preload("res://scripts/ui_kit.gd")
+const Glyphs := preload("res://scripts/input_glyphs.gd")
 const DayNight := preload("res://scripts/day_night.gd")
 
 const SKY_NAMES := {"calm": "Calm", "windy": "Windy", "rain": "Rain", "fog": "Fog", "storm": "Storm"}
@@ -43,7 +44,12 @@ var log_label: Label
 var requests_panel: PanelContainer
 var requests_list: VBoxContainer
 var bait_label: Label
-var prompt_label: Label
+var prompt_label: RichTextLabel
+var controls_label: RichTextLabel
+var _prompt_raw := ""
+var _controls_raw: Array = []
+var _glyph_device := ""
+var _controls_device := ""
 var toast_panel: PanelContainer
 var toast_label: Label
 var power_box: Control
@@ -145,7 +151,9 @@ func setup(s: Node, sv: Dictionary) -> void:
 	bait_label = UI.label("Bait: Bread dough", 20, UI.CREAM)
 	bait_panel.add_child(bait_label)
 	bottom_left.add_child(bait_panel)
-	bottom_left.add_child(UI.label("Space cast, talk   Q/E turn camera   Wheel zoom   R bait   L Logbook   J Journal   M map   Esc menu", 16, UI.DIM))
+	controls_label = _rich(17)
+	controls_label.custom_minimum_size = Vector2(900.0, 0.0)
+	bottom_left.add_child(controls_label)
 
 	# Top centre: toasts.
 	var toast_row := _centered(root, Control.PRESET_TOP_WIDE, 20.0, 70.0)
@@ -170,7 +178,8 @@ func setup(s: Node, sv: Dictionary) -> void:
 
 	# Bottom centre: the context prompt.
 	var prompt_row := _centered(root, Control.PRESET_BOTTOM_WIDE, -70.0, -30.0)
-	prompt_label = UI.label("", 24, UI.CREAM)
+	prompt_label = _rich(24)
+	prompt_label.custom_minimum_size = Vector2(1000.0, 0.0)
 	prompt_row.add_child(prompt_label)
 
 	# Cast power.
@@ -224,7 +233,7 @@ func setup(s: Node, sv: Dictionary) -> void:
 	card_note = UI.label("", 20, UI.GOOD)
 	card_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	card_note.custom_minimum_size = Vector2(420.0, 0.0)
-	var hint := UI.label("Press Space to continue", 18, UI.DIM)
+	var hint := Glyphs.bind(UI.label("", 18, UI.DIM), "{action} to continue")
 	for c in [card_title, card_name, card_rarity, card_icon, card_size, card_tier, card_reward, card_note, hint]:
 		ccol.add_child(c)
 		if c is Label:
@@ -364,12 +373,44 @@ func refresh_bait() -> void:
 
 
 func set_prompt(text: String) -> void:
-	if prompt_label.text != text:
-		prompt_label.text = text
+	if _prompt_raw == text and _glyph_device == Glyphs.device:
+		return
+	_prompt_raw = text
+	_glyph_device = Glyphs.device
+	prompt_label.text = "[center]%s[/center]" % Glyphs.fmt(text) if text != "" else ""
+
+
+## The strip of what you can do right now: [[action, "what it does"], ...].
+func set_controls(pairs: Array) -> void:
+	if pairs == _controls_raw and _controls_device == Glyphs.device:
+		return
+	_controls_raw = pairs
+	_controls_device = Glyphs.device
+	var parts: Array[String] = []
+	for p in pairs:
+		parts.append("%s [color=#c8ccd8]%s[/color]" % [Glyphs.cap(str(p[0])), str(p[1])])
+	controls_label.text = "   ".join(parts)
+
+
+func _rich(size: int) -> RichTextLabel:
+	var r := RichTextLabel.new()
+	r.bbcode_enabled = true
+	r.fit_content = true
+	r.scroll_active = false
+	r.autowrap_mode = TextServer.AUTOWRAP_OFF
+	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	r.add_theme_font_override("normal_font", UI.font(false))
+	r.add_theme_font_override("bold_font", UI.font(true))
+	r.add_theme_font_size_override("normal_font_size", size)
+	r.add_theme_font_size_override("bold_font_size", size)
+	r.add_theme_color_override("default_color", UI.CREAM)
+	r.add_theme_constant_override("outline_size", 6)
+	r.add_theme_color_override("font_outline_color", Color(0.04, 0.05, 0.1))
+	return r
 
 
 func toast(text: String) -> void:
-	_toasts.append(text)
+	_toasts.append(Glyphs.plain(text))
 	if _toast_t <= 0.0:
 		_next_toast()
 
@@ -396,7 +437,7 @@ func show_fight(tension: float, progress: float, text: String, urgent: bool) -> 
 		tc = Color(1.0, 0.8, 0.3)
 	tension_bar.set_value(tension, tc)
 	reel_bar.set_value(progress, Color(1.0, 0.45, 0.4) if progress < 0.15 else UI.SKY)
-	fight_label.text = text
+	fight_label.text = Glyphs.plain(text)
 	var flash := urgent and (Time.get_ticks_msec() / 150) % 2 == 0
 	fight_label.add_theme_color_override("font_color", UI.GOLD if flash else UI.CREAM)
 

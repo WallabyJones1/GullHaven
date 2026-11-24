@@ -12,6 +12,7 @@ extends Node3D
 
 const SaveGame := preload("res://scripts/save_game.gd")
 const UI := preload("res://scripts/ui_kit.gd")
+const Glyphs := preload("res://scripts/input_glyphs.gd")
 
 const RANGE := 1.9
 # where things are (x, z on the map)
@@ -600,7 +601,7 @@ func _build_chest_ui() -> void:
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		row.add_child(l)
 		_dials.append(l)
-	var hint := UI.label("Left/right: choose a dial   Up/down: turn it   Space: try the lock   Esc: leave it", 18, UI.DIM)
+	var hint := Glyphs.bind(UI.label("", 18, UI.DIM), "{leftright} choose a dial   {updown} turn it   {action} try the lock   {cancel} leave it")
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(hint)
 
@@ -633,16 +634,16 @@ func _chest_input() -> void:
 	if Input.is_action_just_pressed("cancel"):
 		_close_dials()
 		return
-	if Input.is_action_just_pressed("move_left"):
+	if (Input.is_action_just_pressed("move_left") or Input.is_action_just_pressed("ui_left")):
 		_dial_i = (_dial_i + 2) % 3
 		audio.play("click", -8.0)
-	if Input.is_action_just_pressed("move_right"):
+	if (Input.is_action_just_pressed("move_right") or Input.is_action_just_pressed("ui_right")):
 		_dial_i = (_dial_i + 1) % 3
 		audio.play("click", -8.0)
-	if Input.is_action_just_pressed("move_up"):
+	if (Input.is_action_just_pressed("move_up") or Input.is_action_just_pressed("ui_up")):
 		_dial[_dial_i] = (int(_dial[_dial_i]) + 1) % 10
 		audio.play("crank", -12.0, 1.6)
-	if Input.is_action_just_pressed("move_down"):
+	if (Input.is_action_just_pressed("move_down") or Input.is_action_just_pressed("ui_down")):
 		_dial[_dial_i] = (int(_dial[_dial_i]) + 9) % 10
 		audio.play("crank", -12.0, 1.6)
 	if Input.is_action_just_pressed("action"):

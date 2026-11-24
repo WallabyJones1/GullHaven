@@ -34,6 +34,9 @@ const Minigames := preload("res://scripts/minigames.gd")
 const Journal := preload("res://scripts/journal.gd")
 const Ambient := preload("res://scripts/ambient.gd")
 const Menus := preload("res://scripts/menus.gd")
+const Glyphs := preload("res://scripts/input_glyphs.gd")
+const Dialogue := preload("res://scripts/dialogue.gd")
+const Bag := preload("res://scripts/bag.gd")
 
 var env: Environment
 var world_env: WorldEnvironment
@@ -66,6 +69,8 @@ var minigames: Node3D
 var journal: CanvasLayer
 var ambient: Node3D
 var menus: CanvasLayer
+var dialogue: CanvasLayer
+var bag: CanvasLayer
 var _first_time := false
 var skip_save := false  # starting a new game: don't write the old save back on the way out
 var save: Dictionary
@@ -76,6 +81,9 @@ var _area_t := 0.0
 
 func _ready() -> void:
 	InputSetup.setup()
+	var glyphs := Glyphs.new()
+	glyphs.name = "Glyphs"
+	add_child(glyphs)
 	save = SaveGame.load_save()
 	sea = Sea.new()
 	sea.name = "Sea"
@@ -121,6 +129,11 @@ func _ready() -> void:
 	add_child(hud)
 	hud.setup(sea, save)
 
+	dialogue = Dialogue.new()
+	dialogue.name = "Dialogue"
+	add_child(dialogue)
+	dialogue.setup(hud, audio, player)
+
 	shop = Shop.new()
 	shop.name = "Shop"
 	add_child(shop)
@@ -135,6 +148,7 @@ func _ready() -> void:
 	town.name = "Town"
 	add_child(town)
 	town.setup(harbour, player, hud, audio, sea, save, shop)
+	town.dialogue = dialogue
 
 	day_night = DayNight.new()
 	day_night.name = "DayNight"
@@ -235,6 +249,11 @@ func _ready() -> void:
 	journal.minigames = minigames
 	journal.companion = companion
 
+	bag = Bag.new()
+	bag.name = "Bag"
+	add_child(bag)
+	bag.setup(save, sea, hud, audio)
+
 	ambient = Ambient.new()
 	ambient.name = "Ambient"
 	add_child(ambient)
@@ -258,6 +277,7 @@ func _process(delta: float) -> void:
 	if _area_t <= 0.0:
 		_area_t = 0.5
 		_update_area(false)
+	_update_controls()
 	if Input.is_action_just_pressed("time_skip"):
 		sea.skip_hours(1.0)
 		save.clock_offset = sea.offset
@@ -274,8 +294,12 @@ func _process(delta: float) -> void:
 		map_screen.open()
 	if Input.is_action_just_pressed("journal") and not hud.input_blocked() and fishing.state == 0:
 		journal.open()
-	if Input.is_action_just_pressed("cancel") and not hud.input_blocked() and fishing.state == 0 and menus.mode == "":
-		if not (boats.aboard and boats.can_land()) and not player.swimming:
+	if Input.is_action_just_pressed("bag") and not hud.input_blocked() and fishing.state == 0:
+		bag.open()
+	if Input.is_action_just_pressed("menu") and not hud.input_blocked() and fishing.state == 0 and menus.mode == "":
+		# Esc on a keyboard is also "back": aboard by a jetty it steps you ashore instead
+		var esc_lands := Input.is_action_just_pressed("cancel") and boats.aboard and boats.can_land()
+		if not esc_lands and not player.swimming:
 			menus.open_pause()
 	# Hear a feeding frenzy bubbling as you get close to it.
 	var near := 0.0
@@ -311,14 +335,106 @@ func save_now() -> void:
 	SaveGame.write(save)
 
 
+## The strip of what you can do right now, at the bottom of the screen.
+func _update_controls() -> void:
+	if menus.mode != "" or hud.modal:
+		hud.set_controls([])
+		return
+	var pairs: Array = []
+	match int(fishing.state):
+		0:
+			if boats.aboard:
+				pairs = [["move", "Steer"], ["action", "Cast"], ["bait", "Bait"]]
+				if boats.can_land():
+					pairs.append(["cancel", "Step ashore"])
+				pairs.append_array([["map", "Map"], ["menu", "Menu"]])
+			elif player.swimming:
+				pairs = [["move", "Swim to shore"], ["menu", "Menu"]]
+			elif interiors.is_inside():
+				pairs = [["move", "Walk"], ["action", "Use"], ["bag", "Bag"], ["journal", "Journal"], ["menu", "Menu"]]
+				if interiors.in_hut():
+					pairs.insert(2, ["build", "Arrange"])
+			else:
+				pairs = [["move", "Walk"], ["camera", "Camera"], ["action", "Cast / use"], ["bait", "Bait"], ["bag", "Bag"],
+					["journal", "Journal"], ["map", "Map"], ["menu", "Menu"]]
+		1:
+			pairs = [["action", "Let go to cast"]]
+		2, 3:
+			pairs = [["action", "Strike when it bites"], ["cancel", "Reel in"]]
+		4:
+			pairs = [["action", "Strike!"]]
+		5:
+			pairs = [["action", "Hold to reel"], ["move", "Steer against runs"]]
+		6:
+			pairs = [["action", "Continue"]]
+	hud.set_controls(pairs)
+
+
+## The line under the game menu's heading: day, time, where you are, your shells.
+func status_line() -> String:
+	var e: Dictionary = sea.env
+	var hour := float(e.get("hour", 9.0))
+	var h := int(hour)
+	var h12 := 12 if h % 12 == 0 else h % 12
+	var place := _area if _area != "" else "Out on the water"
+	if interiors.is_inside():
+		place = "Indoors"
+	var day := int(floor(float(e.get("t", 0.0)) / 1440.0)) % 7
+	var days := ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+	return "%s, %d:%02d %s   %s   %s   %d shells" % [days[day], h12, int((hour - h) * 60.0), "am" if h < 12 else "pm",
+		str(e.get("season", "")).capitalize(), place, int(save.shells)]
+
+
+## The Fisher page of the game menu: how you're getting on.
+func fisher_text() -> String:
+	var out := ""
+	var found: Dictionary = save.log
+	var species := 0
+	var biggest := ""
+	var big_cm := 0.0
+	for id in found:
+		var rec: Dictionary = found[id]
+		if int(rec.get("count", 0)) > 0:
+			species += 1
+		var e: Dictionary = sea.by_id.get(id, {})
+		if float(rec.get("best", 0.0)) > big_cm and str(e.get("cat", "")) in ["fish", "legend"]:
+			big_cm = float(rec.get("best", 0.0))
+			biggest = str(e.get("n", id))
+	var total := 0
+	for e: Dictionary in sea.items:
+		var cp: Dictionary = e.get("cp", {})
+		var flags: Array = cp.get("flags", []) if cp.get("flags") is Array else []
+		if not flags.has("quest"):
+			total += 1
+	var stats: Dictionary = save.stats
+	out += "[color=#ffd24d][b]The catch[/b][/color]\n"
+	out += "Logbook: %d of %d found\n" % [species, total]
+	out += "Fish landed: %d   Junk hauled: %d   Finds dug up: %d\n" % [int(stats.get("catches", 0)), int(stats.get("junk", 0)), int(stats.get("finds", 0))]
+	out += "Best streak: %d\n" % int(save.best_streak)
+	if biggest != "":
+		out += "Biggest fish: %s, %.1f cm\n" % [biggest, big_cm]
+	out += "\n[color=#ffd24d][b]Around the coast[/b][/color]\n"
+	var visited: Dictionary = save.visited
+	out += "Places found: %d   Map explored: %d%%\n" % [visited.size(), map_screen.explored_pct()]
+	var thanks: Dictionary = save.thanks
+	var helped := 0
+	for who in thanks:
+		helped += int(thanks[who])
+	out += "Requests done for townsfolk: %d\n" % helped
+	out += "Boats owned: %d   Shells: %d\n" % [(save.boats as Array).size(), int(save.shells)]
+	if str(save.companion) != "":
+		out += "Your cat: %s\n" % str(companion.cat_name(str(save.companion)))
+	return out
+
+
 ## After the title screen: a few pointers the first time you play.
 func welcome() -> void:
 	if not _first_time:
 		return
 	_first_time = false
-	hud.toast("Welcome to Gullhaven! Walk with WASD, turn the camera with Q and E. Hold Space to cast.")
+	hud.toast("Welcome to Gullhaven! Walk with {move}, turn the camera with {camera}. Hold {action} to cast.")
 	hud.toast("Hale's Tackle on the quay sells bait and better gear. Townsfolk have requests.")
-	hud.toast("They say the old lighthouse keeper left something behind. Your Journal (J) keeps track.")
+	hud.toast("They say the old lighthouse keeper left something behind. Your Journal ({journal}) keeps track.")
 
 
 func _on_gate_blocked(text: String) -> void:

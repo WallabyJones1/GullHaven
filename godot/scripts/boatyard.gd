@@ -4,6 +4,7 @@ extends CanvasLayer
 ## ones come from Lantern Key. Up/down picks, Space buys, left/right changes tab, Esc leaves.
 
 const UI := preload("res://scripts/ui_kit.gd")
+const Glyphs := preload("res://scripts/input_glyphs.gd")
 const SaveGame := preload("res://scripts/save_game.gd")
 const Boats := preload("res://scripts/boats.gd")
 
@@ -85,7 +86,7 @@ func setup(sv: Dictionary, a: Node, h: CanvasLayer, b: Node3D, p: CharacterBody3
 	_message = UI.label("", 20, UI.GOOD)
 	_message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	col.add_child(_message)
-	col.add_child(UI.label("Up/down choose   Space buy   Left/right change tab   Esc leave", 18, UI.DIM))
+	col.add_child(Glyphs.bind(UI.label("", 18, UI.DIM), "{updown} choose   {action} buy   {leftright} change tab   {cancel} leave"))
 
 
 func open(keeper: String, title: String, shop_kind: String) -> void:
@@ -114,10 +115,10 @@ func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("cancel"):
 		get_viewport().set_input_as_handled()
 		close()
-	elif event.is_action_pressed("move_left"):
+	elif (event.is_action_pressed("move_left") or event.is_action_pressed("ui_left")):
 		get_viewport().set_input_as_handled()
 		_show_tab((_tab + TABS.size() - 1) % TABS.size())
-	elif event.is_action_pressed("move_right"):
+	elif (event.is_action_pressed("move_right") or event.is_action_pressed("ui_right")):
 		get_viewport().set_input_as_handled()
 		_show_tab((_tab + 1) % TABS.size())
 

@@ -64,6 +64,7 @@ var shop: CanvasLayer
 var interiors: Node  # doors, and things to use inside
 var boats: Node3D  # your boat, to board
 var services := {}  # shop kind -> Callable(keeper: String, title: String, kind: String)
+var dialogue: CanvasLayer  # the conversation box (main sets it)
 var talk_hooks: Array[Callable] = []  # (who) -> true if they had something to say about a quest
 var providers: Array[Node] = []  # other things to use: each has near(pos, facing) and use(it)
 var companion: Node3D  # cat taming
@@ -304,12 +305,57 @@ func _closed_line(kind: String) -> String:
 	return "Welcome!"
 
 
-## Someone says something, in a speech bubble over their head.
+## Someone says something to you: a conversation in the dialogue box, with their portrait.
 func say(who: String, line: String) -> void:
 	_say(who, line)
 
 
+## A longer conversation: several lines, maybe a question at the end. done(choice) runs
+## when it's over (-1 if there was no question).
+func talk(who: String, lines: Array, choices: Array = [], done: Variant = null) -> void:
+	if dialogue == null:
+		bubble(who, str(lines[lines.size() - 1]))
+		if done is Callable:
+			(done as Callable).call(-1 if choices.is_empty() else 0)
+		return
+	harbour.folk_face(who, player.global_position)
+	var tex: Texture2D = null
+	if harbour.folk.has(who):
+		var node: Sprite3D = harbour.folk[who].node
+		tex = node.texture
+	dialogue.say(who, lines, tex, choices, done)
+
+
 func _say(who: String, line: String) -> void:
+	if dialogue == null:
+		bubble(who, line)
+		return
+	talk(who, _pages(line))
+
+
+## Long speeches split into pages at the ends of sentences.
+func _pages(line: String) -> Array:
+	if line.length() <= 170:
+		return [line]
+	var out: Array = []
+	var cur := ""
+	var re := RegEx.create_from_string("[^.!?]*[.!?]+[\"')]*\\s*|[^.!?]+$")
+	for m in re.search_all(line):
+		var bit := m.get_string().strip_edges()
+		if bit == "":
+			continue
+		if cur != "" and (cur + " " + bit).length() > 170:
+			out.append(cur)
+			cur = bit
+		else:
+			cur = bit if cur == "" else cur + " " + bit
+	if cur != "":
+		out.append(cur)
+	return out
+
+
+## A line in a speech bubble over someone's head (chatter that doesn't stop you).
+func bubble(who: String, line: String) -> void:
 	if not _bubbles.has(who):
 		var b := Label3D.new()
 		b.font = _font

@@ -5,6 +5,7 @@ extends CanvasLayer
 ## left/right changes tab, Esc leaves. The game pauses while you browse.
 
 const UI := preload("res://scripts/ui_kit.gd")
+const Glyphs := preload("res://scripts/input_glyphs.gd")
 const SaveGame := preload("res://scripts/save_game.gd")
 
 const TAB_NAMES := {"rod": "Rods", "reel": "Reels", "line": "Lines", "bait": "Bait"}
@@ -104,7 +105,7 @@ func setup(s: Node, sv: Dictionary, a: Node, h: CanvasLayer) -> void:
 
 	_message = UI.label("", 20, UI.GOOD)
 	col.add_child(_message)
-	col.add_child(UI.label("Up/down choose   Space buy   Left/right change tab   Esc leave", 18, UI.DIM))
+	col.add_child(Glyphs.bind(UI.label("", 18, UI.DIM), "{updown} choose   {action} buy   {leftright} change tab   {cancel} leave"))
 
 
 ## Open a shop: who's behind the counter, the sign over the door, and what kind of shop.
@@ -157,10 +158,10 @@ func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("cancel"):
 		get_viewport().set_input_as_handled()
 		close()
-	elif event.is_action_pressed("move_left"):
+	elif (event.is_action_pressed("move_left") or event.is_action_pressed("ui_left")):
 		get_viewport().set_input_as_handled()
 		_show_tab((_tab + _tabs_here.size() - 1) % _tabs_here.size())
-	elif event.is_action_pressed("move_right"):
+	elif (event.is_action_pressed("move_right") or event.is_action_pressed("ui_right")):
 		get_viewport().set_input_as_handled()
 		_show_tab((_tab + 1) % _tabs_here.size())
 

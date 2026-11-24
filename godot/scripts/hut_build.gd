@@ -8,6 +8,7 @@ extends Node3D
 const Furniture := preload("res://scripts/furniture.gd")
 const SaveGame := preload("res://scripts/save_game.gd")
 const UI := preload("res://scripts/ui_kit.gd")
+const Glyphs := preload("res://scripts/input_glyphs.gd")
 
 const REPEAT := 0.13
 
@@ -66,7 +67,7 @@ func setup(i: Node3D, p: CharacterBody3D, c: Camera3D, h: CanvasLayer, a: Node, 
 	_bar_label = UI.label("", 26, UI.GOLD, true)
 	_bar_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(_bar_label)
-	_hint = UI.label("Move: shift it   Q/E: choose   R: turn   Space: put down / pick up   Esc: done", 18, UI.DIM)
+	_hint = Glyphs.bind(UI.label("", 18, UI.DIM), "{move} shift it   {rotate_left}/{rotate_right} choose   {bait} turn   {action} put down / pick up   {cancel} done")
 	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(_hint)
 

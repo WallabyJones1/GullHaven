@@ -10,6 +10,7 @@ extends Node3D
 
 const SaveGame := preload("res://scripts/save_game.gd")
 const UI := preload("res://scripts/ui_kit.gd")
+const Glyphs := preload("res://scripts/input_glyphs.gd")
 
 const SKIP_SPOT := Vector2(433.0, 690.0)
 const RACE_START := Vector2(492.0, 577.0)
@@ -174,7 +175,7 @@ func start_darts() -> void:
 func _open(title: String, info: String) -> void:
 	_layer.visible = true
 	_title.text = title
-	_info.text = info
+	_info.text = Glyphs.plain(info)
 	hud.modal = true
 	player.can_move = false
 	_t = 0.0
@@ -277,7 +278,7 @@ func _bounce() -> void:
 	_phase = "ring"
 	_gauge.mode = "ring"
 	_t = 0.0
-	_info.text = "%d skip%s! Space when the ring meets the circle." % [_skips, "" if _skips == 1 else "s"]
+	_info.text = Glyphs.plain("%d skip%s! {action} when the ring meets the circle." % [_skips, "" if _skips == 1 else "s"])
 	if not world.is_water(_stone_to.x, _stone_to.z):
 		_skip_end("It skipped right up onto the sand! %s" % _skip_count_text())
 
