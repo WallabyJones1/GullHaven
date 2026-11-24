@@ -107,6 +107,7 @@ var _jump_t := 0.0
 var _tip := Vector3.ZERO
 var _rod_dir := Vector3.UP
 var _cast_dir := Vector3.BACK
+var _nose := false  # the bait landed right on a fish's nose
 
 
 func setup(p: CharacterBody3D, s: Node3D, h: CanvasLayer, c: Camera3D, hb: Node3D, sv: Dictionary, se: Node, a: Node, t: Node) -> void:
@@ -292,7 +293,11 @@ func _casting(delta: float) -> void:
 		audio.play("plop", -2.0, 1.0, 0.1)
 		zone = harbour.zone_at(_cast_to.x, _cast_to.z)
 		_use_bait()
-		school.lure_landed(Vector2(_cast_to.x, _cast_to.z))
+		var gap: float = school.lure_landed(Vector2(_cast_to.x, _cast_to.z))
+		_nose = gap < 1.6
+		if _nose:
+			_float_text("Right on its nose!", _cast_to + Vector3(0.0, 1.2, 0.0))
+			audio.play("good", -6.0)
 		var info: Dictionary = sea.zones.get(zone, {})
 		var where := str(info.get("n", "the water"))
 		if zone == "harbour":
@@ -743,7 +748,7 @@ func _on_bite(cls: int) -> void:
 	if state != State.WAITING:
 		return
 	var at := Vector2(bobber.global_position.x, bobber.global_position.z)
-	var boost: float = school.frenzy_boost(at)
+	var boost: float = school.frenzy_boost(at) * (1.6 if _nose else 1.0)
 	var table: Array = sea.hook_table(zone, bait_key(), rod_tier(), cls, boost)
 	var e: Variant = Sea.pick_w(table, _rng.randf())
 	for sp in specials:
@@ -764,8 +769,11 @@ func _on_bite(cls: int) -> void:
 
 
 func _on_frenzy(at: Vector3) -> void:
-	var where := "off the beach" if at.x < -12.0 else ("by the dock" if absf(at.x - 3.5) < 6.0 else "out in the harbour")
-	hud.toast("A feeding frenzy %s! Rare fish are biting there for a minute." % where)
+	var to := Vector2(at.x - player.global_position.x, at.z - player.global_position.z)
+	var names := ["north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"]
+	var i := posmod(int(round(atan2(to.x, -to.y) / (PI * 0.25))), 8)
+	var where := "right here" if to.length() < 6.0 else "%d m to the %s" % [int(to.length()), names[i]]
+	hud.toast("A feeding frenzy, %s! Watch for the diving gulls. Rare fish bite there for a minute." % where)
 	audio.play("whistle")
 
 

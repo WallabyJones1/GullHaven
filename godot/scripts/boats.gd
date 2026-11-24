@@ -389,7 +389,20 @@ func _update_wake(delta: float) -> void:
 
 # --- building the boat model -----------------------------------------------------------
 
-func _make_boat(b: Dictionary) -> Node3D:
+## A boat model for someone else (the boats sailing about the bay): its own colour, no
+## effect on yours.
+func build_model(b: Dictionary, paint: Color, lamp: bool) -> Node3D:
+	var keep_oars := _oars
+	var keep_lamp := _lamp_light
+	var keep_deck := _deck_y
+	var root := _make_boat(b, paint, 1 if lamp else 0)
+	_oars = keep_oars
+	_lamp_light = keep_lamp
+	_deck_y = keep_deck
+	return root
+
+
+func _make_boat(b: Dictionary, paint_over := Color(0, 0, 0, 0), lamp_over := -1) -> Node3D:
 	var root := Node3D.new()
 	root.name = "Boat"
 	var length := float(b.len)
@@ -397,6 +410,8 @@ func _make_boat(b: Dictionary) -> Node3D:
 	var depth := 0.55 + length * 0.04
 	var paint_i := int(save.boat_paint)
 	var paint := Color.html(str(PAINT[paint_i])) if paint_i >= 0 and paint_i < PAINT.size() else Color.html(str(b.hull))
+	if paint_over.a > 0.0:
+		paint = paint_over
 	_deck_y = depth * 0.62 + 0.03
 	var hull := MeshInstance3D.new()
 	hull.mesh = _hull_mesh(length, width, depth)
@@ -410,7 +425,7 @@ func _make_boat(b: Dictionary) -> Node3D:
 		var r := _box(Vector3(0.08, 0.1, length * 0.7), Vector3(s * width * 0.47, depth * 0.9, length * 0.08), rail)
 		root.add_child(r)
 	var wood := _tex("timber")
-	_oars.clear()
+	_oars = []
 	match str(b.k):
 		"row":
 			root.add_child(_box(Vector3(width * 0.9, 0.08, 0.3), Vector3(0.0, depth * 0.75, 0.0), wood))
@@ -441,7 +456,7 @@ func _make_boat(b: Dictionary) -> Node3D:
 			root.add_child(_box(Vector3(width * 0.7, 1.0, length * 0.3), Vector3(0.0, depth * 0.62 + 0.5, -length * 0.05), _flat(Color("#f0ece0"))))
 			root.add_child(_box(Vector3(width * 0.72, 0.3, 0.05), Vector3(0.0, depth * 0.62 + 0.75, length * 0.1 + 0.02), _glass()))
 			_mast(root, Vector3(0.0, depth * 0.62 + 1.0, -length * 0.08), 4.6, length * 0.5)
-	if has_part("lamp"):
+	if (lamp_over == -1 and has_part("lamp")) or lamp_over == 1:
 		root.add_child(_cyl(0.04, 1.0, Vector3(0.0, depth * 0.62 + 0.5, -length * 0.36), _flat(Color("#3a3a44"))))
 		var glow := StandardMaterial3D.new()
 		glow.albedo_color = Color(1.0, 0.85, 0.5)

@@ -5,6 +5,7 @@ Tiling 64x64 floor and wall textures go to godot/art/tex/, decor sprites (shelve
 racks, fireplaces, paintings, charts, nets, lanterns, the forge...) to godot/art/decor/.
 Same palette rules as tools/godot_art.py: hue-shifted ramps, dark selective outlines,
 light from the top left."""
+import math
 import os
 import sys
 
@@ -823,6 +824,105 @@ def eye_carving():
     return p
 
 
+# ===================================================================== critters
+
+def gull_frames():
+    """Four 16x12 frames: wings up, level, down, and standing."""
+    p = Pix(64, 12)
+    white, grey, dark, beak = '#f4f4f0', '#b8bcc4', '#3a3a44', '#e8a030'
+    for f, wing in enumerate(('up', 'level', 'down')):
+        ox = f * 16
+        p.ellipse(ox + 8, 7, 4.5, 2, white)  # body
+        p.px(ox + 12, 6, white)
+        p.px(ox + 13, 6, beak)
+        p.px(ox + 11, 6, dark)
+        if wing == 'up':
+            p.line(ox + 7, 6, ox + 3, 1, grey)
+            p.line(ox + 9, 6, ox + 12, 1, grey)
+            p.px(ox + 3, 1, dark)
+            p.px(ox + 12, 1, dark)
+        elif wing == 'level':
+            p.line(ox + 2, 5, ox + 14, 5, grey)
+            p.px(ox + 1, 5, dark)
+            p.px(ox + 15, 5, dark)
+        else:
+            p.line(ox + 7, 7, ox + 3, 10, grey)
+            p.line(ox + 9, 7, ox + 12, 10, grey)
+        p.line(ox + 3, 7, ox + 4, 8, grey)  # tail
+    ox = 48  # standing
+    p.ellipse(ox + 8, 6, 4, 2.5, white)
+    p.rect(ox + 5, 5, ox + 9, 6, grey)
+    p.rect(ox + 11, 3, ox + 12, 5, white)
+    p.px(ox + 13, 4, beak)
+    p.px(ox + 12, 3, dark)
+    p.rect(ox + 7, 9, ox + 7, 11, beak)
+    p.rect(ox + 9, 9, ox + 9, 11, beak)
+    return p
+
+
+def crab_frames():
+    p = Pix(24, 8)
+    for f in range(2):
+        ox = f * 12
+        p.ellipse(ox + 6, 4, 3.5, 2.2, '#d0503a')
+        p.px(ox + 4, 2, '#1a1a1a')
+        p.px(ox + 8, 2, '#1a1a1a')
+        p.rect(ox + 0, 2 + f, ox + 1, 3 + f, '#e06a4a')  # claws
+        p.rect(ox + 10, 3 - f, ox + 11, 4 - f, '#e06a4a')
+        for k, x in enumerate((3, 5, 7, 9)):
+            p.px(ox + x, 6 + (k + f) % 2, '#a83a2a')
+    return p
+
+
+def butterfly_frames():
+    p = Pix(16, 7)
+    p.ellipse(3.5, 3.5, 3, 3, '#ffffff')
+    p.rect(3, 1, 4, 6, '#3a3030')
+    p.rect(9, 2, 14, 5, '#ffffff')
+    p.rect(11, 1, 12, 6, '#3a3030')
+    return p
+
+
+def dolphin():
+    p = Pix(30, 14)
+    for x in range(2, 27):
+        t = (x - 2) / 24.0
+        y = int(8 - math.sin(t * math.pi) * 5)
+        p.rect(x, y, x, y + 3 - int(abs(t - 0.5) * 3), '#5a6a80')
+        p.px(x, y + 3 - int(abs(t - 0.5) * 3), '#c8d0d8')
+    p.rect(13, 1, 15, 3, '#5a6a80')  # fin
+    p.px(25, 7, '#1a1a20')
+    p.rect(0, 9, 3, 10, '#5a6a80')  # tail
+    return p.outline()
+
+
+def whale_tail():
+    p = Pix(34, 22)
+    p.rect(14, 10, 19, 21, '#3a4250')
+    for x in range(0, 34):
+        d = abs(x - 16.5)
+        y = int(4 + (d / 16.5) ** 2 * -3 + d * 0.15)
+        p.rect(x, max(0, y), x, min(10, y + 5 - int(d / 6)), '#3a4250')
+    p.rect(15, 0, 18, 4, '#00000000') if False else None
+    p.a[0:3, 15:19, 3] = 0  # the notch
+    p.line(2, 4, 14, 8, '#5a6474')
+    return p.outline()
+
+
+def smoke():
+    p = Pix(16, 16)
+    yy, xx = np.mgrid[0:16, 0:16]
+    d = np.hypot(xx - 7.5, yy - 7.5) / 7.5
+    a = np.clip(1.0 - d, 0, 1) ** 1.5
+    p.a[..., :3] = 235
+    p.a[..., 3] = (a * 200).astype(np.uint8)
+    return p
+
+
+CRITTERS = {'gull': gull_frames, 'crab': crab_frames, 'butterfly': butterfly_frames, 'dolphin': dolphin,
+            'whale_tail': whale_tail, 'smoke': smoke}
+
+
 def bed_frame_texture():
     return quilt()
 
@@ -859,6 +959,8 @@ def main():
         out['tex/' + k] = fn().save('tex/%s.png' % k)
     for k, fn in DECOR.items():
         out['decor/' + k] = fn().save('decor/%s.png' % k)
+    for k, fn in CRITTERS.items():
+        out['critters/' + k] = fn().save('critters/%s.png' % k)
     print('interior art: %d textures, %d decor sprites' % (len(TEX), len(DECOR)))
     if preview:
         os.makedirs(PREVIEW, exist_ok=True)

@@ -32,6 +32,7 @@ const SideQuests := preload("res://scripts/sidequests.gd")
 const Companion := preload("res://scripts/companion.gd")
 const Minigames := preload("res://scripts/minigames.gd")
 const Journal := preload("res://scripts/journal.gd")
+const Ambient := preload("res://scripts/ambient.gd")
 
 var env: Environment
 var world_env: WorldEnvironment
@@ -62,6 +63,7 @@ var sidequests: Node3D
 var companion: Node3D
 var minigames: Node3D
 var journal: CanvasLayer
+var ambient: Node3D
 var save: Dictionary
 var quality_high := true
 var _area := ""
@@ -228,6 +230,12 @@ func _ready() -> void:
 	journal.sidequests = sidequests
 	journal.minigames = minigames
 	journal.companion = companion
+
+	ambient = Ambient.new()
+	ambient.name = "Ambient"
+	add_child(ambient)
+	ambient.setup(harbour, player, cam, audio, sea, boats)
+	ambient.school = school
 
 	if save.visited.is_empty():
 		hud.toast("Welcome to Gullhaven! Walk with WASD, turn the camera with Q and E. Hold Space to cast.")

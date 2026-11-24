@@ -247,6 +247,7 @@ func _update_sound(delta: float, E: Dictionary, night: float) -> void:
 		audio.set_music("day")
 	else:
 		audio.set_music("night")
+	harbour.wind = clampf(0.25 + wind * 0.9, 0.15, 1.2)
 	var muffle := 0.25 if indoor else 1.0
 	audio.set_amb("waves", (0.75 + wind * 0.4) * sea_near * muffle)
 	audio.set_amb("wind", clampf((wind - 0.3) * 1.4, 0.0, 1.0) * muffle)

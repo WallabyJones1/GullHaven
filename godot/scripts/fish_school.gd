@@ -70,13 +70,31 @@ func reroll_all() -> void:
 		_assign_class(f)
 
 
-func lure_landed(p: Vector2) -> void:
+## The bait's in the water. Returns how close it landed to the nearest shadow (metres):
+## right on a fish's nose and it goes for it at once.
+func lure_landed(p: Vector2) -> float:
 	lure = p
 	lure_in = true
 	_taker = -1
 	_wait = _rng.randf_range(0.8, 2.5)
 	if near_frenzy(p):
 		_wait = _rng.randf_range(0.2, 0.8)
+	var best := 99.0
+	var best_i := -1
+	for i in fish.size():
+		var f := fish[i]
+		if f.mode != "wander" and f.mode != "frenzy":
+			continue
+		var fp: Vector2 = f.pos
+		var d := fp.distance_to(p)
+		if d < best:
+			best = d
+			best_i = i
+	if best < 1.6 and best_i >= 0:
+		_taker = best_i
+		fish[best_i].mode = "approach"
+		_wait = 0.0
+	return best
 
 
 func move_lure(p: Vector2) -> void:
