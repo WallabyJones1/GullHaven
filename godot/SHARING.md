@@ -14,6 +14,15 @@ that branch automatically, so the site always has the latest build that passed:
 
 **https://gullhaven-3d-production.up.railway.app**
 
+- **Approving updates.** Railway won't deploy a commit made by GitHub's robot account until
+  someone clicks **Approve** on it (gullhaven-3d service, Deployments). To skip that step
+  and have every passing build go live by itself:
+  1. In Railway, open the Gullhaven project's **Settings > Tokens**, create a token for
+     the **production** environment, and copy it.
+  2. On github.com, in the repo's **Settings > Secrets and variables > Actions**, add a
+     repository secret named `RAILWAY_TOKEN` and paste the token. Paste it only there.
+  3. In Railway, open gullhaven-3d's **Settings > Source** and disconnect the repo, so
+     only the build robot deploys (otherwise approval requests keep piling up).
 - It plays in desktop browsers (Chrome, Edge, Firefox, Safari) with a keyboard, mouse or
   controller. Phones and tablets load it but there are no touch controls yet.
 - The browser version uses Godot's lighter web renderer (WebGL 2), so it has fewer effects

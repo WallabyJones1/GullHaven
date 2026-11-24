@@ -171,6 +171,23 @@ jobs:
           git push -q -f "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" godot-web
           echo "Published to the godot-web branch."
 
+      # Railway holds deploys of commits made by this bot until someone clicks Approve. With a
+      # RAILWAY_TOKEN secret (a project token for the Gullhaven project), the build deploys
+      # straight from here instead. See godot/SHARING.md.
+      - name: Deploy the site to Railway (with a RAILWAY_TOKEN secret)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/hd2d' && steps.smoke.outputs.failed == '0' && steps.browser.outputs.ok == 'true'
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          if [ -z "$RAILWAY_TOKEN" ]; then
+            echo "No RAILWAY_TOKEN secret: Railway picks up the godot-web branch once the deploy is approved there."
+            exit 0
+          fi
+          npm install -g --no-audit --no-fund @railway/cli > /dev/null
+          cd "$RUNNER_TEMP/site"
+          rm -rf .git
+          railway up --service gullhaven-3d --ci
+
       - name: Attach to the release
         if: startsWith(github.ref, 'refs/tags/beta-') || github.event_name == 'release'
         uses: softprops/action-gh-release@v2
