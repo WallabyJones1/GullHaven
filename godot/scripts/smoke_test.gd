@@ -81,6 +81,9 @@ func setup(m: Node) -> void:
 		["check we're on the step", _step_check, 5],
 		["walk into the crate", _walk_crate, 90],
 		["check we didn't climb it", _crate_check, 5],
+		["go to the estuary bridge, mended", _bridge_start, 20],
+		["walk across it", _bridge_walk, 780],
+		["check we got over", _bridge_check, 5],
 		["sail a rowboat", _boat, 20],
 		["steer it", _steer, 300],
 		["check it moved", _steer_check, 5],
@@ -517,6 +520,37 @@ func _crate_check() -> void:
 	for n in _props:
 		n.queue_free()
 	_props.clear()
+	main.player.global_position = _home
+	main.player.velocity = Vector3.ZERO
+
+
+var _bridge_end := 0.0
+
+
+## The estuary bridge, mended: start on the north bank and walk south over the river.
+func _bridge_start() -> void:
+	var w: Node = main.harbour
+	var b: Dictionary = w.meta.bridge
+	if not (w.permits as Dictionary).has("bridge"):
+		w.permits["bridge"] = true
+		w.rebuild_bridge()
+	var x := float(b.x)
+	var half := float(b.length) * 0.5
+	var z0: float = float(b.z) - half - 8.0
+	_bridge_end = float(b.z) + half + 3.0
+	main.player.global_position = Vector3(x, float(w.height_at(x, z0)) + 0.2, z0)
+	main.player.velocity = Vector3.ZERO
+	_mark = main.player.global_position
+
+
+func _bridge_walk() -> void:
+	_press_toward(_mark + Vector3(0.0, 0.0, 100.0))
+
+
+func _bridge_check() -> void:
+	_release_all()
+	var p: Vector3 = main.player.global_position
+	_check(p.z > _bridge_end and not bool(main.player.swimming), "walked over the mended bridge (got to z %.1f of %.1f, %s)" % [p.z, _bridge_end, "swimming" if bool(main.player.swimming) else "dry"])
 	main.player.global_position = _home
 	main.player.velocity = Vector3.ZERO
 
