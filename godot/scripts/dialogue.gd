@@ -26,6 +26,7 @@ var _hint: Label
 var _face: TextureRect
 var _choices: VBoxContainer
 var _blip_t := 0.0
+var _opened_frame := -1  # ignore the press that opened it
 
 
 func setup(h: CanvasLayer, a: Node, p: CharacterBody3D) -> void:
@@ -97,6 +98,8 @@ func _next() -> void:
 		return
 	_cur = _queue.pop_front()
 	_line = 0
+	if not is_open:
+		_opened_frame = Engine.get_process_frames()
 	is_open = true
 	visible = true
 	hud.modal = true
@@ -140,6 +143,8 @@ func _process(delta: float) -> void:
 			audio.play("pin", -22.0, 1.6, 0.15)
 		if _text.visible_characters >= total:
 			_line_done()
+	if Engine.get_process_frames() == _opened_frame:
+		return
 	if Input.is_action_just_pressed("cancel") and _choice_btns.is_empty():
 		_finish(-1)
 		return

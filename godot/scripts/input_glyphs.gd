@@ -9,6 +9,7 @@ extends Node
 static var device := "keyboard"  # or "pad"
 static var pad_style := "xbox"  # xbox, playstation or nintendo
 static var _bound: Array = []  # [label, raw text]
+static var version := 0  # goes up when the device or a key changes, so cached prompts redraw
 
 const PAD := {
 	"xbox": {JOY_BUTTON_A: "A", JOY_BUTTON_B: "B", JOY_BUTTON_X: "X", JOY_BUTTON_Y: "Y", JOY_BUTTON_LEFT_SHOULDER: "LB",
@@ -149,6 +150,7 @@ static func bind(label: Label, raw: String) -> Label:
 
 
 static func refresh() -> void:
+	version += 1
 	var keep: Array = []
 	for pair in _bound:
 		var l: Variant = pair[0]

@@ -20,9 +20,12 @@ then drag `Gullhaven.app` into the window and press Return.
 **Linux:** unzip, then run `./Gullhaven.x86_64` (it may need `chmod +x Gullhaven.x86_64`).
 
 A recent graphics card (or Apple Silicon Mac) is best. If it runs slowly, turn off **High
-quality** in the pause menu's **Settings** (or press F2).
+quality** in the game menu's **Settings** (or press F2).
 
 ## Controls
+
+The game shows the right key or button in every prompt, and a strip along the bottom
+lists what you can do right now. You can change keyboard keys in the game menu (Controls).
 
 | Do this | Keyboard and mouse | Gamepad |
 |---|---|---|
@@ -30,19 +33,24 @@ quality** in the pause menu's **Settings** (or press F2).
 | Turn the camera | Q / E, or drag with the right mouse button | Right stick, bumpers |
 | Zoom | Mouse wheel, - / = | Right stick |
 | Cast (hold to charge), reel, talk, open doors, board boats, dig | Space, F or left click | A |
-| Reel in, step ashore, back, pause menu | Esc | B |
+| Reel in, step ashore, back | Esc | B |
+| Game menu | Esc | Start |
+| Use your kit (crab pots, cast net, trolling, speargun) | G | X |
 | Change bait | R | Y |
-| Logbook | L or Tab | Back |
-| Journal (mystery, quests, letters, collection) | J | Click the left stick |
-| Map | M | Start |
+| Bag | I | D-pad right |
+| Logbook | L or Tab | D-pad left |
+| Journal (story, mystery, quests, letters, collection) | J | D-pad up |
+| Map | M | Back / View |
 | Arrange your hut (inside it) | B | X |
 
 ## Where to start
 
-- Hale's Tackle on the quay sells bait and better gear. Townsfolk ask for fish.
-- Save up for a rowboat at the Boatyard to reach the river and the nearest islands.
-- They say the old lighthouse keeper left something behind. Have a look inside the
-  lighthouse on the breakwater.
+A new game starts with making your fisher, then Gran's letter. After that, follow the
+gold corner at the top right: it always says what to do next, how far away it is and
+which way, and a beam of light marks the spot. Old Marlo on the docks shows you the ropes.
+
+Every fish you land earns XP. New levels bring skill points (game menu, Fisher) and new
+ways to fish from Hale's Tackle: crab pots, a cast net, trolling lines and a speargun.
 
 ## Reporting bugs
 
@@ -53,4 +61,4 @@ save file helps too. It's called `gullhaven_save.json` and lives in:
 - macOS: `~/Library/Application Support/Godot/app_userdata/Gullhaven/`
 - Linux: `~/.local/share/godot/app_userdata/Gullhaven/`
 
-The game saves when you quit (pause menu > Save and quit) and after most things you do.
+The game saves when you quit (game menu > Save and quit) and after most things you do.

@@ -478,19 +478,21 @@ func refresh_bait() -> void:
 
 
 func set_prompt(text: String) -> void:
-	if _prompt_raw == text and _glyph_device == Glyphs.device:
+	var stamp := "%s%d" % [Glyphs.device, Glyphs.version]
+	if _prompt_raw == text and _glyph_device == stamp:
 		return
 	_prompt_raw = text
-	_glyph_device = Glyphs.device
+	_glyph_device = stamp
 	prompt_label.text = "[center]%s[/center]" % Glyphs.fmt(text) if text != "" else ""
 
 
 ## The strip of what you can do right now: [[action, "what it does"], ...].
 func set_controls(pairs: Array) -> void:
-	if pairs == _controls_raw and _controls_device == Glyphs.device:
+	var stamp := "%s%d" % [Glyphs.device, Glyphs.version]
+	if pairs == _controls_raw and _controls_device == stamp:
 		return
 	_controls_raw = pairs
-	_controls_device = Glyphs.device
+	_controls_device = stamp
 	var parts: Array[String] = []
 	for p in pairs:
 		parts.append("%s [color=#c8ccd8]%s[/color]" % [Glyphs.cap(str(p[0])), str(p[1])])
