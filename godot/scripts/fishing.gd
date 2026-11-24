@@ -9,7 +9,10 @@ extends Node
 ##   Fight: hold to reel. Every fish has a style (runner, jumper, diver, sulker...) that
 ##     decides how it fights. Steer against runs, ease off for dives, and let go while it
 ##     jumps. Tension snaps the line; too much line out and it escapes.
-##   Catch: graded Perfect, Great or Clean. Streaks of catches add bonus Shells.
+##   Tough fish (difficulty 4 and 5, and every legend) fight on the reel bar instead: hold
+##     to lift the green zone, let go to drop it, and keep the fish inside it until it tires.
+##   Catch: graded Perfect, Great or Clean. Streaks of catches add bonus Shells, and
+##     everything earns fisher XP (see progress.gd).
 
 const Sea := preload("res://scripts/sea.gd")
 const SaveGame := preload("res://scripts/save_game.gd")
@@ -65,6 +68,18 @@ var town: Node
 var boats: Node3D  # when you're aboard, you cast off the side
 var specials: Array[Callable] = []  # (zone) -> an entry to hook instead, or {}
 var catch_hooks: Array[Callable] = []  # (id, cm, variant) told whenever you land something
+var progress: Node  # fisher level and skills
+var difficulty := 1
+var bar_mode := false  # this fight is on the reel bar
+var bar_zone := 0.0  # bottom of the green zone (0 to 1)
+var bar_h := 0.22
+var bar_v := 0.0
+var bar_fish := 0.5
+var bar_goal := 0.5
+var bar_fill := 0.25
+var _bar_t := 0.0
+var _bar_out := 0.0  # seconds the fish spent outside the zone
+var _bar_speed := 0.5
 
 var power := 0.0
 var catch_e: Dictionary = {}
@@ -352,11 +367,16 @@ func _hook() -> void:
 	if e.cat == "legend":
 		strength += 0.3
 		distance += 0.15
+	difficulty = Sea.difficulty(e)
+	strength *= 0.85 + 0.08 * difficulty
 	distance = minf(distance, 1.0)  # always start with some room before it escapes
+	bar_mode = difficulty >= 5 or (difficulty == 4 and style in ["runner", "jumper", "darter", "fighter"])
+	if bar_mode:
+		_start_bar()
 	tension = 0.2
 	max_tension = tension
 	phase = "calm"
-	_phase_t = _rng.randf_range(1.0, 1.8) * float(STYLES[style].calm)
+	_phase_t = _rng.randf_range(1.0, 1.8) * float(STYLES[style].calm) * (1.15 - 0.07 * difficulty)
 	_warn_t = 0.0
 	school.hooked()
 	cam.set_focus(true, bobber.global_position)
@@ -377,6 +397,9 @@ func _style_for(e: Dictionary) -> String:
 
 
 func _fight(delta: float) -> void:
+	if bar_mode:
+		_fight_bar(delta)
+		return
 	var reeling := Input.is_action_pressed("action")
 	var steer := Input.get_axis("move_left", "move_right")
 	var r := float(catch_e.r)
@@ -399,7 +422,7 @@ func _fight(delta: float) -> void:
 			else:
 				_end_phase()
 				phase = "calm"
-				_phase_t = maxf(_rng.randf_range(1.3, 2.4) * float(st.calm) - r * 0.2, 0.5)
+				_phase_t = maxf(_rng.randf_range(1.3, 2.4) * float(st.calm) * (1.15 - 0.07 * difficulty) - r * 0.2, 0.5)
 
 	# The fish's pull, softened by your rod; runs can be steered against.
 	var pull := 0.15
@@ -425,11 +448,15 @@ func _fight(delta: float) -> void:
 	else:
 		goal = pull * 0.25 / line_k
 	var rate := (0.7 if phase == "jump" else 0.6) if goal > tension else 1.1 * drag
+	if goal > tension and progress:
+		rate *= progress.less("steady")
 	tension = move_toward(tension, goal, rate * delta)
 	max_tension = maxf(max_tension, tension)
 	if phase != "jump":
 		if reeling:
 			var reel := 0.15 * float(_gear("reel").get("speed", 1.0)) * (1.0 - minf(pull, 1.2) * 0.45)
+			if progress:
+				reel *= progress.more("arms")
 			if phase == "dive":
 				reel *= 0.4
 			distance -= reel * delta
@@ -457,6 +484,95 @@ func _fight(delta: float) -> void:
 	elif distance <= 0.0:
 		_end_fight()
 		_land()
+
+
+# --- the reel bar ------------------------------------------------------------------
+
+func _start_bar() -> void:
+	var rod_power := float(_gear("rod").get("power", 1.0))
+	bar_h = clampf(0.2 + 0.035 * (rod_power - 1.0) - 0.015 * (difficulty - 4), 0.13, 0.34)
+	if progress:
+		bar_h = minf(bar_h + 0.015 * progress.rank("steady"), 0.38)
+	bar_zone = 0.0
+	bar_v = 0.0
+	bar_fish = 0.35
+	bar_goal = 0.5
+	bar_fill = 0.28
+	_bar_t = 0.0
+	_bar_out = 0.0
+	_bar_speed = 0.32 + 0.1 * difficulty + (0.15 if catch_e.cat == "legend" else 0.0)
+	hud.show_reel_game(true, _icon(str(catch_e.id)), _tint())
+
+
+func _fight_bar(delta: float) -> void:
+	var reeling := Input.is_action_pressed("action")
+	# your zone: hold to lift it, let go and it sinks
+	bar_v += (2.7 if reeling else -2.3) * delta
+	bar_v = clampf(bar_v, -1.5, 1.5)
+	bar_zone += bar_v * delta
+	if bar_zone <= 0.0:
+		bar_zone = 0.0
+		bar_v = absf(bar_v) * 0.25 if bar_v < -0.6 else 0.0
+	elif bar_zone >= 1.0 - bar_h:
+		bar_zone = 1.0 - bar_h
+		bar_v = minf(bar_v, 0.0)
+	# the fish picks somewhere to go, in its own way
+	_bar_t -= delta
+	if _bar_t <= 0.0:
+		match style:
+			"darter":
+				_bar_t = _rng.randf_range(0.25, 0.7)
+				bar_goal = _rng.randf()
+			"jumper":
+				_bar_t = _rng.randf_range(0.5, 1.2)
+				bar_goal = 0.92 if _rng.randf() < 0.35 else _rng.randf_range(0.1, 0.7)
+				if bar_goal > 0.9:
+					audio.play("jump", -6.0, 1.0, 0.1)
+			"sulker", "diver", "heavy":
+				_bar_t = _rng.randf_range(0.8, 1.6)
+				bar_goal = _rng.randf_range(0.0, 0.45)
+			_:
+				_bar_t = _rng.randf_range(0.5, 1.3)
+				bar_goal = _rng.randf()
+		_bar_t /= 0.7 + 0.1 * difficulty
+	var speed := _bar_speed * (2.2 if style == "darter" else 1.0)
+	bar_fish = move_toward(bar_fish, bar_goal, speed * delta * (0.6 + absf(bar_goal - bar_fish)))
+	bar_fish = clampf(bar_fish + sin(_state_t * 9.0) * 0.004 * difficulty, 0.0, 1.0)
+	# keep it in the zone to wear it out
+	var inside := bar_fish >= bar_zone and bar_fish <= bar_zone + bar_h
+	var line_k := pow(float(_gear("line").get("str", 1.0)), 0.35)
+	if inside:
+		var gain := 0.15 * sqrt(float(_gear("reel").get("speed", 1.0)))
+		if progress:
+			gain *= progress.more("arms")
+		bar_fill += gain * delta
+		_reel_t -= delta
+		if _reel_t <= 0.0:
+			_reel_t = 0.09
+			audio.play("reel", -9.0, 0.9 + bar_fill * 0.5, 0.04)
+	else:
+		_bar_out += delta
+		bar_fill -= 0.13 * (0.8 + 0.1 * difficulty) / line_k * delta
+	distance = clampf(1.0 - bar_fill, 0.0, 1.0)
+	_move_bobber(delta)
+	hud.update_reel_game(bar_zone, bar_h, bar_fish, bar_fill, inside)
+	var text := "Keep the fish in the green! Hold {action} to lift, let go to drop"
+	if _state_t < 1.6:
+		text = "Hooked! %s fight. Keep it in the green!" % Sea.DIFFICULTY_NAMES[difficulty]
+	elif not inside:
+		text = "It's slipping away! Catch it in the green"
+	hud.show_fight(0.0, bar_fill, text, not inside)
+	if bar_fill >= 1.0:
+		max_tension = 0.5 if _bar_out < 0.4 else (0.8 if _bar_out < 2.5 else 0.95)
+		_end_fight()
+		_land()
+	elif bar_fill <= 0.0:
+		_end_fight()
+		hud.toast("It shook the hook and got away...")
+		audio.play("miss", -2.0)
+		_break_streak()
+		school.fish_escaped()
+		_reel_in()
 
 
 func _pick_move(st: Dictionary) -> String:
@@ -534,15 +650,15 @@ func _move_bobber(delta: float) -> void:
 
 
 func _fight_hud() -> void:
-	var text := "Hold Space to reel in"
+	var text := "Hold {action} to reel in"
 	if _state_t < 1.4:
-		text = "Hooked! Feels like %s." % STYLE_NAME.get(style, "a fish")
+		text = "Hooked! Feels like %s. %s fight." % [STYLE_NAME.get(style, "a fish"), Sea.DIFFICULTY_NAMES[difficulty]]
 	elif style == "junk":
 		text = "Something limp... reel it in"
 	if _warn_t > 0.0:
 		text = {"run": "It's about to run!", "dive": "It's about to dive!", "jump": "It's going to jump!"}.get(_next_phase, "")
 	elif phase == "run":
-		var key := "D" if fish_dir < 0.0 else "A"
+		var key := "{move_right}" if fish_dir < 0.0 else "{move_left}"
 		text = "Running %s! Hold %s to steer" % ["left" if fish_dir < 0.0 else "right", key]
 	elif phase == "dive":
 		text = "Diving! Ease off"
@@ -572,6 +688,9 @@ func _snap() -> void:
 
 func _end_fight() -> void:
 	hud.hide_fight()
+	if bar_mode:
+		bar_mode = false
+		hud.show_reel_game(false)
 	cam.set_focus(false)
 	if jumper.visible:
 		jumper.visible = false
@@ -584,48 +703,61 @@ func _break_streak() -> void:
 
 
 func _land() -> void:
-	var e := catch_e
-	var id: String = e.id
-	for h in catch_hooks:
-		h.call(id, size_cm, variant)
-	var cat: String = e.cat
-	var is_fish := cat == "fish" or cat == "legend"
 	var tier := "Clean"
 	if max_tension < 0.75:
 		tier = "Perfect"
 	elif max_tension < 0.9:
 		tier = "Great"
+	school.fish_landed()
+	bobber.visible = false
+	award(catch_e, size_cm, variant, tier, style)
+
+
+## Put a catch in the books without any fuss (the extra fish in a net, a speared fish):
+## Logbook, Shells, XP. Returns what it was worth.
+func award_quiet(e: Dictionary, cm: float, var_kind := "") -> int:
+	var rec := _record(e, cm, var_kind, "")
+	return int(rec.value)
+
+
+func _record(e: Dictionary, cm: float, var_kind: String, tier: String) -> Dictionary:
+	var id: String = e.id
+	for h in catch_hooks:
+		h.call(id, cm, var_kind)
+	var cat: String = e.cat
+	var is_fish := cat == "fish" or cat == "legend"
 	if is_fish:
 		streak += 1
 		hud.set_streak(streak)
 		if streak > int(save.best_streak):
 			save.best_streak = streak
-	var vmult := float(Sea.VARIANTS[variant].mult) if variant != "" else 1.0
+	var vmult := float(Sea.VARIANTS[var_kind].mult) if var_kind != "" else 1.0
 	var smult := 1.0 + minf(streak, 10) * 0.05
 	var value := int(e.price)
 	if is_fish:
-		value = int(round(float(e.price) * (0.8 + 0.4 * Sea.size_frac(e, size_cm)) * float(TIER_BONUS[tier]) * vmult * smult))
+		value = int(round(float(e.price) * (0.8 + 0.4 * Sea.size_frac(e, cm)) * float(TIER_BONUS.get(tier, 1.0)) * vmult * smult))
 	elif cat != "junk":
-		value = int(round(float(e.price) * float(TIER_BONUS[tier])))
+		value = int(round(float(e.price) * float(TIER_BONUS.get(tier, 1.0))))
+	if progress:
+		value = int(round(value * progress.more("haggle")))
 	var hot: bool = is_fish and town.is_hot(id)
 	if hot:
 		value *= 2
-	var for_who: String = town.claim_catch(e, size_cm)
+	var for_who: String = town.claim_catch(e, cm)
 	if for_who != "":
 		value = 0
 	var mats_note := ""
 	if cat == "junk":
 		mats_note = town.junk_materials(id)
-
 	var book: Dictionary = save.log
 	var entry: Dictionary = book.get(id, {})
 	var is_new := entry.is_empty()
 	var best := float(entry.get("best", 0.0))
 	entry["count"] = int(entry.get("count", 0)) + 1
-	if size_cm > 0.0:
-		entry["best"] = snappedf(maxf(best, size_cm), 0.1)
-	if variant != "":
-		entry[variant] = int(entry.get(variant, 0)) + 1
+	if cm > 0.0:
+		entry["best"] = snappedf(maxf(best, cm), 0.1)
+	if var_kind != "":
+		entry[var_kind] = int(entry.get(var_kind, 0)) + 1
 	book[id] = entry
 	var stats: Dictionary = save.stats
 	stats["catches"] = int(stats.get("catches", 0)) + 1
@@ -634,12 +766,35 @@ func _land() -> void:
 	elif not is_fish:
 		stats["finds"] = int(stats.get("finds", 0)) + 1
 	save.shells = int(save.shells) + value
+	var xp := 0
+	if progress:
+		xp = progress.xp_for(e, cm, tier if is_fish else "", is_new)
+		progress.add(xp)
 	SaveGame.write(save)
 	hud.set_shells(save.shells)
 	hud.set_catches(_logged_here(), _total_here())
+	return {"value": value, "xp": xp, "is_new": is_new, "best": best, "hot": hot, "for_who": for_who, "mats_note": mats_note}
 
-	school.fish_landed()
-	bobber.visible = false
+
+## Land something, however it was caught (rod, pot, net, spear, trolling line): it goes in
+## the Logbook, pays out, earns XP and shows the catch card. extra is added to the card's
+## note ("+3 more in the net").
+func award(e: Dictionary, cm: float, var_kind: String, tier: String, fought_as := "", extra := "") -> void:
+	catch_e = e
+	size_cm = cm
+	variant = var_kind
+	var rec := _record(e, cm, var_kind, tier)
+	var id: String = e.id
+	var cat: String = e.cat
+	var is_fish := cat == "fish" or cat == "legend"
+	var value := int(rec.value)
+	var xp := int(rec.xp)
+	var is_new := bool(rec.is_new)
+	var best := float(rec.best)
+	var hot := bool(rec.hot)
+	var for_who := str(rec.for_who)
+	var mats_note := str(rec.mats_note)
+
 	var icon := _icon(id)
 	player.show_off(icon, _tint())
 	cam.shake(0.2)
@@ -675,17 +830,21 @@ func _land() -> void:
 		note = "Biggest one yet!"
 	elif variant != "":
 		note = "A one in %d catch!" % int(Sea.VARIANTS[variant].odds)
+	if extra != "":
+		note = (note + "  " + extra).strip_edges()
 	hud.show_catch({
 		"name": title,
 		"rarity": r,
 		"rarity_name": kind,
+		"difficulty": Sea.difficulty(e) if is_fish else 0,
 		"icon": icon,
 		"tint": _tint(),
 		"size": size_cm,
-		"tier": tier if is_fish else "",
+		"tier": tier if is_fish and tier != "" else "",
 		"shells": value,
+		"xp": xp,
 		"note": note,
-		"style": STYLE_NAME.get(style, "") if is_fish else "",
+		"style": STYLE_NAME.get(fought_as, "") if is_fish else "",
 	})
 	_set_state(State.LANDED)
 
@@ -749,6 +908,8 @@ func _on_bite(cls: int) -> void:
 		return
 	var at := Vector2(bobber.global_position.x, bobber.global_position.z)
 	var boost: float = school.frenzy_boost(at) * (1.6 if _nose else 1.0)
+	if progress:
+		boost *= progress.more("eye")
 	var table: Array = sea.hook_table(zone, bait_key(), rod_tier(), cls, boost)
 	var e: Variant = Sea.pick_w(table, _rng.randf())
 	for sp in specials:
@@ -766,6 +927,28 @@ func _on_bite(cls: int) -> void:
 	cam.shake(0.3)
 	hud.set_prompt("Strike! Press Space")
 	_set_state(State.BITE)
+
+
+## Something hit a trolling lure behind the boat: straight into a fight.
+func troll_strike(e: Dictionary, at: Vector3) -> void:
+	catch_e = e
+	size_cm = Sea.roll_size(e, _rng.randf())
+	variant = Sea.roll_variant(e, _rng.randf(), sea.env)
+	var origin := player.global_position
+	_cast_to = Vector3(at.x, 0.0, at.z)
+	_cast_dir = Vector3(at.x - origin.x, 0.0, at.z - origin.z).normalized()
+	zone = harbour.zone_at(at.x, at.z)
+	bobber.global_position = Vector3(at.x, harbour.water_level_at(at.x, at.z), at.z)
+	bobber.visible = true
+	player.face(_cast_dir)
+	_nose = false
+	audio.play("bite")
+	audio.play("reel", -2.0, 1.4)
+	_hook()
+
+
+func icon_for(id: String) -> Texture2D:
+	return _icon(id)
 
 
 func _on_frenzy(at: Vector3) -> void:

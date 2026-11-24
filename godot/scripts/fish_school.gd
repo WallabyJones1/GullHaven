@@ -30,6 +30,7 @@ var _frenzy_wait := 0.0
 var _bubbles: CPUParticles3D
 var _taker := -1  # index of the fish going for the bait
 var _wait := 0.0  # time until a fish takes an interest
+var wait_mul := 1.0  # the Patience skill shortens the wait
 var _rng := RandomNumberGenerator.new()
 var _t := 0.0
 var _lost_t := 0.0
@@ -76,7 +77,7 @@ func lure_landed(p: Vector2) -> float:
 	lure = p
 	lure_in = true
 	_taker = -1
-	_wait = _rng.randf_range(0.8, 2.5)
+	_wait = _rng.randf_range(0.8, 2.5) * wait_mul
 	if near_frenzy(p):
 		_wait = _rng.randf_range(0.2, 0.8)
 	var best := 99.0

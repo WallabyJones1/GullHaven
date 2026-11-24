@@ -37,6 +37,9 @@ const Menus := preload("res://scripts/menus.gd")
 const Glyphs := preload("res://scripts/input_glyphs.gd")
 const Dialogue := preload("res://scripts/dialogue.gd")
 const Bag := preload("res://scripts/bag.gd")
+const Progress := preload("res://scripts/progress.gd")
+const Kit := preload("res://scripts/kit.gd")
+const Spearfishing := preload("res://scripts/spearfishing.gd")
 
 var env: Environment
 var world_env: WorldEnvironment
@@ -71,6 +74,9 @@ var ambient: Node3D
 var menus: CanvasLayer
 var dialogue: CanvasLayer
 var bag: CanvasLayer
+var progress: Node
+var kit: Node3D
+var spear: CanvasLayer
 var _first_time := false
 var skip_save := false  # starting a new game: don't write the old save back on the way out
 var save: Dictionary
@@ -129,6 +135,11 @@ func _ready() -> void:
 	add_child(hud)
 	hud.setup(sea, save)
 
+	progress = Progress.new()
+	progress.name = "Progress"
+	add_child(progress)
+	progress.setup(save, hud, audio)
+
 	dialogue = Dialogue.new()
 	dialogue.name = "Dialogue"
 	add_child(dialogue)
@@ -149,6 +160,8 @@ func _ready() -> void:
 	add_child(town)
 	town.setup(harbour, player, hud, audio, sea, save, shop)
 	town.dialogue = dialogue
+	town.progress = progress
+	shop.progress = progress
 
 	day_night = DayNight.new()
 	day_night.name = "DayNight"
@@ -206,13 +219,17 @@ func _ready() -> void:
 	add_child(fishing)
 	fishing.setup(player, school, hud, cam, harbour, save, sea, audio, town)
 	fishing.boats = boats
+	fishing.progress = progress
 	boats.fishing = fishing
+	boats.progress = progress
+	quests.progress = progress
 
 	mystery = Mystery.new()
 	mystery.name = "Mystery"
 	add_child(mystery)
 	mystery.setup(harbour, player, hud, audio, sea, save, town)
 	interiors.mystery = mystery
+	mystery.progress = progress
 	fishing.specials.append(mystery.special_catch)
 	fishing.catch_hooks.append(mystery.on_catch)
 	if bool(save.mystery.get("restored", false)):
@@ -222,6 +239,7 @@ func _ready() -> void:
 	sidequests.name = "SideQuests"
 	add_child(sidequests)
 	sidequests.setup(harbour, player, hud, audio, save, town)
+	sidequests.progress = progress
 
 	companion = Companion.new()
 	companion.name = "Companion"
@@ -236,8 +254,25 @@ func _ready() -> void:
 	add_child(minigames)
 	minigames.setup(harbour, player, hud, audio, save, boats, interiors)
 	interiors.minigames = minigames
+	minigames.progress = progress
 
-	for prov in [boats, mystery, sidequests, companion, minigames]:
+	kit = Kit.new()
+	kit.name = "Kit"
+	add_child(kit)
+	kit.setup(harbour, player, cam, hud, audio, sea, save, town)
+	kit.fishing = fishing
+	kit.boats = boats
+	kit.school = school
+	kit.dialogue = dialogue
+	kit.progress = progress
+	kit.interiors = interiors
+	spear = Spearfishing.new()
+	spear.name = "Spearfishing"
+	add_child(spear)
+	spear.setup(kit, fishing, sea, hud, audio)
+	kit.spear = spear
+
+	for prov in [boats, mystery, sidequests, companion, minigames, kit]:
 		town.providers.append(prov)
 
 	journal = Journal.new()
@@ -253,6 +288,7 @@ func _ready() -> void:
 	bag.name = "Bag"
 	add_child(bag)
 	bag.setup(save, sea, hud, audio)
+	bag.extra_sections.append(_bag_kit)
 
 	ambient = Ambient.new()
 	ambient.name = "Ambient"
@@ -277,6 +313,7 @@ func _process(delta: float) -> void:
 	if _area_t <= 0.0:
 		_area_t = 0.5
 		_update_area(false)
+		school.wait_mul = progress.less("patience")
 	_update_controls()
 	if Input.is_action_just_pressed("time_skip"):
 		sea.skip_hours(1.0)
@@ -345,6 +382,8 @@ func _update_controls() -> void:
 		0:
 			if boats.aboard:
 				pairs = [["move", "Steer"], ["action", "Cast"], ["bait", "Bait"]]
+				if kit.has_any():
+					pairs.append(["tool", "Lines in" if kit.troll_on else "Kit"])
 				if boats.can_land():
 					pairs.append(["cancel", "Step ashore"])
 				pairs.append_array([["map", "Map"], ["menu", "Menu"]])
@@ -355,8 +394,10 @@ func _update_controls() -> void:
 				if interiors.in_hut():
 					pairs.insert(2, ["build", "Arrange"])
 			else:
-				pairs = [["move", "Walk"], ["camera", "Camera"], ["action", "Cast / use"], ["bait", "Bait"], ["bag", "Bag"],
-					["journal", "Journal"], ["map", "Map"], ["menu", "Menu"]]
+				pairs = [["move", "Walk"], ["camera", "Camera"], ["action", "Cast / use"], ["bait", "Bait"]]
+				if kit.has_any():
+					pairs.append(["tool", "Kit"])
+				pairs.append_array([["bag", "Bag"], ["journal", "Journal"], ["map", "Map"], ["menu", "Menu"]])
 		1:
 			pairs = [["action", "Let go to cast"]]
 		2, 3:
@@ -368,6 +409,20 @@ func _update_controls() -> void:
 		6:
 			pairs = [["action", "Continue"]]
 	hud.set_controls(pairs)
+
+
+## The bag's Kit section: pots, net, trolling rig, speargun.
+func _bag_kit() -> String:
+	var k: Dictionary = save.kit
+	if k.is_empty():
+		return ""
+	var out := "[color=#ffd24d][b]Kit[/b][/color]\n"
+	if int(k.get("pot", 0)) > 0:
+		out += "Crab pots: %d (%d out in the water)\n" % [int(k.pot), (save.pots as Array).size()]
+	for pair in [["net", "Cast net"], ["troll", "Trolling rig"], ["spear", "Snorkel and speargun"]]:
+		if int(k.get(pair[0], 0)) > 0:
+			out += "%s\n" % pair[1]
+	return out
 
 
 ## The line under the game menu's heading: day, time, where you are, your shells.

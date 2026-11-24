@@ -8,11 +8,19 @@ const UI := preload("res://scripts/ui_kit.gd")
 const Glyphs := preload("res://scripts/input_glyphs.gd")
 const SaveGame := preload("res://scripts/save_game.gd")
 
-const TAB_NAMES := {"rod": "Rods", "reel": "Reels", "line": "Lines", "bait": "Bait"}
+const TAB_NAMES := {"rod": "Rods", "reel": "Reels", "line": "Lines", "bait": "Bait", "kit": "Kit"}
+# other ways to fish, unlocked by fisher level (see progress.gd)
+const KIT := {
+	"pot": {"n": "Crab pot", "price": 250, "max": 4, "d": "Drop it in the shallows, the estuary, kelp or a wreck; haul it up later for crabs and lobsters."},
+	"net": {"n": "Cast net", "price": 900, "max": 1, "d": "Throw it over a bait school for live bait and a few small fish at once."},
+	"troll": {"n": "Trolling rig", "price": 1400, "max": 1, "d": "Tow lures behind your boat at speed. The fast fish of open water hit hard."},
+	"spear": {"n": "Snorkel and speargun", "price": 1600, "max": 1, "d": "Stop your boat over clear water (reef, kelp, shallows, a wreck) and dive."},
+}
+const KIT_ORDER := ["pot", "net", "troll", "spear"]
 const KINDS := ["rod", "reel", "line"]
 # What each kind of shop sells: its tabs and the baits its waters call for.
 const STOCK := {
-	"tackle": {"tabs": ["rod", "reel", "line", "bait"], "bait": ["worm", "prawn", "pilchard", "weedbait", "squidjig", "metal", "livebait", "glow"]},
+	"tackle": {"tabs": ["rod", "reel", "line", "bait", "kit"], "bait": ["worm", "prawn", "pilchard", "weedbait", "squidjig", "metal", "livebait", "glow"]},
 	"general": {"tabs": ["line", "bait"], "bait": ["worm", "prawn", "weedbait", "crabbait"]},
 	"baittea": {"tabs": ["bait"], "bait": ["worm", "prawn", "pilchard", "squid", "crabbait", "livebait"]},
 	"kelptea": {"tabs": ["bait"], "bait": ["squid", "crabbait", "squidjig", "popper", "glow"]},
@@ -42,6 +50,7 @@ var sea: Node
 var save: Dictionary
 var audio: Node
 var hud: CanvasLayer
+var progress: Node  # fisher level: better gear and kit need higher levels
 var is_open := false
 var kind := "tackle"
 var keeper := "Hale"
@@ -177,6 +186,8 @@ func _show_tab(i: int, focus_row := 0) -> void:
 	var what := str(_tabs_here[i])
 	if what == "bait":
 		rows = _bait_rows()
+	elif what == "kit":
+		rows = _kit_rows()
 	else:
 		rows = _gear_rows(what)
 	var focusable: Array[Button] = []
@@ -203,13 +214,16 @@ func _gear_rows(gear_kind: String) -> Array[Button]:
 			status = "Owned"
 		else:
 			status = "%d Shells" % int(g.price)
+		var locked := progress != null and i > cur and not progress.gear_ok(gear_kind, i)
+		if locked:
+			status = "Needs Fisher Lv %d" % progress.gear_level(gear_kind, i)
 		b.text = "%s   %s\n    %s" % [g.n, status, _describe(gear_kind, g, i)]
 		if i <= cur:
 			b.disabled = true
 			b.focus_mode = Control.FOCUS_NONE
 		else:
 			b.pressed.connect(_buy_gear.bind(gear_kind, i))
-			if int(save.shells) < int(g.price):
+			if int(save.shells) < int(g.price) or locked:
 				b.add_theme_color_override("font_color", UI.DIM)
 		out.append(b)
 	return out
@@ -260,6 +274,9 @@ func _bait_rows() -> Array[Button]:
 func _buy_gear(gear_kind: String, i: int) -> void:
 	var g: Dictionary = sea.gear[gear_kind][i]
 	var price := int(g.price)
+	if progress and not progress.gear_ok(gear_kind, i):
+		_fail("%s: \"That one's for a more practised hand. Come back at Fisher level %d.\"" % [keeper, progress.gear_level(gear_kind, i)])
+		return
 	if int(save.shells) < price:
 		_fail("You need %d more Shells for the %s." % [price - int(save.shells), g.n])
 		return
@@ -267,6 +284,50 @@ func _buy_gear(gear_kind: String, i: int) -> void:
 	save.gear[gear_kind] = i
 	_done("Bought the %s!" % g.n)
 	_show_tab(_tab, 0)
+
+
+func _kit_rows() -> Array[Button]:
+	var out: Array[Button] = []
+	var kit: Dictionary = save.kit
+	for k in KIT_ORDER:
+		var item: Dictionary = KIT[k]
+		var have := int(kit.get(k, 0))
+		var row := UI.button("", 20)
+		var lv := 1
+		if progress:
+			lv = int(progress.KIT_LEVEL.get(k, 1))
+		var locked := progress != null and not progress.kit_ok(k)
+		if have >= int(item.max):
+			row.text = "%s   %s\n    %s" % [item.n, "Owned" if int(item.max) == 1 else "You have %d (the most you can use)" % have, item.d]
+			row.disabled = true
+			row.focus_mode = Control.FOCUS_NONE
+		else:
+			var status := "Needs Fisher Lv %d" % lv if locked else "%d Shells" % int(item.price)
+			if int(item.max) > 1 and have > 0:
+				status += "   (you have %d)" % have
+			row.text = "%s   %s\n    %s" % [item.n, status, item.d]
+			row.pressed.connect(_buy_kit.bind(k))
+			if locked or int(save.shells) < int(item.price):
+				row.add_theme_color_override("font_color", UI.DIM)
+		out.append(row)
+	return out
+
+
+func _buy_kit(k: String) -> void:
+	var item: Dictionary = KIT[k]
+	if progress and not progress.kit_ok(k):
+		_fail("%s: \"Get a few more fish under your belt first. Fisher level %d.\"" % [keeper, int(progress.KIT_LEVEL.get(k, 1))])
+		return
+	var price := int(item.price)
+	if int(save.shells) < price:
+		_fail("You need %d more Shells for the %s." % [price - int(save.shells), str(item.n).to_lower()])
+		return
+	save.shells = int(save.shells) - price
+	var kit: Dictionary = save.kit
+	kit[k] = int(kit.get(k, 0)) + 1
+	_done("Bought the %s! Use your kit with {tool}." % str(item.n).to_lower())
+	_message.text = Glyphs.plain(_message.text)
+	_show_tab(_tab, KIT_ORDER.find(k))
 
 
 func _buy_bait(k: String) -> void:

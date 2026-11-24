@@ -114,6 +114,22 @@ FISH = [
 ]
 
 # id, name, zone, conditions, size, look, what, quest flag
+# Only turn up in crab pots (Kit tab at Hale's Tackle, from fisher level 2).
+POTS = [
+    ('Harbour Spider Crab', 'harbour', 0, '', (6, 12), 'crab|#8a5a4a|#b07a5a|#e0c0a0|spots|#4a2a20|#a06a4a|', 'Long-legged and grumpy. Lives under the pier'),
+    ('Sand Crab', 'shallows', 0, '', (5, 10), 'crab|#d8c098|#e8d8b8|#f8f0e0|spots|#a08060|#d0b890|', 'Pale as the sand it digs into'),
+    ('Moreton Bay Bug', 'shallows', 2, 'night', (12, 25), 'lobster|#a8784a|#c89a6a|#e8d0a8|spots|#5a3a20|#b88a5a|', 'A flat-headed lobster, the finest eating on the coast'),
+    ('Soldier Crab', 'estuary', 0, 'low', (2, 4), 'crab|#6a8ad0|#9ab0e0|#e0e8f8|none|#000|#5a7ac0|', 'Marches the mudflats in blue armies at low tide'),
+    ('Coral Crab', 'reef', 1, 'night', (8, 15), 'crab|#d04a3a|#e8805a|#f8d0b0|spots|#8a2a20|#d0603a|', 'Bright red, and as tough as the reef'),
+    ('Painted Rock Lobster', 'reef', 2, 'night', (25, 45), 'lobster|#3a7a9a|#6ab0c0|#e8e0c8|bars|#e0d0a0|#5a9ab0|', 'Blue and gold and every colour between'),
+    ('Giant Spider Crab', 'kelp', 1, 'winter', (20, 40), 'crab|#b0604a|#d0886a|#f0c8a8|spots|#6a3020|#c07050|', 'Gathers in the kelp in its thousands each winter'),
+    ('Slipper Lobster', 'wreck', 1, '', (15, 30), 'lobster|#8a6a4a|#b08a60|#d8c0a0|spots|#4a3020|#9a7a5a|', 'Flat as a shoe, it hides in the wreck\'s ribs'),
+    ('Velvet Swimmer Crab', 'seagrass', 0, '', (6, 12), 'crab|#5a6a4a|#8a9a6a|#d0d8b8|none|#000|#6a8a5a|', 'Soft-shelled and quick in the seagrass'),
+    ('Coconut Crab', 'lagoon', 3, 'night', (30, 45), 'crab|#6a3a8a|#9a5aba|#e0c0e0|spots|#3a1a4a|#8a4aaa|', 'The biggest crab of all, and it climbs trees'),
+    ('Yabby', 'lake', 0, '', (8, 15), 'lobster|#4a5a6a|#7a8a9a|#c8d0d8|none|#000|#5a6a8a|', 'The freshwater crayfish every kid in the hills has caught'),
+    ('Marron', 'lake', 2, 'night', (20, 35), 'lobster|#2a3a5a|#4a6a8a|#a8b8c8|none|#000|#3a5a7a|', 'A giant crayfish, blue-black and very old'),
+]
+
 LEGENDS = [
     ('silverjaw', 'Silverjaw', 'lake', 'dawn calm', (110, 140), 'gar|#c8d0d8|#e8eef4|#ffffff|lines|#8a9aa8|#d0d8e0|long',
      'The old pike of Mirrorlake, who never takes a hook twice', 'quest'),
@@ -202,6 +218,11 @@ def build_items():
         items.append(dict(id=slug(name), n=name, cat='fish', z=z, r=r, c=c or 'any', cp=parse_cond(c), sz=list(sz),
                           price=FISH_PRICE[r], how='fish', art=look.split('|')[0], look=look, release=False,
                           hint=fish_hint(z, c), what=what, extra=True))
+    for name, z, r, c, sz, look, what in POTS:
+        hint = fish_hint(z, c).replace('Bites', 'Crawls into crab pots', 1)
+        items.append(dict(id=slug(name), n=name, cat='fish', z=z, r=r, c=c or 'any', cp=parse_cond(c), sz=list(sz),
+                          price=FISH_PRICE[r], how='pot', art=look.split('|')[0], look=look, release=False,
+                          hint=hint, what=what, extra=True))
     for id_, name, z, c, sz, look, what, flag in LEGENDS:
         cp = parse_cond(c)
         if flag:

@@ -17,6 +17,7 @@ const EMBER := {"price": 1500, "species": 30, "tier": 3}
 
 var world: Node3D
 var town: Node
+var progress: Node  # fisher XP
 var hud: CanvasLayer
 var audio: Node
 var sea: Node
@@ -108,6 +109,8 @@ func _ranger(keeper: String, _title: String, _kind: String) -> void:
 		town.say(keeper, "You know your river fish, I'll give you that. The permit's %d Shells, though." % int(RANGER.price))
 		return
 	save.shells = int(save.shells) - int(RANGER.price)
+	if progress:
+		progress.add(100)
 	hud.set_shells(save.shells)
 	grant("permit_ranger")
 	town.say(keeper, "Here's your permit. The gate up the north road is open. Mirrorlake's fish have never seen a hook!")
@@ -139,6 +142,8 @@ func _harbourmaster(keeper: String, _title: String, _kind: String) -> void:
 		town.say(keeper, "You've earned it. The permit's %d Shells." % int(EMBER.price))
 		return
 	save.shells = int(save.shells) - int(EMBER.price)
+	if progress:
+		progress.add(100)
 	hud.set_shells(save.shells)
 	grant("permit_ember")
 	town.say(keeper, "Signed and stamped. You may land on Ember Isle. Bring back something remarkable.")

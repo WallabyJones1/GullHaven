@@ -2109,6 +2109,378 @@
    "extra": true
   },
   {
+   "id": "harbour_spider_crab",
+   "n": "Harbour Spider Crab",
+   "cat": "fish",
+   "z": "harbour",
+   "r": 0,
+   "c": "any",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    6,
+    12
+   ],
+   "price": 12,
+   "how": "pot",
+   "art": "crab",
+   "look": "crab|#8a5a4a|#b07a5a|#e0c0a0|spots|#4a2a20|#a06a4a|",
+   "release": false,
+   "hint": "Crawls into crab pots any time in the Harbour and Piers.",
+   "what": "Long-legged and grumpy. Lives under the pier",
+   "extra": true
+  },
+  {
+   "id": "sand_crab",
+   "n": "Sand Crab",
+   "cat": "fish",
+   "z": "shallows",
+   "r": 0,
+   "c": "any",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    5,
+    10
+   ],
+   "price": 12,
+   "how": "pot",
+   "art": "crab",
+   "look": "crab|#d8c098|#e8d8b8|#f8f0e0|spots|#a08060|#d0b890|",
+   "release": false,
+   "hint": "Crawls into crab pots any time in the Sandy Shallows.",
+   "what": "Pale as the sand it digs into",
+   "extra": true
+  },
+  {
+   "id": "moreton_bay_bug",
+   "n": "Moreton Bay Bug",
+   "cat": "fish",
+   "z": "shallows",
+   "r": 2,
+   "c": "night",
+   "cp": {
+    "time": "night",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    12,
+    25
+   ],
+   "price": 110,
+   "how": "pot",
+   "art": "lobster",
+   "look": "lobster|#a8784a|#c89a6a|#e8d0a8|spots|#5a3a20|#b88a5a|",
+   "release": false,
+   "hint": "Crawls into crab pots at night in the Sandy Shallows.",
+   "what": "A flat-headed lobster, the finest eating on the coast",
+   "extra": true
+  },
+  {
+   "id": "soldier_crab",
+   "n": "Soldier Crab",
+   "cat": "fish",
+   "z": "estuary",
+   "r": 0,
+   "c": "low",
+   "cp": {
+    "time": null,
+    "tide": "low",
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    2,
+    4
+   ],
+   "price": 12,
+   "how": "pot",
+   "art": "crab",
+   "look": "crab|#6a8ad0|#9ab0e0|#e0e8f8|none|#000|#5a7ac0|",
+   "release": false,
+   "hint": "Crawls into crab pots at low tide in the Mangrove Estuary.",
+   "what": "Marches the mudflats in blue armies at low tide",
+   "extra": true
+  },
+  {
+   "id": "coral_crab",
+   "n": "Coral Crab",
+   "cat": "fish",
+   "z": "reef",
+   "r": 1,
+   "c": "night",
+   "cp": {
+    "time": "night",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    8,
+    15
+   ],
+   "price": 35,
+   "how": "pot",
+   "art": "crab",
+   "look": "crab|#d04a3a|#e8805a|#f8d0b0|spots|#8a2a20|#d0603a|",
+   "release": false,
+   "hint": "Crawls into crab pots at night in the Coral Reef.",
+   "what": "Bright red, and as tough as the reef",
+   "extra": true
+  },
+  {
+   "id": "painted_rock_lobster",
+   "n": "Painted Rock Lobster",
+   "cat": "fish",
+   "z": "reef",
+   "r": 2,
+   "c": "night",
+   "cp": {
+    "time": "night",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    25,
+    45
+   ],
+   "price": 110,
+   "how": "pot",
+   "art": "lobster",
+   "look": "lobster|#3a7a9a|#6ab0c0|#e8e0c8|bars|#e0d0a0|#5a9ab0|",
+   "release": false,
+   "hint": "Crawls into crab pots at night in the Coral Reef.",
+   "what": "Blue and gold and every colour between",
+   "extra": true
+  },
+  {
+   "id": "giant_spider_crab",
+   "n": "Giant Spider Crab",
+   "cat": "fish",
+   "z": "kelp",
+   "r": 1,
+   "c": "winter",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": null,
+    "season": "winter",
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    20,
+    40
+   ],
+   "price": 35,
+   "how": "pot",
+   "art": "crab",
+   "look": "crab|#b0604a|#d0886a|#f0c8a8|spots|#6a3020|#c07050|",
+   "release": false,
+   "hint": "Crawls into crab pots in winter in the Kelp Forest.",
+   "what": "Gathers in the kelp in its thousands each winter",
+   "extra": true
+  },
+  {
+   "id": "slipper_lobster",
+   "n": "Slipper Lobster",
+   "cat": "fish",
+   "z": "wreck",
+   "r": 1,
+   "c": "any",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    15,
+    30
+   ],
+   "price": 35,
+   "how": "pot",
+   "art": "lobster",
+   "look": "lobster|#8a6a4a|#b08a60|#d8c0a0|spots|#4a3020|#9a7a5a|",
+   "release": false,
+   "hint": "Crawls into crab pots any time in the Wreck Graveyard.",
+   "what": "Flat as a shoe, it hides in the wreck's ribs",
+   "extra": true
+  },
+  {
+   "id": "velvet_swimmer_crab",
+   "n": "Velvet Swimmer Crab",
+   "cat": "fish",
+   "z": "seagrass",
+   "r": 0,
+   "c": "any",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    6,
+    12
+   ],
+   "price": 12,
+   "how": "pot",
+   "art": "crab",
+   "look": "crab|#5a6a4a|#8a9a6a|#d0d8b8|none|#000|#6a8a5a|",
+   "release": false,
+   "hint": "Crawls into crab pots any time in the Seagrass Meadows.",
+   "what": "Soft-shelled and quick in the seagrass",
+   "extra": true
+  },
+  {
+   "id": "coconut_crab",
+   "n": "Coconut Crab",
+   "cat": "fish",
+   "z": "lagoon",
+   "r": 3,
+   "c": "night",
+   "cp": {
+    "time": "night",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    30,
+    45
+   ],
+   "price": 380,
+   "how": "pot",
+   "art": "crab",
+   "look": "crab|#6a3a8a|#9a5aba|#e0c0e0|spots|#3a1a4a|#8a4aaa|",
+   "release": false,
+   "hint": "Crawls into crab pots at night in the Turquoise Lagoon.",
+   "what": "The biggest crab of all, and it climbs trees",
+   "extra": true
+  },
+  {
+   "id": "yabby",
+   "n": "Yabby",
+   "cat": "fish",
+   "z": "lake",
+   "r": 0,
+   "c": "any",
+   "cp": {
+    "time": null,
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    8,
+    15
+   ],
+   "price": 12,
+   "how": "pot",
+   "art": "lobster",
+   "look": "lobster|#4a5a6a|#7a8a9a|#c8d0d8|none|#000|#5a6a8a|",
+   "release": false,
+   "hint": "Crawls into crab pots any time in the Mirrorlake.",
+   "what": "The freshwater crayfish every kid in the hills has caught",
+   "extra": true
+  },
+  {
+   "id": "marron",
+   "n": "Marron",
+   "cat": "fish",
+   "z": "lake",
+   "r": 2,
+   "c": "night",
+   "cp": {
+    "time": "night",
+    "tide": null,
+    "sky": null,
+    "season": null,
+    "moon": null,
+    "method": [],
+    "bait": null,
+    "where": null,
+    "flags": []
+   },
+   "sz": [
+    20,
+    35
+   ],
+   "price": 110,
+   "how": "pot",
+   "art": "lobster",
+   "look": "lobster|#2a3a5a|#4a6a8a|#a8b8c8|none|#000|#3a5a7a|",
+   "release": false,
+   "hint": "Crawls into crab pots at night in the Mirrorlake.",
+   "what": "A giant crayfish, blue-black and very old",
+   "extra": true
+  },
+  {
    "id": "silverjaw",
    "n": "Silverjaw",
    "cat": "legend",

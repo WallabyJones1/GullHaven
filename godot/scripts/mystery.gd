@@ -77,6 +77,7 @@ var audio: Node
 var sea: Node
 var save: Dictionary
 var town: Node
+var progress: Node  # fisher XP
 var _bells: Array[Node3D] = []
 var _bell_seq: Array = []
 var _stones: Array[Node3D] = []
@@ -129,6 +130,8 @@ func advance(to: int) -> void:
 		return
 	save.mystery.step = to
 	SaveGame.write(save)
+	if progress:
+		progress.add(120)
 	var p := page(to)
 	audio.play("fanfare2", -2.0)
 	audio.play("cardflip", -4.0)
@@ -530,6 +533,8 @@ func restore_light() -> bool:
 		return false
 	save.mystery.restored = true
 	save.shells = int(save.shells) + 5000
+	if progress:
+		progress.add(600, "the Gull's Eye shines again")
 	hud.set_shells(save.shells)
 	world.restore_light()
 	audio.play("jackpot")

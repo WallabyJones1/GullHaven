@@ -65,6 +65,7 @@ var interiors: Node  # doors, and things to use inside
 var boats: Node3D  # your boat, to board
 var services := {}  # shop kind -> Callable(keeper: String, title: String, kind: String)
 var dialogue: CanvasLayer  # the conversation box (main sets it)
+var progress: Node  # fisher XP
 var talk_hooks: Array[Callable] = []  # (who) -> true if they had something to say about a quest
 var providers: Array[Node] = []  # other things to use: each has near(pos, facing) and use(it)
 var companion: Node3D  # cat taming
@@ -280,6 +281,8 @@ func _deliver(who: String, req: Dictionary) -> void:
 	hud.set_requests(save.requests)
 	audio.play("lvl")
 	audio.play("coin", -2.0)
+	if progress:
+		progress.add(25 + reward / 6, "a request for %s" % who)
 	var lines := ["Now that's a fish.", "Whoa, it's huge!", "Perfect for tonight's supper.", "Just what I needed!"]
 	_say(who, "%s Here's %d Shells. Thank you!" % [lines[_rng.randi() % lines.size()], reward])
 
@@ -715,6 +718,8 @@ func _dig(spot: Sprite3D) -> void:
 	save.shells = int(save.shells) + value
 	var stats: Dictionary = save.stats
 	stats["finds"] = int(stats.get("finds", 0)) + 1
+	if progress:
+		progress.add(progress.xp_for(found, 0.0, "", is_new))
 	SaveGame.write(save)
 	hud.set_shells(save.shells)
 	audio.play("crank", -4.0)

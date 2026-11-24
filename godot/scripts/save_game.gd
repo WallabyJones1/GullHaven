@@ -39,6 +39,12 @@ static func defaults() -> Dictionary:
 		"records": {},  # mini-game bests and prizes paid
 		"cats": {},  # cat id -> {trust, fed}
 		"companion": "",  # your cat's id
+		"fisher": {"level": 1, "xp": 0, "total": 0, "points": 0, "skills": {}},  # your fisher level
+		"kit": {},  # pots (how many), net, troll, spear, snorkel...
+		"pots": [],  # crab pots out in the water: {x, z, zone, t}
+		"story": {"ch": 0, "step": 0, "flags": {}},  # the main story
+		"look": {},  # your character: body, skin, hair, colours, clothes
+		"wardrobe": [],  # clothes you own
 	}
 
 
@@ -55,7 +61,7 @@ static func load_save() -> Dictionary:
 	for key in parsed:
 		var have: Variant = data.get(key)
 		var got: Variant = parsed[key]
-		if have is Dictionary and got is Dictionary and key not in ["log", "bait", "thanks", "visited", "permits", "furniture_inv", "quests", "records", "cats"]:
+		if have is Dictionary and got is Dictionary and key not in ["log", "bait", "thanks", "visited", "permits", "furniture_inv", "quests", "records", "cats", "kit"]:
 			for sub in got:
 				have[sub] = got[sub]
 		elif have == null or typeof(have) == typeof(got) or (have is float and got is int) or (have is int and got is float):

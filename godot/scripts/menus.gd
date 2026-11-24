@@ -14,7 +14,7 @@ const Glyphs := preload("res://scripts/input_glyphs.gd")
 const SETTINGS := "user://settings.cfg"
 const PAD_CONTROLS := """[b]Walk / steer[/b]  left stick      [b]Camera[/b]  right stick, LB / RB
 [b]Cast, reel, talk, use[/b]  A      [b]Back, reel in, step ashore[/b]  B
-[b]Change bait[/b]  Y      [b]Arrange your hut[/b]  X
+[b]Change bait[/b]  Y      [b]Use your kit / arrange your hut[/b]  X
 [b]Game menu[/b]  Start      [b]Map[/b]  Back / View
 [b]Journal[/b]  D-pad up (or click the left stick)      [b]Logbook[/b]  D-pad left      [b]Bag[/b]  D-pad right"""
 
@@ -192,7 +192,19 @@ func _fisher_page() -> void:
 	_clear()
 	_page = "fisher"
 	_sub.text = "Fisher"
-	_box.add_child(_rich(str(main.fisher_text()) if main.has_method("fisher_text") else "", 560.0))
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(660.0, minf(560.0, get_viewport().get_visible_rect().size.y * 0.6))
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.follow_focus = true
+	_box.add_child(scroll)
+	var col := VBoxContainer.new()
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	col.add_theme_constant_override("separation", 8)
+	scroll.add_child(col)
+	var prog: Node = main.get("progress")
+	if prog:
+		prog.call("fill_page", col, _fisher_page)
+	col.add_child(_rich(str(main.fisher_text()) if main.has_method("fisher_text") else "", 620.0))
 	_button("Back", _pause_page)
 	_focus_first()
 

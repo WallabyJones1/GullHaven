@@ -26,6 +26,7 @@ var hud: CanvasLayer
 var audio: Node
 var save: Dictionary
 var town: Node
+var progress: Node  # fisher XP
 var _cats := {}  # name -> Sprite3D
 
 
@@ -87,6 +88,8 @@ func _granny() -> bool:
 			if found.size() >= LOST_CATS.size():
 				_mark("cats", "done")
 				save.shells = int(save.shells) + 600
+				if progress:
+					progress.add(150)
 				hud.set_shells(save.shells)
 				Furniture.give(save, "plant_flower")
 				SaveGame.write(save)
@@ -120,6 +123,8 @@ func _miller() -> bool:
 			_mark("mill", "done")
 			world.mill_fixed = true
 			save.shells = int(save.shells) + 400
+			if progress:
+				progress.add(150)
 			hud.set_shells(save.shells)
 			SaveGame.write(save)
 			audio.play("fanfare2")
@@ -142,6 +147,8 @@ func _bottle_fee() -> bool:
 		return false
 	_mark("bottles", "done")
 	save.shells = int(save.shells) + 1000
+	if progress:
+		progress.add(150)
 	hud.set_shells(save.shells)
 	SaveGame.write(save)
 	audio.play("fanfare2")

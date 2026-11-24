@@ -66,6 +66,7 @@ var audio: Node
 var save: Dictionary
 var boats: Node3D
 var interiors: Node3D
+var progress: Node  # fisher XP
 var playing := ""  # "skip", "darts" (modal); the race runs alongside normal play
 var _layer: CanvasLayer
 var _gauge: Gauge
@@ -319,6 +320,8 @@ func _prize(game: String, score: float, prizes: Array, who: String, lower_better
 			save.shells = int(save.shells) + shells
 			hud.set_shells(save.shells)
 			audio.play("coin", -2.0)
+			if progress:
+				progress.add(30 + shells / 10)
 			out += "  %s's prize: +%d Shells!" % [who, shells]
 	rec[game + "_paid"] = paid
 	return out

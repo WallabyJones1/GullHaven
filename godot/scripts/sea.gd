@@ -225,6 +225,34 @@ static func size_class(e: Dictionary) -> int:
 	return 3
 
 
+const DIFFICULTY_NAMES := ["", "Easy", "Steady", "Tricky", "Tough", "Fearsome"]
+const STRONG_SHAPES := ["torp", "gar", "squid", "cuttle", "octo", "shark", "tuna", "marlin", "sail", "mahi", "wobbe"]
+const GENTLE_SHAPES := ["seahorse", "dragon", "crab", "puffer", "clown", "idol", "lantern", "flying", "lobster"]
+
+
+## How hard something fights, 1 (easy) to 5 (fearsome): rarer, bigger and faster fish fight
+## harder; seahorses and their kin never really fight. Legends are always 5.
+static func difficulty(e: Dictionary) -> int:
+	var cat := str(e.get("cat", ""))
+	if cat == "legend":
+		return 5
+	if cat != "fish":
+		return 1
+	if e.has("diff"):
+		return clampi(int(e.diff), 1, 5)
+	var r := int(e.get("r", 0))
+	var d := 1 + r
+	var cls := size_class(e)
+	if cls >= 2:
+		d += 1
+	var art := str(e.get("art", ""))
+	if art in STRONG_SHAPES and cls >= 1:
+		d += 1
+	if art in GENTLE_SHAPES:
+		d = mini(d, 2 + (1 if r >= 2 else 0))
+	return clampi(d, 1, 5)
+
+
 ## Everything that could take the hook on this cast, as [entry, weight] pairs.
 ## shadow_r is the size class of the shadow that came to the bait (-1 for any).
 ## rare_boost multiplies the odds of uncommon and better fish (feeding frenzies).
@@ -381,9 +409,12 @@ func hint_for(e: Dictionary) -> String:
 		parts.append("on " + str(b.get("n", p.bait)).to_lower())
 	if e.cat == "legend":
 		parts.append("needs a Graphite Rod or better")
+	var verb := "Bites"
+	if str(e.get("how", "")) == "pot":
+		verb = "Crawls into crab pots"
 	if parts.is_empty():
-		return str(e.get("hint", "Any time."))
-	return "Bites " + ", ".join(PackedStringArray(parts)) + "."
+		return str(e.get("hint", "Any time.")) if verb == "Bites" else verb + " any time."
+	return verb + " " + ", ".join(PackedStringArray(parts)) + "."
 
 
 # --- the web game's integer hash (Math.imul semantics), so weather matches -------

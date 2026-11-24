@@ -44,6 +44,7 @@ var info := {}  # the BOATS entry for your boat
 var aboard := false
 var heading := 0.0  # 0 points north (-Z)
 var speed := 0.0
+var progress: Node  # fisher skills (sea legs)
 var _lamp_light: OmniLight3D
 var _oars: Array[Node3D] = []
 var _row_t := 0.0
@@ -276,6 +277,8 @@ func _physics_process(delta: float) -> void:
 	if aboard and not busy and not hud.input_blocked():
 		input = Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	var top := BASE_SPEED * float(info.spd)
+	if progress:
+		top *= progress.more("sea_legs")
 	if input.length() > 0.1:
 		var right: Vector3 = cam.ground_right()
 		var fwd: Vector3 = cam.ground_forward()

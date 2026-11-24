@@ -211,6 +211,9 @@ func _show_detail(e: Dictionary) -> void:
 			pass
 		_:
 			kind = "%s find" % kind
+	if str(e.cat) in ["fish", "legend"]:
+		var d := Sea.difficulty(e)
+		kind += "   %s fight (%d/5)" % [Sea.DIFFICULTY_NAMES[d], d]
 	_d_kind.text = kind
 	_d_kind.add_theme_color_override("font_color", UI.RARITY_COLORS[clampi(r, 0, UI.RARITY_COLORS.size() - 1)])
 	_d_now.text = "Biting now!" if _now(e) else ""

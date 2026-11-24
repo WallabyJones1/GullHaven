@@ -5,10 +5,10 @@ extends RefCounted
 ##   right mouse button), mouse wheel or - / = zooms.
 ##   Space, F or left click: cast, reel, talk, open doors, board boats, dig.
 ##   Esc: reel in early, close menus (or open the game menu). R bait, Tab or L Logbook,
-##   J Journal, M map, B build, I bag.
+##   J Journal, M map, B build, I bag, G kit (pots, net, trolling, speargun).
 ## Gamepad:
 ##   Left stick walks, right stick turns and zooms the camera, bumpers turn in steps.
-##   A acts, B cancels, Y bait, X build, Start the game menu, Back the map,
+##   A acts, B cancels, Y bait, X kit (or build, in your hut), Start the game menu, Back the map,
 ##   D-pad up Journal (or click the left stick), left Logbook, right bag.
 ## Keys can be changed in the game menu (Controls); the changes live in settings.cfg.
 
@@ -32,15 +32,16 @@ const KEYS := {
 	"journal": [KEY_J],
 	"build": [KEY_B],
 	"bag": [KEY_I],
+	"tool": [KEY_G],
 	"menu": [KEY_ESCAPE],
 }
 # the ones you can change in Controls, in the order they're listed
 # (Esc always stays back / menu, so there's always a way out)
 const REBINDABLE := ["move_up", "move_down", "move_left", "move_right", "action", "rotate_left", "rotate_right",
-	"bait", "bag", "journal", "logbook", "map", "build", "time_skip", "photo"]
+	"bait", "tool", "bag", "journal", "logbook", "map", "build", "time_skip", "photo"]
 const NAMES := {"move_up": "Walk up", "move_down": "Walk down", "move_left": "Walk left", "move_right": "Walk right",
 	"action": "Cast, reel, talk, use", "rotate_left": "Turn camera left",
-	"rotate_right": "Turn camera right", "bait": "Change bait", "bag": "Bag", "journal": "Journal", "logbook": "Logbook",
+	"rotate_right": "Turn camera right", "bait": "Change bait", "tool": "Use your kit (pots, net...)", "bag": "Bag", "journal": "Journal", "logbook": "Logbook",
 	"map": "Map", "build": "Arrange your hut", "time_skip": "Skip an hour", "photo": "Hide the HUD"}
 
 
@@ -65,6 +66,7 @@ static func setup() -> void:
 	_pad_button("cancel", JOY_BUTTON_B)
 	_pad_button("bait", JOY_BUTTON_Y)
 	_pad_button("build", JOY_BUTTON_X)
+	_pad_button("tool", JOY_BUTTON_X)
 	_pad_button("menu", JOY_BUTTON_START)
 	_pad_button("map", JOY_BUTTON_BACK)
 	_pad_button("journal", JOY_BUTTON_DPAD_UP)
