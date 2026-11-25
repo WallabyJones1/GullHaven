@@ -595,9 +595,13 @@ func _veg_near(pos: Vector3, facing: Vector3) -> Dictionary:
 	var c := Vector2i(int(pos.x / 128.0), int(pos.z / 128.0))
 	var best := {}
 	var best_d := 99.0
+	var reach := Rect2(pos.x - 2.6, pos.z - 2.6, 5.2, 5.2)
 	for dz in range(-1, 2):
 		for dx in range(-1, 2):
-			var list: Array = world._veg_list.get(c + Vector2i(dx, dz), [])
+			var cell := c + Vector2i(dx, dz)
+			if not reach.intersects(Rect2(cell.x * 128.0, cell.y * 128.0, 128.0, 128.0)):
+				continue  # (almost always just the one cell you're standing in)
+			var list: Array = world._veg_list.get(cell, [])
 			for p in list:
 				var x := float(p[0])
 				var z := float(p[1])
