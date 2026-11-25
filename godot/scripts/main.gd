@@ -49,6 +49,7 @@ const Land := preload("res://scripts/land.gd")
 const LandMenu := preload("res://scripts/land_menu.gd")
 const LandStory := preload("res://scripts/land_story.gd")
 const Online := preload("res://scripts/online.gd")
+const Touch := preload("res://scripts/touch.gd")
 
 var env: Environment
 var world_env: WorldEnvironment
@@ -95,6 +96,7 @@ var land: Node3D  # Harbour Life: farming, foraging, mining, hunting, crafting
 var land_menu: CanvasLayer
 var land_story: Node3D
 var online: Node  # the shared town (multiplayer), when you play online
+var touch: CanvasLayer  # thumbstick and buttons on phones and tablets
 var _first_time := false
 var skip_save := false  # starting a new game: don't write the old save back on the way out
 var save: Dictionary
@@ -375,7 +377,11 @@ func _ready() -> void:
 	menus.name = "Menus"
 	add_child(menus)
 	menus.setup(self, hud, audio, player, cam)
-	set_quality(bool(menus.settings.quality), false)
+	set_quality(bool(menus.settings.quality) and not (Touch.is_touch_device() and OS.has_feature("web")), false)
+	touch = Touch.new()
+	touch.name = "Touch"
+	add_child(touch)
+	touch.setup(self)
 
 	opening = Opening.new()
 	opening.name = "Opening"

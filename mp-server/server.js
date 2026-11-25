@@ -6,7 +6,9 @@
 // of each hut's layout so friends can visit. No accounts, no money, no tokens.
 //
 // Run:  cd mp-server && npm install && npm start     (PORT, default 8787; DATA_FILE for huts)
-// Health check: GET / returns {"ok":true,"players":N}.
+// Health check: GET /health. Status: GET /status returns {"ok":true,"players":N}.
+// If a public/ folder sits next to this file (the web build of the game, put there by CI),
+// the server also serves the game itself, and tells the page to join this same server.
 'use strict';
 const http = require('http');
 const fs = require('fs');
@@ -120,9 +122,61 @@ function info(p) {
   return { id: p.id, name: p.name, look: p.look, x: p.x, y: p.y, z: p.z, fx: p.fx, fz: p.fz, a: p.a, in: p.in };
 }
 
+const PUBLIC = process.env.PUBLIC_DIR || path.join(__dirname, 'public');
+const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.wasm': 'application/wasm',
+  '.pck': 'application/octet-stream', '.png': 'image/png', '.ico': 'image/x-icon', '.svg': 'image/svg+xml',
+  '.json': 'application/json', '.css': 'text/css', '.txt': 'text/plain; charset=utf-8', '.webmanifest': 'application/manifest+json' };
+// The page learns where to connect before the game starts (same host, ws or wss).
+const INJECT = '<script>window.GULLHAVEN_SERVER=(location.protocol==="https:"?"wss://":"ws://")+location.host;</script>' +
+  '<style>#gh-rotate{display:none}@media (orientation:portrait) and (max-width:900px){#gh-rotate{display:flex;position:fixed;' +
+  'inset:0;z-index:99;background:#0b1020;color:#f8f0dc;font:600 22px sans-serif;align-items:center;justify-content:center;' +
+  'text-align:center;padding:32px}}</style>';
+const ROTATE = '<div id="gh-rotate">Turn your phone sideways to play Gullhaven</div>';
+
+function serveFile(req, res) {
+  let rel = decodeURIComponent(String(req.url || '/').split('?')[0]);
+  if (rel === '/' || rel === '') rel = '/index.html';
+  const file = path.normalize(path.join(PUBLIC, rel));
+  if (!file.startsWith(PUBLIC + path.sep) || /\/(ci|node_modules)\//.test(rel)) {
+    res.writeHead(404); res.end('Not found'); return;
+  }
+  fs.stat(file, (err, st) => {
+    if (err || !st.isFile()) { res.writeHead(404); res.end('Not found'); return; }
+    const ext = path.extname(file).toLowerCase();
+    const headers = { 'content-type': MIME[ext] || 'application/octet-stream', 'cache-control': 'no-cache',
+      'cross-origin-opener-policy': 'same-origin', 'cross-origin-embedder-policy': 'require-corp' };
+    if (ext === '.html') {
+      fs.readFile(file, 'utf8', (e, html) => {
+        if (e) { res.writeHead(500); res.end(); return; }
+        res.writeHead(200, headers);
+        res.end(html.replace('<head>', '<head>' + INJECT).replace(/<body([^>]*)>/, '<body$1>' + ROTATE));
+      });
+      return;
+    }
+    const gz = file + '.gz';
+    const wantsGz = /\bgzip\b/.test(String(req.headers['accept-encoding'] || ''));
+    if (wantsGz && fs.existsSync(gz)) {
+      headers['content-encoding'] = 'gzip';
+      headers['content-length'] = fs.statSync(gz).size;
+      res.writeHead(200, headers);
+      fs.createReadStream(gz).pipe(res);
+      return;
+    }
+    headers['content-length'] = st.size;
+    res.writeHead(200, headers);
+    fs.createReadStream(file).pipe(res);
+  });
+}
+
 const server = http.createServer((req, res) => {
-  res.writeHead(200, { 'content-type': 'application/json', 'access-control-allow-origin': '*' });
-  res.end(JSON.stringify({ ok: true, game: 'gullhaven', players: players.size, protocol: PROTOCOL }));
+  const url = String(req.url || '/');
+  if (url === '/health') { res.writeHead(200, { 'content-type': 'text/plain' }); res.end('ok'); return; }
+  if (url.startsWith('/status') || !fs.existsSync(path.join(PUBLIC, 'index.html'))) {
+    res.writeHead(200, { 'content-type': 'application/json', 'access-control-allow-origin': '*' });
+    res.end(JSON.stringify({ ok: true, game: 'gullhaven', players: players.size, protocol: PROTOCOL }));
+    return;
+  }
+  serveFile(req, res);
 });
 
 const wss = new WebSocketServer({ server, maxPayload: 64 * 1024 });

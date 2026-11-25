@@ -183,6 +183,29 @@ jobs:
           git push -q -f "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" godot-web
           echo "Published to the godot-web branch."
 
+      # The online game: the web build plus the shared-town server (mp-server/), on the
+      # harbour-life-web branch, which Railway's "gullhaven-online" service runs with Node.
+      - name: Publish the online game to the harbour-life-web branch
+        if: github.event_name == 'push' && github.ref == 'refs/heads/harbour-life' && steps.smoke.outputs.failed == '0'
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          SITE="$RUNNER_TEMP/online"
+          mkdir -p "$SITE/public"
+          cp -r godot/build/web/. "$SITE/public/"
+          for f in "$SITE"/public/*.wasm "$SITE"/public/*.pck "$SITE"/public/*.js; do gzip -9 -k "$f"; done
+          cp mp-server/server.js mp-server/package.json mp-server/package-lock.json mp-server/README.md "$SITE/"
+          printf 'node_modules/\nhuts.json\n' > "$SITE/.gitignore"
+          echo "Built from ${GITHUB_SHA} on $(date -u +%Y-%m-%dT%H:%MZ)" > "$SITE/public/BUILD.txt"
+          cd "$SITE"
+          git init -q -b harbour-life-web
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Online game build of ${GITHUB_SHA::7}"
+          git push -q -f "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" harbour-life-web
+          echo "Published to the harbour-life-web branch."
+
       # Railway holds deploys of commits made by this bot until someone clicks Approve. With a
       # RAILWAY_TOKEN secret (a project token for the Gullhaven project), the build deploys
       # straight from here instead. See godot/SHARING.md.

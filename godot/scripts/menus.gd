@@ -48,7 +48,7 @@ static var fresh_start := false  # New game: skip the menu after the reload and 
 
 var mode := ""  # "title", "intro", "pause", "screen" (something opened from the menu) or ""
 var settings := {"music": 0.8, "effects": 1.0, "fullscreen": false, "quality": true, "seen_opening": false, "harbour": false,
-	"show_requests": false, "online_name": "", "online_server": ""}
+	"show_requests": false, "online_name": "", "online_server": "", "online_auto": true, "touch": "auto"}
 var _root: Control
 var _box: VBoxContainer
 var _sub: Label
@@ -241,6 +241,23 @@ func _start() -> void:
 		opening.call("release")
 	audio.play("fanfare1", -6.0)
 	main.welcome()
+	_auto_join()
+
+
+## On the online site the game joins the shared town by itself (Settings can turn it off).
+func _auto_join() -> void:
+	var online: Node = main.get("online")
+	if online == null or bool(online.is_online()) or not bool(settings.get("online_auto", true)):
+		return
+	var url: String = online.page_server()
+	if url == "":
+		return
+	var nm := str(settings.online_name)
+	if nm == "":
+		nm = "Fisher %d" % (randi() % 900 + 100)
+		settings.online_name = nm
+		_save_settings()
+	online.call("connect_to", url, nm)
 
 
 ## After New game reloads the scene: straight in, no menu.
@@ -653,9 +670,11 @@ func _online_page(from: String) -> void:
 		_box.add_child(UI.label("Your name", 20, UI.GOLD, true))
 		var name_edit := _edit(str(settings.online_name), "Your name in town")
 		_box.add_child(name_edit)
-		_box.add_child(UI.label("Server address", 20, UI.GOLD, true))
-		var server_edit := _edit(str(settings.online_server), "ws://localhost:8787")
-		_box.add_child(server_edit)
+		var here_url: String = online.page_server() if online else ""
+		var server_edit := _edit(here_url if here_url != "" else str(settings.online_server), "ws://localhost:8787")
+		if here_url == "":
+			_box.add_child(UI.label("Server address", 20, UI.GOLD, true))
+			_box.add_child(server_edit)
 		var note := UI.label("Your own save comes with you. Run the server from mp-server/ in the game's folder (npm start), or ask a friend for theirs.", 17, UI.DIM)
 		note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		note.custom_minimum_size = Vector2(560.0, 0.0)
@@ -685,6 +704,7 @@ func _join_online(name_edit: LineEdit, server_edit: LineEdit) -> void:
 		nm = "Fisher"
 	settings.online_name = nm
 	settings.online_server = server_edit.text.strip_edges()
+	settings.online_auto = true
 	_save_settings()
 	online.call("connect_to", str(settings.online_server), nm)
 	if _from == "title":
@@ -702,6 +722,8 @@ func _visit(id: int) -> void:
 
 func _leave_online() -> void:
 	var online: Node = main.get("online")
+	settings.online_auto = false
+	_save_settings()
 	if online:
 		online.call("leave")
 	_online_page(_from)
@@ -737,6 +759,9 @@ func _settings_page(from: String) -> void:
 	rq.add_theme_font_size_override("font_size", 22)
 	rq.toggled.connect(_on_requests)
 	_box.add_child(rq)
+	var tc := UI.button("Touch controls: %s" % str(settings.get("touch", "auto")).capitalize(), 22)
+	tc.pressed.connect(_cycle_touch.bind(tc))
+	_box.add_child(tc)
 	_button("Back", show_title if from == "title" else _pause_page)
 	_focus_first()
 
@@ -768,6 +793,18 @@ func _on_quality(on: bool) -> void:
 	settings.quality = on
 	main.set_quality(on, false)
 	_save_settings()
+
+
+func _cycle_touch(b: Button) -> void:
+	var order := ["auto", "on", "off"]
+	var now := str(settings.get("touch", "auto"))
+	var next: String = order[(order.find(now) + 1) % order.size()]
+	settings.touch = next
+	_save_settings()
+	b.text = "Touch controls: %s" % next.capitalize()
+	var t: Node = main.get("touch")
+	if t:
+		t.call("set_enabled", next == "on" or (next == "auto" and bool(t.call("is_touch_device"))))
 
 
 func _on_requests(on: bool) -> void:

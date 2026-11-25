@@ -19,6 +19,9 @@ const LOG_LINES := 7
 const LOG_FADE := 14.0
 const BUBBLE_TIME := 6.0
 const WALK := [0, 1, 0, 2]
+# Emotes: keys 1 to 5 (or the touch Wave button). What shows over your head.
+const EMOTES := {"wave": "*waves*", "dance": "*dances*", "cheer": "Hooray!", "heart": "<3", "laugh": "Ha ha ha!"}
+const EMOTE_KEYS := {KEY_1: "wave", KEY_2: "dance", KEY_3: "cheer", KEY_4: "heart", KEY_5: "laugh"}
 
 signal changed  # connected, disconnected, someone came or went
 
@@ -53,6 +56,15 @@ func setup(m: Node) -> void:
 	_my_bubble.modulate = Color(1.0, 0.95, 0.75)
 	_my_bubble.visible = false
 	main.add_child.call_deferred(_my_bubble)
+
+
+## In a browser, the page the game came from may be a shared-town server itself (the
+## Railway site): it tells the game its address, and the game joins it by itself.
+static func page_server() -> String:
+	if not OS.has_feature("web"):
+		return ""
+	var v: Variant = JavaScriptBridge.eval("window.GULLHAVEN_SERVER || ''", true)
+	return "" if v == null else str(v)
 
 
 func is_online() -> bool:
@@ -208,6 +220,21 @@ func _send_hut() -> void:
 		_send({"t": "hut", "data": h})
 
 
+## Wave, dance, cheer... (over your head, and everyone else's screen).
+func emote(kind: String) -> void:
+	if not EMOTES.has(kind):
+		return
+	_my_bubble.text = str(EMOTES[kind])
+	_my_bubble_t = 2.5
+	var pl: CharacterBody3D = main.player
+	if str(pl.pose) == "":
+		pl.pose = "cheer"
+		get_tree().create_timer(1.2).timeout.connect(func() -> void:
+			if str(pl.pose) == "cheer" and not (pl.get("_held") as Node3D).visible:
+				pl.pose = "")
+	_send({"t": "emote", "e": kind})
+
+
 ## Tell everyone your new clothes (the wardrobe calls this after a change).
 func send_look() -> void:
 	if is_online():
@@ -222,7 +249,7 @@ func _on_message(msg: Dictionary) -> void:
 			for p in msg.get("players", []):
 				if p is Dictionary:
 					_add(p)
-			_say_system("You're in the shared town as %s. Press Enter to chat." % my_name)
+			_say_system("You're in the shared town as %s. Enter to chat, 1 to 5 to wave, dance, cheer..." % my_name)
 			main.hud.toast("Online: %d other %s here." % [remotes.size(), "player" if remotes.size() == 1 else "players"])
 			changed.emit()
 		"join":
@@ -267,6 +294,15 @@ func _on_message(msg: Dictionary) -> void:
 			var data: Dictionary = msg.get("data", {})
 			data["owner"] = str(msg.get("owner", "A friend"))
 			main.interiors.visit_hut(data)
+		"emote":
+			var eid := int(msg.get("id", -1))
+			var kind := str(msg.get("e", ""))
+			if remotes.has(eid) and EMOTES.has(kind):
+				var re: Dictionary = remotes[eid]
+				var eb: Label3D = re.bubble
+				eb.text = str(EMOTES[kind])
+				re.bubble_t = 2.5
+				re.emote_t = 1.5
 		"sys":
 			_say_system(str(msg.get("text", "")))
 		"full":
@@ -356,7 +392,9 @@ func _update_remotes(delta: float) -> void:
 		node.visible = absf(pos.y - me.y) < 60.0
 		var row := Billboard.row_for(r.facing, cam)
 		var col := 0
-		match int(r.a):
+		r.emote_t = float(r.get("emote_t", 0.0)) - delta
+		var a := 4 if float(r.emote_t) > 0.0 else int(r.a)
+		match a:
 			1:
 				r.walk = float(r.walk) + delta * 8.0
 				col = WALK[int(r.walk) % 4]
@@ -445,10 +483,14 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not (event is InputEventKey) or not event.is_pressed() or event.is_echo():
 		return
 	var k := (event as InputEventKey).keycode
-	if k != KEY_ENTER and k != KEY_KP_ENTER:
-		return
 	var hud: CanvasLayer = main.hud
 	if hud.modal or str(main.menus.mode) != "" or bool(main.dialogue.is_open) or get_tree().paused:
+		return
+	if EMOTE_KEYS.has(k):
+		get_viewport().set_input_as_handled()
+		emote(str(EMOTE_KEYS[k]))
+		return
+	if k != KEY_ENTER and k != KEY_KP_ENTER:
 		return
 	get_viewport().set_input_as_handled()
 	_open_line()
