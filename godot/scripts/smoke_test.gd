@@ -49,6 +49,11 @@ func setup(m: Node, quick := false) -> void:
 		["close the map", _close_screen.bind("map_screen"), 10],
 		["the Harbour Exchange (test build)", _harbour, 10],
 		["leave the game menu", _close_pause, 10],
+		["go home (a plot, test build)", _home_go, 60],
+		["decorate it from the catalogue", _home_decorate, 20],
+		["check the home", _home_check, 5],
+		["leave home", _home_leave, 60],
+		["check we're back outside", _home_out, 5],
 		["Hale's Tackle, every tab", _shop, 10],
 		["close the shop", _close_shop, 10],
 		["Threads & Tides", _outfitter, 10],
@@ -171,7 +176,7 @@ func _harbour() -> void:
 	m.open_pause()
 	main.save["shells"] = 500
 	m._harbour_page()
-	_check(int(main.save.token.fishers) == 1, "the starter Fisher is given")
+	_check(int(main.save.token.fishers) >= 1 and bool(main.save.token.starter), "the starter Fisher is given")
 	var gull_before := float(main.save.token.gull)
 	m._harbour_sell(100)
 	_check(is_equal_approx(float(main.save.token.gull) - gull_before, 10.0) and int(main.save.shells) == 400, "100 Shells sell for 10 $GULL")
@@ -179,10 +184,67 @@ func _harbour() -> void:
 	_check((main.save.token.sea as Array).size() == 1, "the Fisher goes out to sea")
 	m._harbour_home()
 	_check((main.save.token.sea as Array).is_empty() and int(main.save.shells) >= 400, "the crew comes home with the catch")
+	var fishers_before := int(main.save.token.fishers)
+	main.save.token.gull = 10.0
 	m._harbour_buy()
-	_check(int(main.save.token.fishers) == 1, "a Fisher costs more $GULL than this, so none is bought")
+	_check(int(main.save.token.fishers) == fishers_before, "a Fisher costs more $GULL than this, so none is bought")
+	if str(main.save.get("home", {}).get("plot", "")) == "":
+		main.save.token.gull = float(main.save.token.gull) + 2000.0
+		m._plots_page()
+		m._harbour_buy_plot("hillside")
+	_check(str(main.save.home.plot).begins_with("L-"), "a Hillside plot is bought with $GULL (%s)" % str(main.save.home.plot))
 	m.settings.harbour = false
 	m._pause_page()
+
+
+## Homes (test build): go home from the menu, buy a sofa and wallpaper from the Home
+## Catalogue, put the sofa down with the arranger, and walk back out.
+func _home_go() -> void:
+	_check(bool(main.interiors.visit_home()), "go home from the game menu")
+
+
+func _home_decorate() -> void:
+	var it: Node = main.interiors
+	_check(bool(it.in_home()), "inside your home (%s)" % str(it.inside.get("name", "")))
+	var cat: Node = main.catalogue
+	main.save["shells"] = int(main.save.shells) + 2000
+	cat.open(0)
+	cat._buy_item("sofa@red", "sofa")
+	cat.show_tab(cat.walls_tab())
+	cat._use_style("home/wall_stripes_blue", "stripes")
+	cat.close()
+	_check(int(main.save.furniture_inv.get("sofa@red", 0)) >= 1, "bought a red sofa from the catalogue")
+	_check(str(main.save.home.wall) == "home/wall_stripes_blue", "blue striped wallpaper is up")
+	(main.save.home.furniture as Array).clear()  # a clear floor, whatever an earlier run left here
+	it.refresh()
+	var hb: Node = main.hut_build
+	hb.begin()
+	hb._sel = (hb._owned() as Array).find("sofa@red")
+	hb._cursor = Vector2(0.0, -1.5)
+	hb._rot = 0
+	hb._act()
+	hb.finish()
+
+
+func _home_check() -> void:
+	var placed: Array = main.save.home.furniture
+	_check(placed.size() >= 1 and str(placed[-1].id) == "sofa@red", "the sofa is placed in the home")
+	var built := false
+	var seen: Array = []
+	for f in main.interiors.furniture_nodes:
+		var n: Node3D = f.node
+		seen.append("%s:%d:%s" % [str(f.item.id), n.get_child_count() if is_instance_valid(n) else -1, str(is_instance_valid(n) and n.is_inside_tree())])
+		if str(f.item.id) == "sofa@red" and is_instance_valid(n) and n.get_child_count() > 0:
+			built = true
+	_check(built, "and it's built in the room (%s)" % ", ".join(seen))
+
+
+func _home_leave() -> void:
+	main.interiors.leave()
+
+
+func _home_out() -> void:
+	_check(not bool(main.interiors.is_inside()), "back outside where we were")
 
 
 func _show_title() -> void:

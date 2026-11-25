@@ -15,6 +15,7 @@ const Glyphs := preload("res://scripts/input_glyphs.gd")
 const Harbour := preload("res://scripts/token/harbour.gd")
 const Economy := preload("res://scripts/token/economy.gd")
 const Wallet := preload("res://scripts/token/wallet.gd")
+const Homes := preload("res://scripts/token/homes.gd")
 
 const SETTINGS := "user://settings.cfg"
 const PAD_CONTROLS := """[b]Walk / steer[/b]  left stick      [b]Camera[/b]  right stick, LB / RB
@@ -361,7 +362,7 @@ func _harbour_page() -> void:
 	text += "Exchange: %.2f $GULL a Shell, up to %d Shells a day (%d sold today).\n" % [Economy.rate_per_shell(), Economy.SALE_CAP, sold_today]
 	text += "Fishers: %d to sail (%d in this save, %d in your wallet), %d at sea.\n" % [Harbour.owned(main.save), int(t.fishers), int(t.chain_fishers), crew]
 	if not Harbour.licence(main.save):
-		text += "You need a Harbour Licence (one Fisher) before you can sell Shells.\n"
+		text += "You need a Harbour Licence (a Fisher or a home plot) before you can sell Shells.\n"
 	if crew > 0:
 		text += "The crew has earned %d Shells so far. They stop paying after %d hours, so bring them home." % [Harbour.pending(main.save, now), int(Economy.MAX_HOURS)]
 	_box.add_child(_rich(text, 620.0))
@@ -376,6 +377,12 @@ func _harbour_page() -> void:
 			_button("Connect wallet (Phantom)", wallet.connect_wallet)
 	if str(wallet.chain.get("mint_page_url", "")) != "":
 		_button("Mint Fishers (opens the mint page)", wallet.open_mint_page)
+	var home := Homes.ensure(main.save)
+	if str(home.plot) == "":
+		_button("Buy a home plot", _plots_page)
+	else:
+		_button("Go home (%s)" % str(home.plot), _harbour_go_home)
+		_button("Home Catalogue", _harbour_catalogue)
 	_button("Sell 100 Shells", _harbour_sell.bind(100))
 	_button("Sell all Shells (up to today's cap)", _harbour_sell.bind(-1))
 	if Harbour.owned(main.save) > crew:
@@ -400,6 +407,48 @@ func _on_wallet_changed() -> void:
 			t.sea = (t.sea as Array).slice(0, Harbour.owned(main.save))  # Fishers that left the wallet come home
 	if _page == "harbour" and visible:
 		_harbour_page()
+
+
+## The season-1 districts: pick one and the first free plot there is yours.
+func _plots_page() -> void:
+	_clear()
+	_page = "plots"
+	_sub.text = "Buy a home plot"
+	var gull := float(Harbour.ensure(main.save).gull)
+	var text := "A plot gives you a home to decorate (and a Harbour Licence). You have %.2f $GULL.\n" % gull
+	for d in Homes.catalog().districts:
+		text += "\n[b]%s[/b]: %s" % [d.n, d.d]
+	_box.add_child(_rich(text, 620.0))
+	for d in Homes.catalog().districts:
+		_button("%s: %s $GULL, a %d x %d m home (%d plots)" % [d.n, Wallet._num(float(d.gull)), int(d.room[0]), int(d.room[1]), int(d.count)],
+			_harbour_buy_plot.bind(str(d.id)))
+	_button("Back", _harbour_page)
+	_focus_first()
+
+
+func _harbour_buy_plot(district_id: String) -> void:
+	var r := Homes.buy_plot(main.save, district_id)
+	if r.ok:
+		audio.play("click")
+		hud.toast("Plot %s is yours! Go home from here to decorate it." % str(r.plot))
+	else:
+		hud.toast(str(r.reason))
+	main.save_now()
+	_harbour_page()
+
+
+func _harbour_go_home() -> void:
+	close_pause()
+	var interiors: Node = main.get("interiors")
+	if interiors and not interiors.call("visit_home"):
+		hud.toast("Step outside first, then go home.")
+
+
+func _harbour_catalogue() -> void:
+	close_pause()
+	var cat: Node = main.get("catalogue")
+	if cat:
+		cat.call("open", 0)
 
 
 func _harbour_sell(n: int) -> void:

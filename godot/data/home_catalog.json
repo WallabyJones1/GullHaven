@@ -1,0 +1,1403 @@
+{
+ "colours": {
+  "red": "#c8423c",
+  "orange": "#e07a2e",
+  "yellow": "#e8c03a",
+  "green": "#5a9e48",
+  "teal": "#2f9e94",
+  "blue": "#3f6fc8",
+  "purple": "#7b4fc0",
+  "pink": "#e07aa8",
+  "cream": "#e8dcc0",
+  "charcoal": "#3c3f48",
+  "oak": "#b8864a",
+  "walnut": "#6e4426",
+  "pale": "#d8bc8c",
+  "white": "#ecebe6",
+  "black": "#2a2a30",
+  "steel": "#9aa4ae",
+  "brass": "#c8a040",
+  "terracotta": "#c0623a",
+  "gold": "#d8b040",
+  "silver": "#c0c8d0",
+  "bronze": "#b07040",
+  "gradient": "#9945ff"
+ },
+ "colour_names": {
+  "red": "Red",
+  "orange": "Orange",
+  "yellow": "Yellow",
+  "green": "Green",
+  "teal": "Teal",
+  "blue": "Blue",
+  "purple": "Purple",
+  "pink": "Pink",
+  "cream": "Cream",
+  "charcoal": "Charcoal",
+  "oak": "Oak",
+  "walnut": "Walnut",
+  "pale": "Pale",
+  "white": "White",
+  "black": "Black",
+  "steel": "Steel",
+  "brass": "Brass",
+  "terracotta": "Terracotta",
+  "gold": "Gold",
+  "silver": "Silver",
+  "bronze": "Bronze",
+  "gradient": "Gradient"
+ },
+ "categories": [
+  "Living room",
+  "Bedroom",
+  "Kitchen",
+  "Bathroom",
+  "Lights",
+  "Fun",
+  "Plants",
+  "Wall decor"
+ ],
+ "items": [
+  {
+   "base": "sofa",
+   "n": "Sofa",
+   "cat": "Living room",
+   "kind": "floor",
+   "price": 300,
+   "colours": [
+    "red",
+    "orange",
+    "yellow",
+    "green",
+    "teal",
+    "blue",
+    "purple",
+    "pink",
+    "cream",
+    "charcoal"
+   ],
+   "d": "A deep three-seater for long evenings.",
+   "cells": [
+    4,
+    2
+   ]
+  },
+  {
+   "base": "armchair",
+   "n": "Armchair",
+   "cat": "Living room",
+   "kind": "floor",
+   "price": 180,
+   "colours": [
+    "red",
+    "orange",
+    "yellow",
+    "green",
+    "teal",
+    "blue",
+    "purple",
+    "pink",
+    "cream",
+    "charcoal"
+   ],
+   "d": "The comfy chair by the fire.",
+   "cells": [
+    2,
+    2
+   ]
+  },
+  {
+   "base": "beanbag",
+   "n": "Beanbag",
+   "cat": "Living room",
+   "kind": "floor",
+   "price": 90,
+   "colours": [
+    "red",
+    "orange",
+    "yellow",
+    "green",
+    "teal",
+    "blue",
+    "purple",
+    "pink",
+    "cream",
+    "charcoal"
+   ],
+   "d": "Squashy and impossible to get out of.",
+   "cells": [
+    2,
+    2
+   ]
+  },
+  {
+   "base": "coffee_table",
+   "n": "Coffee table",
+   "cat": "Living room",
+   "kind": "floor",
+   "price": 120,
+   "colours": [
+    "oak",
+    "walnut",
+    "pale",
+    "white",
+    "black"
+   ],
+   "d": "Room for a mug and a tide table.",
+   "cells": [
+    3,
+    2
+   ]
+  },
+  {
+   "base": "side_table",
+   "n": "Side table",
+   "cat": "Living room",
+   "kind": "floor",
+   "price": 60,
+   "colours": [
+    "oak",
+    "walnut",
+    "pale",
+    "white",
+    "black"
+   ],
+   "d": "A little table for a lamp.",
+   "cells": [
+    1,
+    1
+   ]
+  },
+  {
+   "base": "tv_retro",
+   "n": "Retro TV",
+   "cat": "Living room",
+   "kind": "floor",
+   "price": 400,
+   "colours": [
+    "walnut",
+    "cream",
+    "charcoal",
+    "red"
+   ],
+   "d": "Two channels: weather and more weather.",
+   "cells": [
+    2,
+    1
+   ]
+  },
+  {
+   "base": "radio",
+   "n": "Valve radio",
+   "cat": "Living room",
+   "kind": "floor",
+   "price": 150,
+   "colours": [
+    "walnut",
+    "cream",
+    "red",
+    "teal"
+   ],
+   "d": "Plays the shipping forecast.",
+   "cells": [
+    1,
+    1
+   ]
+  },
+  {
+   "base": "bookcase_tall",
+   "n": "Tall bookcase",
+   "cat": "Living room",
+   "kind": "floor",
+   "price": 160,
+   "colours": [
+    "oak",
+    "walnut",
+    "pale",
+    "white",
+    "black"
+   ],
+   "d": "Floor-to-ceiling books.",
+   "cells": [
+    3,
+    1
+   ]
+  },
+  {
+   "base": "rug_round",
+   "n": "Round rug",
+   "cat": "Living room",
+   "kind": "rug",
+   "price": 120,
+   "colours": [
+    "red",
+    "orange",
+    "yellow",
+    "green",
+    "teal",
+    "blue",
+    "purple",
+    "pink",
+    "cream",
+    "charcoal"
+   ],
+   "d": "A soft round rug.",
+   "cells": [
+    4,
+    4
+   ]
+  },
+  {
+   "base": "rug_stripe",
+   "n": "Striped rug",
+   "cat": "Living room",
+   "kind": "rug",
+   "price": 140,
+   "colours": [
+    "red",
+    "orange",
+    "yellow",
+    "green",
+    "teal",
+    "blue",
+    "purple",
+    "pink",
+    "cream",
+    "charcoal"
+   ],
+   "d": "A woven rug with stripes.",
+   "cells": [
+    5,
+    3
+   ]
+  },
+  {
+   "base": "double_bed",
+   "n": "Double bed",
+   "cat": "Bedroom",
+   "kind": "floor",
+   "price": 450,
+   "colours": [
+    "red",
+    "orange",
+    "yellow",
+    "green",
+    "teal",
+    "blue",
+    "purple",
+    "pink",
+    "cream",
+    "charcoal"
+   ],
+   "d": "A big bed with a patchwork quilt.",
+   "cells": [
+    4,
+    5
+   ]
+  },
+  {
+   "base": "bunk_bed",
+   "n": "Bunk beds",
+   "cat": "Bedroom",
+   "kind": "floor",
+   "price": 380,
+   "colours": [
+    "oak",
+    "walnut",
+    "pale",
+    "white",
+    "black"
+   ],
+   "d": "For sleepovers.",
+   "cells": [
+    2,
+    4
+   ]
+  },
+  {
+   "base": "wardrobe",
+   "n": "Wardrobe",
+   "cat": "Bedroom",
+   "kind": "floor",
+   "price": 260,
+   "colours": [
+    "oak",
+    "walnut",
+    "pale",
+    "white",
+    "black"
+   ],
+   "d": "Holds every outfit you own.",
+   "cells": [
+    3,
+    1
+   ]
+  },
+  {
+   "base": "dresser",
+   "n": "Dresser",
+   "cat": "Bedroom",
+   "kind": "floor",
+   "price": 200,
+   "colours": [
+    "oak",
+    "walnut",
+    "pale",
+    "white",
+    "black"
+   ],
+   "d": "Drawers with brass handles.",
+   "cells": [
+    3,
+    1
+   ]
+  },
+  {
+   "base": "nightstand",
+   "n": "Nightstand",
+   "cat": "Bedroom",
+   "kind": "floor",
+   "price": 70,
+   "colours": [
+    "oak",
+    "walnut",
+    "pale",
+    "white",
+    "black"
+   ],
+   "d": "For your alarm clock and a glass of water.",
+   "cells": [
+    1,
+    1
+   ]
+  },
+  {
+   "base": "kitchen_counter",
+   "n": "Kitchen counter",
+   "cat": "Kitchen",
+   "kind": "floor",
+   "price": 160,
+   "colours": [
+    "white",
+    "cream",
+    "teal",
+    "red",
+    "charcoal",
+    "pink"
+   ],
+   "d": "Cupboards below, worktop above.",
+   "cells": [
+    2,
+    1
+   ]
+  },
+  {
+   "base": "kitchen_sink",
+   "n": "Kitchen sink",
+   "cat": "Kitchen",
+   "kind": "floor",
+   "price": 180,
+   "colours": [
+    "white",
+    "cream",
+    "teal",
+    "red",
+    "charcoal",
+    "pink"
+   ],
+   "d": "With a window-shaped view of the sea.",
+   "cells": [
+    2,
+    1
+   ]
+  },
+  {
+   "base": "fridge",
+   "n": "Fridge",
+   "cat": "Kitchen",
+   "kind": "floor",
+   "price": 350,
+   "colours": [
+    "white",
+    "cream",
+    "teal",
+    "red",
+    "charcoal",
+    "pink"
+   ],
+   "d": "Keeps the catch fresh.",
+   "cells": [
+    2,
+    1
+   ]
+  },
+  {
+   "base": "oven_retro",
+   "n": "Retro oven",
+   "cat": "Kitchen",
+   "kind": "floor",
+   "price": 320,
+   "colours": [
+    "white",
+    "cream",
+    "teal",
+    "red",
+    "charcoal",
+    "pink"
+   ],
+   "d": "Four rings and a grill.",
+   "cells": [
+    2,
+    1
+   ]
+  },
+  {
+   "base": "dining_table",
+   "n": "Dining table",
+   "cat": "Kitchen",
+   "kind": "floor",
+   "price": 220,
+   "colours": [
+    "oak",
+    "walnut",
+    "pale",
+    "white",
+    "black"
+   ],
+   "d": "Seats six, or four fishers and a cat.",
+   "cells": [
+    4,
+    3
+   ]
+  },
+  {
+   "base": "dining_chair",
+   "n": "Dining chair",
+   "cat": "Kitchen",
+   "kind": "floor",
+   "price": 50,
+   "colours": [
+    "oak",
+    "walnut",
+    "pale",
+    "white",
+    "black"
+   ],
+   "d": "A sturdy chair.",
+   "cells": [
+    1,
+    1
+   ]
+  },
+  {
+   "base": "round_table",
+   "n": "Round table",
+   "cat": "Kitchen",
+   "kind": "floor",
+   "price": 180,
+   "colours": [
+    "oak",
+    "walnut",
+    "pale",
+    "white",
+    "black"
+   ],
+   "d": "For card games and chowder.",
+   "cells": [
+    3,
+    3
+   ]
+  },
+  {
+   "base": "bar_stool",
+   "n": "Bar stool",
+   "cat": "Kitchen",
+   "kind": "floor",
+   "price": 60,
+   "colours": [
+    "red",
+    "teal",
+    "charcoal",
+    "yellow",
+    "steel"
+   ],
+   "d": "Spins round.",
+   "cells": [
+    1,
+    1
+   ]
+  },
+  {
+   "base": "bathtub",
+   "n": "Bathtub",
+   "cat": "Bathroom",
+   "kind": "floor",
+   "price": 420,
+   "colours": [
+    "white",
+    "cream",
+    "pink",
+    "teal",
+    "charcoal"
+   ],
+   "d": "A claw-foot tub.",
+   "cells": [
+    4,
+    2
+   ]
+  },
+  {
+   "base": "toilet",
+   "n": "Toilet",
+   "cat": "Bathroom",
+   "kind": "floor",
+   "price": 150,
+   "colours": [
+    "white",
+    "cream",
+    "pink",
+    "teal",
+    "charcoal"
+   ],
+   "d": "Every home needs one.",
+   "cells": [
+    1,
+    2
+   ]
+  },
+  {
+   "base": "shower",
+   "n": "Shower",
+   "cat": "Bathroom",
+   "kind": "floor",
+   "price": 300,
+   "colours": [
+    "white",
+    "cream",
+    "pink",
+    "teal",
+    "charcoal"
+   ],
+   "d": "Hot water after a cold morning at sea.",
+   "cells": [
+    2,
+    2
+   ]
+  },
+  {
+   "base": "basin",
+   "n": "Basin",
+   "cat": "Bathroom",
+   "kind": "floor",
+   "price": 140,
+   "colours": [
+    "white",
+    "cream",
+    "pink",
+    "teal",
+    "charcoal"
+   ],
+   "d": "A pedestal basin.",
+   "cells": [
+    1,
+    1
+   ]
+  },
+  {
+   "base": "floor_lamp",
+   "n": "Floor lamp",
+   "cat": "Lights",
+   "kind": "floor",
+   "price": 90,
+   "colours": [
+    "red",
+    "orange",
+    "yellow",
+    "green",
+    "teal",
+    "blue",
+    "purple",
+    "pink",
+    "cream",
+    "charcoal"
+   ],
+   "d": "A tall lamp with a fabric shade.",
+   "cells": [
+    1,
+    1
+   ]
+  },
+  {
+   "base": "table_lamp",
+   "n": "Table lamp",
+   "cat": "Lights",
+   "kind": "floor",
+   "price": 60,
+   "colours": [
+    "red",
+    "orange",
+    "yellow",
+    "green",
+    "teal",
+    "blue",
+    "purple",
+    "pink",
+    "cream",
+    "charcoal"
+   ],
+   "d": "A small lamp.",
+   "cells": [
+    1,
+    1
+   ]
+  },
+  {
+   "base": "lava_lamp",
+   "n": "Lava lamp",
+   "cat": "Lights",
+   "kind": "floor",
+   "price": 120,
+   "colours": [
+    "red",
+    "orange",
+    "green",
+    "blue",
+    "purple",
+    "pink",
+    "gradient"
+   ],
+   "d": "Blobs go up, blobs come down.",
+   "cells": [
+    1,
+    1
+   ]
+  },
+  {
+   "base": "string_lights",
+   "n": "String lights",
+   "cat": "Lights",
+   "kind": "wall",
+   "price": 80,
+   "colours": [
+    "yellow",
+    "pink",
+    "blue",
+    "green",
+    "gradient"
+   ],
+   "d": "Fairy lights along the wall.",
+   "y": 2.4
+  },
+  {
+   "base": "neon_fish",
+   "n": "Neon fish",
+   "cat": "Lights",
+   "kind": "wall",
+   "price": 300,
+   "colours": [
+    "pink",
+    "blue",
+    "green",
+    "orange",
+    "purple",
+    "gradient"
+   ],
+   "d": "A glowing fish sign.",
+   "y": 1.5
+  },
+  {
+   "base": "neon_gm",
+   "n": "Neon GM",
+   "cat": "Lights",
+   "kind": "wall",
+   "price": 300,
+   "colours": [
+    "pink",
+    "blue",
+    "green",
+    "orange",
+    "purple",
+    "gradient"
+   ],
+   "d": "Good morning, harbour.",
+   "y": 1.5
+  },
+  {
+   "base": "neon_heart",
+   "n": "Neon heart",
+   "cat": "Lights",
+   "kind": "wall",
+   "price": 260,
+   "colours": [
+    "pink",
+    "blue",
+    "green",
+    "orange",
+    "purple",
+    "gradient"
+   ],
+   "d": "A glowing heart.",
+   "y": 1.5
+  },
+  {
+   "base": "jukebox",
+   "n": "Jukebox",
+   "cat": "Fun",
+   "kind": "floor",
+   "price": 900,
+   "colours": [
+    "red",
+    "teal",
+    "purple",
+    "yellow",
+    "gradient"
+   ],
+   "d": "Sea shanties, mostly.",
+   "cells": [
+    2,
+    1
+   ]
+  },
+  {
+   "base": "arcade",
+   "n": "Arcade cabinet",
+   "cat": "Fun",
+   "kind": "floor",
+   "price": 1200,
+   "colours": [
+    "red",
+    "blue",
+    "purple",
+    "green",
+    "gradient"
+   ],
+   "d": "High score: GULL.",
+   "cells": [
+    2,
+    2
+   ]
+  },
+  {
+   "base": "piano",
+   "n": "Upright piano",
+   "cat": "Fun",
+   "kind": "floor",
+   "price": 1500,
+   "colours": [
+    "black",
+    "white",
+    "walnut",
+    "red"
+   ],
+   "d": "Slightly out of tune.",
+   "cells": [
+    3,
+    2
+   ]
+  },
+  {
+   "base": "guitar_stand",
+   "n": "Guitar",
+   "cat": "Fun",
+   "kind": "floor",
+   "price": 350,
+   "colours": [
+    "red",
+    "blue",
+    "yellow",
+    "black",
+    "cream"
+   ],
+   "d": "An acoustic on a stand.",
+   "cells": [
+    1,
+    1
+   ]
+  },
+  {
+   "base": "pool_table",
+   "n": "Pool table",
+   "cat": "Fun",
+   "kind": "floor",
+   "price": 1100,
+   "colours": [
+    "green",
+    "blue",
+    "red",
+    "purple"
+   ],
+   "d": "Eight-ball by the sea.",
+   "cells": [
+    5,
+    3
+   ]
+  },
+  {
+   "base": "fish_bowl",
+   "n": "Fish bowl",
+   "cat": "Fun",
+   "kind": "floor",
+   "price": 120,
+   "colours": [
+    "blue",
+    "teal",
+    "green",
+    "pink"
+   ],
+   "d": "One goldfish, named Admiral.",
+   "cells": [
+    1,
+    1
+   ]
+  },
+  {
+   "base": "cat_bed",
+   "n": "Cat bed",
+   "cat": "Fun",
+   "kind": "floor",
+   "price": 80,
+   "colours": [
+    "red",
+    "orange",
+    "yellow",
+    "green",
+    "teal",
+    "blue",
+    "purple",
+    "pink",
+    "cream",
+    "charcoal"
+   ],
+   "d": "Your cat might even use it.",
+   "cells": [
+    2,
+    2
+   ]
+  },
+  {
+   "base": "gaming_desk",
+   "n": "Desk and computer",
+   "cat": "Fun",
+   "kind": "floor",
+   "price": 500,
+   "colours": [
+    "charcoal",
+    "white",
+    "pink",
+    "gradient"
+   ],
+   "d": "Two screens: one chart, one game.",
+   "cells": [
+    3,
+    2
+   ]
+  },
+  {
+   "base": "potted_palm",
+   "n": "Potted palm",
+   "cat": "Plants",
+   "kind": "floor",
+   "price": 110,
+   "colours": [
+    "terracotta",
+    "white",
+    "teal",
+    "charcoal",
+    "yellow"
+   ],
+   "d": "A little bit of the tropics.",
+   "cells": [
+    1,
+    1
+   ]
+  },
+  {
+   "base": "cactus",
+   "n": "Cactus",
+   "cat": "Plants",
+   "kind": "floor",
+   "price": 70,
+   "colours": [
+    "terracotta",
+    "white",
+    "teal",
+    "charcoal",
+    "yellow"
+   ],
+   "d": "Needs almost no looking after.",
+   "cells": [
+    1,
+    1
+   ]
+  },
+  {
+   "base": "flower_vase",
+   "n": "Flowers in a vase",
+   "cat": "Plants",
+   "kind": "floor",
+   "price": 60,
+   "colours": [
+    "red",
+    "yellow",
+    "pink",
+    "purple",
+    "blue",
+    "white"
+   ],
+   "d": "Fresh from the market.",
+   "cells": [
+    1,
+    1
+   ]
+  },
+  {
+   "base": "bonsai",
+   "n": "Bonsai",
+   "cat": "Plants",
+   "kind": "floor",
+   "price": 220,
+   "colours": [
+    "terracotta",
+    "white",
+    "teal",
+    "charcoal",
+    "yellow"
+   ],
+   "d": "A tiny, very old tree.",
+   "cells": [
+    1,
+    1
+   ]
+  },
+  {
+   "base": "monstera",
+   "n": "Monstera",
+   "cat": "Plants",
+   "kind": "floor",
+   "price": 150,
+   "colours": [
+    "terracotta",
+    "white",
+    "teal",
+    "charcoal",
+    "yellow"
+   ],
+   "d": "Big leaves with holes in.",
+   "cells": [
+    2,
+    2
+   ]
+  },
+  {
+   "base": "curtains",
+   "n": "Curtains",
+   "cat": "Wall decor",
+   "kind": "wall",
+   "price": 90,
+   "colours": [
+    "red",
+    "orange",
+    "yellow",
+    "green",
+    "teal",
+    "blue",
+    "purple",
+    "pink",
+    "cream",
+    "charcoal"
+   ],
+   "d": "A pair of curtains with a pelmet.",
+   "y": 0.6
+  },
+  {
+   "base": "poster_wave",
+   "n": "Wave poster",
+   "cat": "Wall decor",
+   "kind": "wall",
+   "price": 60,
+   "colours": [
+    "red",
+    "blue",
+    "teal",
+    "yellow",
+    "purple",
+    "gradient"
+   ],
+   "d": "The big wave.",
+   "y": 1.3
+  },
+  {
+   "base": "poster_gull",
+   "n": "Gull poster",
+   "cat": "Wall decor",
+   "kind": "wall",
+   "price": 60,
+   "colours": [
+    "red",
+    "blue",
+    "teal",
+    "yellow",
+    "purple",
+    "gradient"
+   ],
+   "d": "Gullhaven's finest.",
+   "y": 1.3
+  },
+  {
+   "base": "poster_moon",
+   "n": "To the Moon poster",
+   "cat": "Wall decor",
+   "kind": "wall",
+   "price": 80,
+   "colours": [
+    "red",
+    "blue",
+    "teal",
+    "yellow",
+    "purple",
+    "gradient"
+   ],
+   "d": "A rocket and a full moon.",
+   "y": 1.3
+  },
+  {
+   "base": "poster_candles",
+   "n": "Green candles poster",
+   "cat": "Wall decor",
+   "kind": "wall",
+   "price": 80,
+   "colours": [
+    "red",
+    "blue",
+    "teal",
+    "yellow",
+    "purple",
+    "gradient"
+   ],
+   "d": "A chart that only goes up.",
+   "y": 1.3
+  },
+  {
+   "base": "wall_shelf",
+   "n": "Wall shelf",
+   "cat": "Wall decor",
+   "kind": "wall",
+   "price": 70,
+   "colours": [
+    "oak",
+    "walnut",
+    "pale",
+    "white",
+    "black"
+   ],
+   "d": "For trinkets and shells.",
+   "y": 1.4
+  },
+  {
+   "base": "wall_clock",
+   "n": "Wall clock",
+   "cat": "Wall decor",
+   "kind": "wall",
+   "price": 90,
+   "colours": [
+    "red",
+    "blue",
+    "yellow",
+    "cream",
+    "black",
+    "brass"
+   ],
+   "d": "Tick, tock.",
+   "y": 1.9
+  },
+  {
+   "base": "surfboard",
+   "n": "Surfboard",
+   "cat": "Wall decor",
+   "kind": "wall",
+   "price": 250,
+   "colours": [
+    "red",
+    "orange",
+    "yellow",
+    "teal",
+    "pink",
+    "gradient"
+   ],
+   "d": "For the one good wave a year.",
+   "y": 0.3
+  },
+  {
+   "base": "trophy_fish",
+   "n": "Trophy fish",
+   "cat": "Wall decor",
+   "kind": "wall",
+   "price": 400,
+   "colours": [
+    "gold",
+    "silver",
+    "bronze"
+   ],
+   "d": "The one that didn't get away.",
+   "y": 1.4
+  },
+  {
+   "base": "mirror_round",
+   "n": "Round mirror",
+   "cat": "Wall decor",
+   "kind": "wall",
+   "price": 160,
+   "colours": [
+    "brass",
+    "black",
+    "white",
+    "oak"
+   ],
+   "d": "Looking good, fisher.",
+   "y": 1.1
+  }
+ ],
+ "walls": [
+  {
+   "pattern": "plain",
+   "n": "Plain",
+   "price": 80,
+   "colours": [
+    "cream",
+    "red",
+    "yellow",
+    "green",
+    "teal",
+    "blue",
+    "purple",
+    "pink",
+    "charcoal"
+   ]
+  },
+  {
+   "pattern": "stripes",
+   "n": "Stripes",
+   "price": 100,
+   "colours": [
+    "cream",
+    "red",
+    "yellow",
+    "green",
+    "teal",
+    "blue",
+    "purple",
+    "pink",
+    "charcoal"
+   ]
+  },
+  {
+   "pattern": "flowers",
+   "n": "Flowers",
+   "price": 120,
+   "colours": [
+    "cream",
+    "red",
+    "yellow",
+    "green",
+    "teal",
+    "blue",
+    "purple",
+    "pink",
+    "charcoal"
+   ]
+  },
+  {
+   "pattern": "checks",
+   "n": "Checks",
+   "price": 100,
+   "colours": [
+    "cream",
+    "red",
+    "yellow",
+    "green",
+    "teal",
+    "blue",
+    "purple",
+    "pink",
+    "charcoal"
+   ]
+  },
+  {
+   "pattern": "dots",
+   "n": "Polka dots",
+   "price": 100,
+   "colours": [
+    "cream",
+    "red",
+    "yellow",
+    "green",
+    "teal",
+    "blue",
+    "purple",
+    "pink",
+    "charcoal"
+   ]
+  },
+  {
+   "pattern": "waves",
+   "n": "Waves",
+   "price": 120,
+   "colours": [
+    "cream",
+    "red",
+    "yellow",
+    "green",
+    "teal",
+    "blue",
+    "purple",
+    "pink",
+    "charcoal"
+   ]
+  },
+  {
+   "pattern": "brick",
+   "n": "Brick",
+   "price": 140,
+   "colours": [
+    "cream",
+    "red",
+    "yellow",
+    "green",
+    "teal",
+    "blue",
+    "purple",
+    "pink",
+    "charcoal"
+   ]
+  },
+  {
+   "pattern": "panels",
+   "n": "Wood panels",
+   "price": 140,
+   "colours": [
+    "cream",
+    "red",
+    "yellow",
+    "green",
+    "teal",
+    "blue",
+    "purple",
+    "pink",
+    "charcoal"
+   ]
+  }
+ ],
+ "floors": [
+  {
+   "kind": "planks",
+   "n": "Planks",
+   "price": 150,
+   "colours": [
+    "oak",
+    "walnut",
+    "pale",
+    "white",
+    "black"
+   ]
+  },
+  {
+   "kind": "tiles",
+   "n": "Tiles",
+   "price": 160,
+   "colours": [
+    "red",
+    "blue",
+    "teal",
+    "green",
+    "charcoal",
+    "cream"
+   ]
+  },
+  {
+   "kind": "carpet",
+   "n": "Carpet",
+   "price": 140,
+   "colours": [
+    "red",
+    "orange",
+    "yellow",
+    "green",
+    "teal",
+    "blue",
+    "purple",
+    "pink",
+    "cream",
+    "charcoal"
+   ]
+  },
+  {
+   "kind": "stone",
+   "n": "Stone",
+   "price": 180,
+   "colours": [
+    "steel",
+    "cream",
+    "terracotta"
+   ]
+  },
+  {
+   "kind": "marble",
+   "n": "Marble",
+   "price": 260,
+   "colours": [
+    "white",
+    "black",
+    "pink"
+   ]
+  },
+  {
+   "kind": "chequer",
+   "n": "Chequerboard",
+   "price": 200,
+   "colours": [
+    "black",
+    "red",
+    "blue",
+    "green"
+   ]
+  }
+ ],
+ "districts": [
+  {
+   "id": "harbourfront",
+   "n": "Harbourfront",
+   "prefix": "H",
+   "count": 60,
+   "room": [
+    13,
+    10
+   ],
+   "gull": 12000,
+   "d": "On the water, by the harbour lights. The biggest homes in town."
+  },
+  {
+   "id": "village",
+   "n": "Village",
+   "prefix": "V",
+   "count": 240,
+   "room": [
+    10,
+    8
+   ],
+   "gull": 4000,
+   "d": "In the lanes behind the square, near the bakery and the tavern."
+  },
+  {
+   "id": "hillside",
+   "n": "Hillside",
+   "prefix": "L",
+   "count": 300,
+   "room": [
+    8,
+    7
+   ],
+   "gull": 1500,
+   "d": "Up the hill with a view of the bay. Cosy, and the cheapest way in."
+  }
+ ]
+}

@@ -38,8 +38,9 @@ static func owned(save: Dictionary) -> int:
 	return int(t.fishers) + int(t.chain_fishers)
 
 
+## A Harbour Licence: at least one Fisher, or a home plot.
 static func licence(save: Dictionary) -> bool:
-	return owned(save) >= Economy.LICENCE_FISHERS
+	return owned(save) >= Economy.LICENCE_FISHERS or str((save.get("home", {}) as Dictionary).get("plot", "")) != ""
 
 
 static func day_key(now: int) -> String:

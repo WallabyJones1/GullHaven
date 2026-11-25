@@ -5,6 +5,8 @@ extends SceneTree
 
 const Economy := preload("res://scripts/token/economy.gd")
 const Harbour := preload("res://scripts/token/harbour.gd")
+const Homes := preload("res://scripts/token/homes.gd")
+const Furniture := preload("res://scripts/furniture.gd")
 
 const T0 := 1800000000  # a fixed unix time, so the tests are repeatable
 const DAY := 86400
@@ -110,6 +112,42 @@ func _run() -> void:
 	for i in 3:
 		Harbour.send_out(save, T0)
 	check((t.sea as Array).size() == 3 and not Harbour.send_out(save, T0).ok, "save + wallet Fishers can all go to sea, and no more")
+
+	# homes: the catalogue
+	check(Homes.all_ids().size() == 342 and Homes.catalog().districts.size() == 3, "the catalogue has 342 colourways and 3 districts")
+	var sofa := Homes.data("sofa@red")
+	check(sofa.n == "Sofa (Red)" and sofa.cells == Vector2i(4, 2) and sofa.sprite == "home/sofa_red", "a catalogue piece reads back right")
+	check(Homes.data("sofa@gold").is_empty() and Homes.data("nonsense").is_empty(), "colours a piece doesn't come in aren't pieces")
+	check(Furniture.data("sofa@red").price == 300 and Furniture.data("table").n == "Table and stools", "furniture lookups cover the hut and the catalogue")
+	check(Furniture.sprite("sofa@red") == "home/sofa_red" and Furniture.sprite("table") == "table", "sprites for both")
+	var missing := 0
+	for id in Homes.all_ids():
+		if not FileAccess.file_exists("res://art/decor/%s.png" % Homes.data(id).sprite):
+			missing += 1
+	check(missing == 0, "every colourway has its sprite (%d missing)" % missing)
+
+	# homes: buying a plot, furniture and wallpaper
+	save = {"shells": 1000}
+	t = Harbour.ensure(save)
+	check(not Harbour.licence(save), "no licence before a plot")
+	t.gull = 1000.0
+	check(not Homes.buy_plot(save, "hillside").ok, "a Hillside plot costs more than 1,000 $GULL")
+	t.gull = 2000.0
+	r = Homes.buy_plot(save, "hillside")
+	check(r.ok and r.plot == "L-001" and is_equal_approx(float(t.gull), 500.0), "Hillside plot L-001 for 1,500 $GULL")
+	check(is_equal_approx(float(t.burned), 600.0) and is_equal_approx(float(t.treasury), 300.0), "the plot's $GULL is split 40/40/20")
+	check(Harbour.licence(save), "a plot is a Harbour Licence")
+	check(not Homes.buy_plot(save, "village").ok, "one home per player")
+	check(Homes.buy_plot({"token": {"gull": 99999.0}}, "village", {"V-001": true}).plot == "V-002", "taken plots are skipped")
+	check(Homes.room_size(save) == Vector2(8, 7), "a Hillside home is 8 x 7 m")
+	r = Homes.buy_item(save, "sofa@teal")
+	check(r.ok and int(save.shells) == 700 and int(save.furniture_inv["sofa@teal"]) == 1, "a teal sofa for 300 Shells goes into your things")
+	r = Homes.use_style(save, "home/wall_stripes_blue")
+	check(r.ok and r.bought and int(save.shells) == 600 and save.home.wall == "home/wall_stripes_blue", "blue stripes bought and up")
+	r = Homes.use_style(save, "home/wall_plain_cream")
+	check(r.ok and not r.bought and int(save.shells) == 600, "swapping back to wallpaper you own is free")
+	check(Homes.use_style(save, "home/floor_marble_pink").ok and save.home.floor == "home/floor_marble_pink", "a pink marble floor")
+	check(not Homes.use_style(save, "home/floor_lava_red").ok, "made-up styles aren't for sale")
 
 	# many at sea: the 25th earns half
 	save = {}

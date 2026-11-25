@@ -10,6 +10,7 @@ extends Node3D
 const Billboard := preload("res://scripts/billboard.gd")
 const SaveGame := preload("res://scripts/save_game.gd")
 const Furniture := preload("res://scripts/furniture.gd")
+const Homes := preload("res://scripts/token/homes.gd")
 
 const ROOM_Y := 240.0
 const WALL_H := 3.2
@@ -31,6 +32,7 @@ var sea: Node
 var save: Dictionary
 var day_night: Node
 var hut_build: Node  # arranging furniture in your hut
+var catalogue: CanvasLayer  # the Home Catalogue (Harbour economy build), see token/catalogue.gd
 var map_screen: CanvasLayer  # the lighthouse shows you the bay
 var mystery: Node3D  # the Gull's Eye
 var minigames: Node3D  # darts in the tavern
@@ -151,6 +153,9 @@ func use(it: Dictionary) -> void:
 		"arrange":
 			if hut_build:
 				hut_build.begin()
+		"catalogue":
+			if catalogue:
+				catalogue.open(int(it.get("data", 0)))
 		"climb":
 			_climb()
 		"descend":
@@ -264,8 +269,10 @@ func _go_out() -> void:
 	_clear_room()
 	inside = {}
 	var door: Vector3 = b.door
-	var node: Node3D = b.node
-	var away := Vector3(door.x - node.global_position.x, 0.0, door.z - node.global_position.z).normalized()
+	var node: Node3D = b.get("node")
+	var away: Vector3 = b.get("away", Vector3.BACK)
+	if node:
+		away = Vector3(door.x - node.global_position.x, 0.0, door.z - node.global_position.z).normalized()
 	var out := door + away * 0.4
 	out.y = maxf(float(world.height_at(out.x, out.z)), door.y) + 0.1
 	player.global_position = out
@@ -308,6 +315,46 @@ func in_hut() -> bool:
 	return is_inside() and str(inside.get("kind", "")) == "hut"
 
 
+## In your home (Harbour economy build): the plot house you bought.
+func in_home() -> bool:
+	return is_inside() and str(inside.get("kind", "")) == "plot_home"
+
+
+## Somewhere you can arrange your furniture: your hut, or your home.
+func can_arrange() -> bool:
+	return in_hut() or in_home()
+
+
+## The furniture placed where you are (the hut and the home each keep their own).
+func placed_list() -> Array:
+	if in_home():
+		return Homes.ensure(save).furniture
+	return save.furniture
+
+
+func arrange_fixed() -> Dictionary:
+	if in_home():
+		return {"floor": [Rect2(-DOOR_W * 0.5 - 0.2, _d * 0.5 - 1.5, DOOR_W + 0.4, 1.5)], "walls": []}
+	return hut_fixed()
+
+
+## Go to your home from wherever you are (the game menu's Harbour page). Walking out of
+## its door brings you back to where you were standing.
+func visit_home() -> bool:
+	if _busy or is_inside() or not Homes.has_home(save):
+		return false
+	var h := Homes.ensure(save)
+	var d := Homes.district(str(h.district))
+	var here := player.global_position
+	var facing: Vector3 = player.get("facing")
+	var away := Vector3(facing.x, 0.0, facing.z)
+	away = away.normalized() if away.length() > 0.1 else Vector3.BACK
+	enter({"name": "Your home, %s %s" % [str(d.get("n", "")), str(h.plot)], "kind": "plot_home", "role": "", "town": "",
+		"door": here, "away": away, "size": Vector3(6.0, 3.0, 5.0),
+		"room": Homes.room_size(save)})
+	return true
+
+
 func origin() -> Vector3:
 	return _origin
 
@@ -343,7 +390,9 @@ func _build_room(b: Dictionary) -> void:
 		"lodge": Vector2(13.0, 10.0), "lighthouse": Vector2(7.0, 7.0), "mill": Vector2(9.0, 8.0),
 		"harbourmaster": Vector2(11.0, 8.0)}
 	var wd: Vector2 = dims.get(key, Vector2(clampf(size.x * 1.5, 8.0, 12.0), clampf(size.z * 1.45, 7.0, 9.0)))
-	if key == "hut":
+	if key == "plot_home":  # (not "home": that's the Home Goods shop)
+		wd = b.get("room", Vector2(8.0, 7.0))
+	elif key == "hut":
 		wd = [Vector2(7.0, 6.0), Vector2(8.5, 7.0), Vector2(10.0, 8.0), Vector2(12.0, 9.0)][clampi(int(world.hut_tier), 0, 3)]
 	_w = wd.x
 	_d = wd.y
@@ -555,6 +604,8 @@ func _build_room(b: Dictionary) -> void:
 			_lighthouse_stair()
 		"hut":
 			_hut_room()
+		"plot_home":
+			_home_room()
 		_:  # a cottage
 			_cottage(b)
 	_rebuild_sky()
@@ -602,7 +653,7 @@ func _lighthouse_stair() -> void:
 func _shell(floor_kind: String, lower: String, upper: String) -> void:
 	var hw := _w * 0.5
 	var hd := _d * 0.5
-	var floor_mat := _tex(str(FLOORS.get(floor_kind, "floor_wood")), 0.5)
+	var floor_mat := _tex(str(FLOORS.get(floor_kind, floor_kind if floor_kind.begins_with("home/") else "floor_wood")), 0.5)
 	_box(Vector3(0.0, -0.4, 0.0), Vector3(_w + 0.4, 0.4, _d + 0.4), "", floor_mat)
 	var upper_mat := _tex(upper, 0.45)
 	var lower_mat := _tex(lower, 0.45)
@@ -676,6 +727,21 @@ func _hut_room() -> void:
 	_keeper_at = Vector3(0.0, 0.0, 0.0)
 
 
+## Your home: your wallpaper and floor, your furniture, and the catalogue by the door.
+func _home_room() -> void:
+	var h := Homes.ensure(save)
+	_shell(str(h.floor), str(h.wall), str(h.wall))
+	_wall("window", "back", -_w * 0.3, 0.9)
+	_wall("window", "back", _w * 0.3, 0.9)
+	for item in h.furniture:
+		place_furniture(item)
+	_things.append({"pos": _to_world(Vector3(-1.4, 0.0, _d * 0.5 - 1.0)), "text": "Space: Arrange your furniture (or press B)",
+		"kind": "arrange", "data": 0})
+	_things.append({"pos": _to_world(Vector3(1.4, 0.0, _d * 0.5 - 1.0)), "text": "Space: Browse the Home Catalogue",
+		"kind": "catalogue", "data": 0})
+	_keeper_at = Vector3.ZERO
+
+
 ## Fixed things in your hut that furniture can't overlap: floor rectangles (room-local,
 ## x/z) and wall spans ({side, from, to}).
 func hut_fixed() -> Dictionary:
@@ -694,9 +760,10 @@ func hut_fixed() -> Dictionary:
 ## (room-local) turned rot quarter turns; wall pieces hang on side at along.
 func place_furniture(item: Dictionary) -> Node3D:
 	var id := str(item.get("id", ""))
-	var data: Dictionary = Furniture.ITEMS.get(id, {})
+	var data: Dictionary = Furniture.data(id)
 	if data.is_empty():
 		return null
+	var tex := Furniture.sprite(id)
 	var node := Node3D.new()
 	node.name = "Furniture"
 	_room.add_child(node)
@@ -709,7 +776,7 @@ func place_furniture(item: Dictionary) -> Node3D:
 		if id == "fireplace":
 			_fireplace(side, along)
 		else:
-			_wall(id, side, along, y)
+			_wall(tex, side, along, y)
 	else:
 		var rot := int(item.get("rot", 0))
 		node.position = Vector3(float(item.get("x", 0.0)), 0.0, float(item.get("z", 0.0)))
@@ -731,7 +798,13 @@ func place_furniture(item: Dictionary) -> Node3D:
 			"bookshelf":
 				_stand(id, Vector3(0.0, 0.0, -0.2), false)
 			_:
-				_stand(id, Vector3.ZERO, true)
+				if kind == "rug":  # catalogue rugs
+					_rug(tex, Vector3.ZERO, Furniture.footprint(id, 0))
+				else:
+					_stand(tex, Vector3.ZERO, true)
+				if str(data.get("base", "")) in ["double_bed", "bunk_bed"]:
+					_things.append({"pos": node.global_position + node.basis * Vector3(0.0, 0.0, 0.9), "text": "Space: Sleep until morning",
+						"kind": "bed", "data": 0})
 	_target = null
 	furniture_nodes.append({"item": item, "node": node})
 	return node
