@@ -1,0 +1,35 @@
+{
+  "token": {
+    "name": "Gullhaven",
+    "symbol": "GULL",
+    "description": "The harbour coin of Gullhaven. Earned by selling Shells at the Harbour Exchange, spent on Fishers, plots, gear and bait.",
+    "logo": "assets-token/gull-coin.png",
+    "decimals": 6,
+    "supply": 1000000000,
+    "revokeMintAuthority": true,
+    "revokeMetadataAuthority": false,
+    "allocations": [
+      { "label": "Player rewards (Harbour Exchange, 4 years)", "percent": 40, "wallet": "SELF" },
+      { "label": "Team (lock: 12-month cliff, 24 months linear)", "percent": 15, "wallet": "SELF" },
+      { "label": "Treasury", "percent": 15, "wallet": "SELF" },
+      { "label": "Liquidity pool (Meteora DAMM v2, LP locked 24 months)", "percent": 10, "wallet": "SELF" },
+      { "label": "Airdrop (vests through play)", "percent": 10, "wallet": "SELF" },
+      { "label": "Marketing", "percent": 5, "wallet": "SELF" },
+      { "label": "Reserve", "percent": 5, "wallet": "SELF" }
+    ]
+  },
+  "nft": {
+    "name": "Gullhaven Fishers",
+    "assetsDir": "assets",
+    "royaltyBasisPoints": 500,
+    "creators": [{ "wallet": "SELF", "percent": 100 }],
+    "priceSol": 0.25,
+    "treasury": "SELF",
+    "startDate": "2027-04-01T00:00:00Z",
+    "mintLimitPerWallet": 5,
+    "configLinesPerTx": 10
+  },
+  "game": {
+    "mintPageUrl": ""
+  }
+}

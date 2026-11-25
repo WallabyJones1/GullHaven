@@ -61,3 +61,10 @@ shore, and the Cove cottage that floated on the sea.
 - Menus focus the first button (Godot 4.6 labels take focus only for a screen reader), so
   A / Enter works straight away.
 - The atoll had no radius in the island data, which threw a script error.
+
+## Harbour economy (token test build)
+
+- `godot --headless --path godot -s res://scripts/token/economy_test.gd` checks the
+  Harbour rules (stacking, the sale cap, the 40/40/20 spend split, expedition yield) and
+  exits 1 on any failure. The smoke test also plays the Harbour Exchange, with the
+  title-screen switch set to "on" (default off, so the original game is unchanged).

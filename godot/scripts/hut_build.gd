@@ -73,7 +73,7 @@ func setup(i: Node3D, p: CharacterBody3D, c: Camera3D, h: CanvasLayer, a: Node, 
 
 
 func begin() -> void:
-	if active or not interiors.in_hut():
+	if active or not interiors.can_arrange():
 		return
 	active = true
 	hud.modal = true
@@ -112,10 +112,10 @@ func _process(delta: float) -> void:
 	if not interiors:
 		return
 	if not active:
-		if interiors.in_hut() and Input.is_action_just_pressed("build") and not hud.input_blocked():
+		if interiors.can_arrange() and Input.is_action_just_pressed("build") and not hud.input_blocked():
 			begin()
 		return
-	if not interiors.in_hut():
+	if not interiors.can_arrange():
 		finish()
 		return
 	if _fresh:
@@ -164,9 +164,15 @@ func _process(delta: float) -> void:
 func _owned() -> Array:
 	var out: Array = []
 	var inv: Dictionary = save.furniture_inv
-	for id in Furniture.ITEMS:
+	for id in Furniture.ITEMS:  # the hut's own pieces first, then catalogue pieces you've bought
 		if int(inv.get(id, 0)) > 0:
 			out.append(id)
+	var extra: Array = []
+	for id in inv:
+		if not Furniture.ITEMS.has(id) and int(inv[id]) > 0 and not Furniture.data(str(id)).is_empty():
+			extra.append(str(id))
+	extra.sort()
+	out.append_array(extra)
 	if _sel >= out.size():
 		_sel = 0
 	return out
@@ -180,7 +186,7 @@ func _selected() -> String:
 func _act() -> void:
 	var hit := _placed_under()
 	if hit >= 0:
-		var placed: Array = save.furniture
+		var placed: Array = interiors.placed_list()
 		var item: Dictionary = placed[hit]
 		placed.remove_at(hit)
 		Furniture.give(save, str(item.id))
@@ -189,14 +195,15 @@ func _act() -> void:
 		return
 	var id := _selected()
 	if id == "":
-		hud.toast("Nothing to put down. Tess the carpenter, Fern at Home Goods and the salvager sell furniture.")
+		hud.toast("Nothing to put down. The Home Catalogue by the door sells furniture." if interiors.in_home()
+			else "Nothing to put down. Tess the carpenter, Fern at Home Goods and the salvager sell furniture.")
 		audio.play("error", -6.0)
 		return
 	var item := _candidate(id)
 	if item.is_empty():
 		audio.play("error", -6.0)
 		return
-	var placed: Array = save.furniture
+	var placed: Array = interiors.placed_list()
 	placed.append(item)
 	var inv: Dictionary = save.furniture_inv
 	inv[id] = int(inv[id]) - 1
@@ -206,14 +213,14 @@ func _act() -> void:
 	interiors.refresh()
 
 
-## The piece of furniture under the ghost, as an index into save.furniture, or -1.
+## The piece of furniture under the ghost, as an index into the placed list (interiors.placed_list()), or -1.
 func _placed_under() -> int:
-	var placed: Array = save.furniture
+	var placed: Array = interiors.placed_list()
 	var size: Vector2 = interiors.room_size()
 	var wall := _nearest_wall()
 	for i in placed.size():
 		var item: Dictionary = placed[i]
-		var data: Dictionary = Furniture.ITEMS.get(str(item.id), {})
+		var data: Dictionary = Furniture.data(str(item.id))
 		if data.is_empty():
 			continue
 		if str(data.kind) == "wall":
@@ -230,10 +237,10 @@ func _placed_under() -> int:
 
 ## The item that would be placed at the ghost, or {} if it doesn't fit there.
 func _candidate(id: String) -> Dictionary:
-	var data: Dictionary = Furniture.ITEMS[id]
+	var data: Dictionary = Furniture.data(id)
 	var size: Vector2 = interiors.room_size()
-	var fixed: Dictionary = interiors.hut_fixed()
-	var placed: Array = save.furniture
+	var fixed: Dictionary = interiors.arrange_fixed()
+	var placed: Array = interiors.placed_list()
 	if str(data.kind) == "wall":
 		var wall := _nearest_wall()
 		var half := Furniture.wall_width(id) * 0.5
@@ -243,7 +250,7 @@ func _candidate(id: String) -> Dictionary:
 			if f.side == wall.side and along + half > float(f.from) and along - half < float(f.to):
 				return {}
 		for other in placed:
-			var od: Dictionary = Furniture.ITEMS.get(str(other.id), {})
+			var od: Dictionary = Furniture.data(str(other.id))
 			if od.is_empty() or str(od.kind) != "wall" or str(other.side) != str(wall.side):
 				continue
 			var oh := Furniture.wall_width(str(other.id)) * 0.5
@@ -261,7 +268,7 @@ func _candidate(id: String) -> Dictionary:
 			if f.intersects(r):
 				return {}
 	for other in placed:
-		var od: Dictionary = Furniture.ITEMS.get(str(other.id), {})
+		var od: Dictionary = Furniture.data(str(other.id))
 		if od.is_empty() or str(od.kind) == "wall":
 			continue
 		if (str(od.kind) == "rug") != is_rug:
@@ -309,10 +316,10 @@ func _refresh() -> void:
 	var ok := false
 	if under >= 0:
 		_ghost_mat.albedo_color = Color(1.0, 0.8, 0.3, 0.4)
-	if id != "" and str(Furniture.ITEMS[id].kind) == "wall" and under < 0:
+	if id != "" and str(Furniture.data(id).kind) == "wall" and under < 0:
 		var wall := _nearest_wall()
 		var w := Furniture.wall_width(id)
-		var y := float(Furniture.ITEMS[id].get("y", 1.2)) + 0.6
+		var y := float(Furniture.data(id).get("y", 1.2)) + 0.6
 		match str(wall.side):
 			"back":
 				mesh.size = Vector3(w, 1.2, 0.1)
@@ -334,10 +341,10 @@ func _refresh() -> void:
 	var owned := _owned()
 	var inv: Dictionary = save.furniture_inv
 	if under >= 0:
-		var placed: Array = save.furniture
+		var placed: Array = interiors.placed_list()
 		var it: Dictionary = placed[under]
-		_bar_label.text = "Space: pick up the %s" % str(Furniture.ITEMS[str(it.id)].n).to_lower()
+		_bar_label.text = "Space: pick up the %s" % str(Furniture.data(str(it.id)).n).to_lower()
 	elif id == "":
 		_bar_label.text = "You haven't any furniture to put down"
 	else:
-		_bar_label.text = "<  %s  x%d  >   (%d of %d)" % [Furniture.ITEMS[id].n, int(inv.get(id, 0)), _sel + 1, owned.size()]
+		_bar_label.text = "<  %s  x%d  >   (%d of %d)" % [Furniture.data(id).n, int(inv.get(id, 0)), _sel + 1, owned.size()]

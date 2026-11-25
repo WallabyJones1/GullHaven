@@ -25,6 +25,7 @@ const Boats := preload("res://scripts/boats.gd")
 const Boatyard := preload("res://scripts/boatyard.gd")
 const Trade := preload("res://scripts/trade.gd")
 const HutBuild := preload("res://scripts/hut_build.gd")
+const Catalogue := preload("res://scripts/token/catalogue.gd")
 const Quests := preload("res://scripts/quests.gd")
 const MapScreen := preload("res://scripts/map_screen.gd")
 const Mystery := preload("res://scripts/mystery.gd")
@@ -71,6 +72,7 @@ var boats: Node3D
 var boatyard: CanvasLayer
 var trade: CanvasLayer
 var hut_build: Node3D
+var catalogue: CanvasLayer  # the Home Catalogue (Harbour economy build)
 var quests: Node
 var map_screen: CanvasLayer
 var mystery: Node3D
@@ -224,6 +226,12 @@ func _ready() -> void:
 	add_child(hut_build)
 	hut_build.setup(interiors, player, cam, hud, audio, save)
 	interiors.hut_build = hut_build
+	catalogue = Catalogue.new()
+	catalogue.name = "Catalogue"
+	add_child(catalogue)
+	catalogue.setup(save, audio, hud)
+	catalogue.on_style_changed = interiors.refresh
+	interiors.catalogue = catalogue
 
 	quests = Quests.new()
 	quests.name = "Quests"
@@ -496,7 +504,7 @@ func _update_controls() -> void:
 				pairs = [["move", "Swim to shore"], ["menu", "Menu"]]
 			elif interiors.is_inside():
 				pairs = [["move", "Walk"], ["action", "Use"], ["bag", "Bag"], ["journal", "Journal"], ["menu", "Menu"]]
-				if interiors.in_hut():
+				if interiors.can_arrange():
 					pairs.insert(2, ["build", "Arrange"])
 			else:
 				pairs = [["move", "Walk"], ["camera", "Camera"], ["zoom", "Zoom"], ["action", "Cast / use"], ["bait", "Bait"]]

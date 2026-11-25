@@ -52,6 +52,8 @@ static func defaults() -> Dictionary:
 			"flags": {}, "bed_count": 6},
 		"land_story": {"ch": 0, "step": 0, "count": 0, "flags": {}},
 		"online": {"name": ""},
+		"home": {},  # your plot and home (Harbour economy build); see scripts/token/homes.gd
+		"token": {},  # the Harbour economy (test build): $GULL, Fishers and the crew at sea; see scripts/token/
 	}
 
 

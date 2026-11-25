@@ -12,6 +12,10 @@ const SaveGame := preload("res://scripts/save_game.gd")
 const Audio := preload("res://scripts/audio.gd")
 const InputSetup := preload("res://scripts/input_setup.gd")
 const Glyphs := preload("res://scripts/input_glyphs.gd")
+const Harbour := preload("res://scripts/token/harbour.gd")
+const Economy := preload("res://scripts/token/economy.gd")
+const Wallet := preload("res://scripts/token/wallet.gd")
+const Homes := preload("res://scripts/token/homes.gd")
 
 const SETTINGS := "user://settings.cfg"
 const PAD_CONTROLS := """[b]Walk / steer[/b]  left stick      [b]Camera[/b]  right stick, LB / RB
@@ -43,7 +47,7 @@ to everyone playing the beta. Tell us what you find!
 static var fresh_start := false  # New game: skip the menu after the reload and go straight in
 
 var mode := ""  # "title", "intro", "pause", "screen" (something opened from the menu) or ""
-var settings := {"music": 0.8, "effects": 1.0, "fullscreen": false, "quality": true, "seen_opening": false,
+var settings := {"music": 0.8, "effects": 1.0, "fullscreen": false, "quality": true, "seen_opening": false, "harbour": false,
 	"show_requests": false, "online_name": "", "online_server": ""}
 var _root: Control
 var _box: VBoxContainer
@@ -60,6 +64,7 @@ var _page := ""  # which page of the game menu is showing
 var _waiting := ""  # the action waiting for a new key
 var _waiting_btn: Button
 var keys := {}  # action -> physical keycode, only the ones you've changed
+var wallet: Node  # the player's Solana wallet (browser version), see token/wallet.gd
 
 
 func setup(m: Node, h: CanvasLayer, a: Node, p: CharacterBody3D, c: Camera3D) -> void:
@@ -73,6 +78,10 @@ func setup(m: Node, h: CanvasLayer, a: Node, p: CharacterBody3D, c: Camera3D) ->
 	_load_settings()
 	_apply_settings()
 	hud.set_show_requests(bool(settings.show_requests))
+	wallet = Wallet.new()
+	wallet.name = "Wallet"
+	add_child(wallet)
+	wallet.changed.connect(_on_wallet_changed)
 	# the game menu: a panel in the middle of the screen
 	_root = Control.new()
 	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -203,6 +212,8 @@ func show_title() -> void:
 	else:
 		_button("Start a new game", _start)
 	_button("Play online with friends", _online_page.bind("title"))
+	if "--harbour-economy" in OS.get_cmdline_user_args():  # the token test build stays put away for now
+		_button("Harbour economy (test build): %s" % ("on" if bool(settings.harbour) else "off"), _toggle_harbour)
 	_button("Settings", _settings_page.bind("title"))
 	_button("Controls", _controls_page.bind("title"))
 	_button("Watch the opening", _replay_opening)
@@ -300,10 +311,13 @@ func _pause_page() -> void:
 	grid.add_theme_constant_override("h_separation", 8)
 	grid.add_theme_constant_override("v_separation", 8)
 	_box.add_child(grid)
-	for pair in [["Fisher", _fisher_page], ["Bag", _open_screen.bind("bag")], ["Logbook", _open_screen.bind("logbook")],
+	var pairs := [["Fisher", _fisher_page], ["Bag", _open_screen.bind("bag")], ["Logbook", _open_screen.bind("logbook")],
 			["Journal", _open_screen.bind("journal")], ["Map", _open_screen.bind("map_screen")], ["Controls", _controls_page],
 			["Settings", _settings_page.bind("pause")], ["Online", _online_page.bind("pause")],
-			["Save" if OS.has_feature("web") else "Save and quit", _quit]]:
+			["Save" if OS.has_feature("web") else "Save and quit", _quit]]
+	if bool(settings.harbour):  # the Harbour economy (test build) only shows when switched on
+		pairs.insert(4, ["Harbour Exchange", _harbour_page])
+	for pair in pairs:
 		var b := UI.button(str(pair[0]), 24)
 		b.alignment = HORIZONTAL_ALIGNMENT_CENTER
 		b.custom_minimum_size = Vector2(250.0, 0.0)
@@ -329,6 +343,151 @@ func _open_screen(which: String) -> void:
 	visible = false
 	_screen = screen
 	screen.call("open")
+
+
+## The Harbour economy (test build): the title toggle, and the Exchange page in the game menu.
+func _toggle_harbour() -> void:
+	settings.harbour = not bool(settings.harbour)
+	_save_settings()
+	show_title()
+
+
+func _harbour_page() -> void:
+	_clear()
+	_page = "harbour"
+	_sub.text = "Harbour Exchange"
+	var now := int(Time.get_unix_time_from_system())
+	if Harbour.starter_fisher(main.save):
+		main.save_now()
+		hud.toast("The Harbour gives you a starter Fisher (test build).")
+	var t := Harbour.ensure(main.save)
+	var sold_today := int(t.sold) if str(t.day) == Harbour.day_key(now) else 0
+	var crew: int = t.sea.size()
+	var text := "You have %d Shells and %.2f $GULL.\n" % [int(main.save.get("shells", 0)), float(t.gull)]
+	text += "Exchange: %.2f $GULL a Shell, up to %d Shells a day (%d sold today).\n" % [Economy.rate_per_shell(), Economy.SALE_CAP, sold_today]
+	text += "Fishers: %d to sail (%d in this save, %d in your wallet), %d at sea.\n" % [Harbour.owned(main.save), int(t.fishers), int(t.chain_fishers), crew]
+	if not Harbour.licence(main.save):
+		text += "You need a Harbour Licence (a Fisher or a home plot) before you can sell Shells.\n"
+	if crew > 0:
+		text += "The crew has earned %d Shells so far. They stop paying after %d hours, so bring them home." % [Harbour.pending(main.save, now), int(Economy.MAX_HOURS)]
+	_box.add_child(_rich(text, 620.0))
+	var wl := _rich(str(wallet.summary()), 620.0)
+	wl.add_theme_color_override("default_color", UI.SKY)
+	_box.add_child(wl)
+	if Wallet.is_web() and wallet.launched():
+		if wallet.connected():
+			_button("Refresh wallet", wallet.refresh)
+			_button("Disconnect wallet", wallet.disconnect_wallet)
+		else:
+			_button("Connect wallet (Phantom)", wallet.connect_wallet)
+	if str(wallet.chain.get("mint_page_url", "")) != "":
+		_button("Mint Fishers (opens the mint page)", wallet.open_mint_page)
+	var home := Homes.ensure(main.save)
+	if str(home.plot) == "":
+		_button("Buy a home plot", _plots_page)
+	else:
+		_button("Go home (%s)" % str(home.plot), _harbour_go_home)
+		_button("Home Catalogue", _harbour_catalogue)
+	_button("Sell 100 Shells", _harbour_sell.bind(100))
+	_button("Sell all Shells (up to today's cap)", _harbour_sell.bind(-1))
+	if Harbour.owned(main.save) > crew:
+		_button("Send a Fisher to sea", _harbour_send)
+	if crew > 0:
+		_button("Bring the crew home (+%d Shells)" % Harbour.pending(main.save, now), _harbour_home)
+	_button("Buy a Fisher (%d $GULL, test price)" % int(Economy.FISHER_PRICE), _harbour_buy)
+	_button("Back", _pause_page)
+	_focus_first()
+
+
+## The wallet read something new: count its Fishers towards your Licence and crew, and
+## redraw the Harbour page if it's open.
+func _on_wallet_changed() -> void:
+	if main == null or not (main.get("save") is Dictionary):
+		return
+	var t := Harbour.ensure(main.save)
+	var n := int(wallet.state.get("fishers", 0)) if wallet.connected() else 0
+	if n != int(t.chain_fishers):
+		t.chain_fishers = n
+		if (t.sea as Array).size() > Harbour.owned(main.save):
+			t.sea = (t.sea as Array).slice(0, Harbour.owned(main.save))  # Fishers that left the wallet come home
+	if _page == "harbour" and visible:
+		_harbour_page()
+
+
+## The season-1 districts: pick one and the first free plot there is yours.
+func _plots_page() -> void:
+	_clear()
+	_page = "plots"
+	_sub.text = "Buy a home plot"
+	var gull := float(Harbour.ensure(main.save).gull)
+	var text := "A plot gives you a home to decorate (and a Harbour Licence). You have %.2f $GULL.\n" % gull
+	for d in Homes.catalog().districts:
+		text += "\n[b]%s[/b]: %s" % [d.n, d.d]
+	_box.add_child(_rich(text, 620.0))
+	for d in Homes.catalog().districts:
+		_button("%s: %s $GULL, a %d x %d m home (%d plots)" % [d.n, Wallet._num(float(d.gull)), int(d.room[0]), int(d.room[1]), int(d.count)],
+			_harbour_buy_plot.bind(str(d.id)))
+	_button("Back", _harbour_page)
+	_focus_first()
+
+
+func _harbour_buy_plot(district_id: String) -> void:
+	var r := Homes.buy_plot(main.save, district_id)
+	if r.ok:
+		audio.play("click")
+		hud.toast("Plot %s is yours! Go home from here to decorate it." % str(r.plot))
+	else:
+		hud.toast(str(r.reason))
+	main.save_now()
+	_harbour_page()
+
+
+func _harbour_go_home() -> void:
+	close_pause()
+	var interiors: Node = main.get("interiors")
+	if interiors and not interiors.call("visit_home"):
+		hud.toast("Step outside first, then go home.")
+
+
+func _harbour_catalogue() -> void:
+	close_pause()
+	var cat: Node = main.get("catalogue")
+	if cat:
+		cat.call("open", 0)
+
+
+func _harbour_sell(n: int) -> void:
+	var r := Harbour.sell(main.save, n, int(Time.get_unix_time_from_system()))
+	var msg: String = str(r.get("reason", ""))
+	if r.ok:
+		msg = "Sold %d Shells for %.2f $GULL." % [int(r.sold), float(r.gull)]
+		if bool(r.capped):
+			msg += " That's today's cap."
+	_harbour_done(bool(r.ok), msg)
+
+
+func _harbour_send() -> void:
+	var r := Harbour.send_out(main.save, int(Time.get_unix_time_from_system()))
+	_harbour_done(bool(r.ok), "A Fisher is out at sea." if r.ok else str(r.reason))
+
+
+func _harbour_home() -> void:
+	var r := Harbour.bring_home(main.save, int(Time.get_unix_time_from_system()))
+	_harbour_done(bool(r.ok), "The crew is home with %d Shells." % int(r.shells) if r.ok else str(r.reason))
+
+
+func _harbour_buy() -> void:
+	var r := Harbour.buy_fisher(main.save)
+	_harbour_done(bool(r.ok), "Bought a Fisher (test build, nothing on a chain)." if r.ok else str(r.reason))
+
+
+func _harbour_done(ok: bool, msg: String) -> void:
+	if ok:
+		audio.play("click")
+	main.save_now()
+	hud.set_shells(main.save.get("shells", 0))
+	hud.toast(msg)
+	_harbour_page()
 
 
 func _fisher_page() -> void:

@@ -1,0 +1,16 @@
+{
+ "name": "Gullhaven Fishers",
+ "symbol": "GULLF",
+ "description": "One of 3,333 fishers from Gullhaven, a cosy pixel-art fishing town. Hand-coded 64 x 64 pixel portraits with Solana-coloured gear, harbour classics and rare finds.",
+ "seller_fee_basis_points": 500,
+ "image": "collection.png",
+ "properties": {
+  "files": [
+   {
+    "uri": "collection.png",
+    "type": "image/png"
+   }
+  ],
+  "category": "image"
+ }
+}

@@ -4,6 +4,8 @@ extends RefCounted
 ## kind: "floor" stands on the floor (cells are 0.5 m), "rug" lies under things, "wall"
 ## hangs on a wall (y is the height of its bottom edge).
 
+const Homes := preload("res://scripts/token/homes.gd")
+
 const CELL := 0.5
 const MATERIALS := {
 	"wood": {"n": "Driftwood", "price": 25, "d": "Planks and beach timber. Gather it on sandy shores."},
@@ -113,7 +115,7 @@ static func give(save: Dictionary, id: String, n := 1) -> void:
 
 ## A floor item's footprint in metres (turned a quarter for odd rotations).
 static func footprint(id: String, rot: int) -> Vector2:
-	var it: Dictionary = ITEMS.get(id, {})
+	var it := data(id)
 	var c: Vector2i = it.get("cells", Vector2i(2, 2))
 	if rot % 2 == 1:
 		return Vector2(c.y, c.x) * CELL
@@ -122,8 +124,23 @@ static func footprint(id: String, rot: int) -> Vector2:
 
 ## How wide a wall item is along its wall, in metres (from its sprite).
 static func wall_width(id: String) -> float:
-	var path := "res://art/decor/%s.png" % id
+	var path := "res://art/decor/%s.png" % sprite(id)
 	if ResourceLoader.exists(path):
 		var t: Texture2D = load(path)
 		return t.get_width() / 32.0
 	return 1.0
+
+
+## Any piece you can own and place: the hut's own (ITEMS) or one from the Home Catalogue
+## ("sofa@red", Harbour economy build). {} if it's neither.
+static func data(id: String) -> Dictionary:
+	if ITEMS.has(id):
+		return ITEMS[id]
+	return Homes.data(id)
+
+
+## The decor sprite for a piece (art/decor/<sprite>.png).
+static func sprite(id: String) -> String:
+	if ITEMS.has(id):
+		return id
+	return str(Homes.data(id).get("sprite", id))
