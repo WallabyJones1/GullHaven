@@ -28,6 +28,7 @@ func setup(m: Node, quick := false) -> void:
 		["skip the opening", _skip_opening, 20],
 		["main menu pages", _menu_pages, 10],
 		["back to the menu", _show_title, 10],
+		["the Harbour economy switch", _harbour_switch, 5],
 		["start a new game", _start, 15],
 		["make a fisher", _make_fisher, 10],
 		["finish the creator", _finish_creator, 10],
@@ -46,6 +47,7 @@ func setup(m: Node, quick := false) -> void:
 		["close the journal", _close_screen.bind("journal"), 10],
 		["the map", _open_screen.bind("map_screen"), 10],
 		["close the map", _close_screen.bind("map_screen"), 10],
+		["the Harbour Exchange (test build)", _harbour, 10],
 		["leave the game menu", _close_pause, 10],
 		["Hale's Tackle, every tab", _shop, 10],
 		["close the shop", _close_shop, 10],
@@ -150,6 +152,37 @@ func _menu_pages() -> void:
 	main.menus._settings_page("title")
 	main.menus._controls_page("title")
 	main.menus._credits_page()
+
+
+## The Harbour economy (test build), from the title: switch it on and off again.
+func _harbour_switch() -> void:
+	var m: Node = main.menus
+	m._toggle_harbour()
+	_check(bool(m.settings.harbour), "the Harbour economy switches on at the title")
+	m._toggle_harbour()
+	_check(not bool(m.settings.harbour), "...and off again")
+
+
+## The Harbour economy (test build) in the game menu: sell, send out and bring home a Fisher.
+## Everything else in the game is unchanged with it off.
+func _harbour() -> void:
+	var m: Node = main.menus
+	m.settings.harbour = true
+	m.open_pause()
+	main.save["shells"] = 500
+	m._harbour_page()
+	_check(int(main.save.token.fishers) == 1, "the starter Fisher is given")
+	var gull_before := float(main.save.token.gull)
+	m._harbour_sell(100)
+	_check(is_equal_approx(float(main.save.token.gull) - gull_before, 10.0) and int(main.save.shells) == 400, "100 Shells sell for 10 $GULL")
+	m._harbour_send()
+	_check((main.save.token.sea as Array).size() == 1, "the Fisher goes out to sea")
+	m._harbour_home()
+	_check((main.save.token.sea as Array).is_empty() and int(main.save.shells) >= 400, "the crew comes home with the catch")
+	m._harbour_buy()
+	_check(int(main.save.token.fishers) == 1, "a Fisher costs more $GULL than this, so none is bought")
+	m.settings.harbour = false
+	m._pause_page()
 
 
 func _show_title() -> void:

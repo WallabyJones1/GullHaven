@@ -12,6 +12,8 @@ const SaveGame := preload("res://scripts/save_game.gd")
 const Audio := preload("res://scripts/audio.gd")
 const InputSetup := preload("res://scripts/input_setup.gd")
 const Glyphs := preload("res://scripts/input_glyphs.gd")
+const Harbour := preload("res://scripts/token/harbour.gd")
+const Economy := preload("res://scripts/token/economy.gd")
 
 const SETTINGS := "user://settings.cfg"
 const PAD_CONTROLS := """[b]Walk / steer[/b]  left stick      [b]Camera[/b]  right stick, LB / RB
@@ -43,7 +45,7 @@ to everyone playing the beta. Tell us what you find!
 static var fresh_start := false  # New game: skip the menu after the reload and go straight in
 
 var mode := ""  # "title", "intro", "pause", "screen" (something opened from the menu) or ""
-var settings := {"music": 0.8, "effects": 1.0, "fullscreen": false, "quality": true, "seen_opening": false}
+var settings := {"music": 0.8, "effects": 1.0, "fullscreen": false, "quality": true, "seen_opening": false, "harbour": false}
 var _root: Control
 var _box: VBoxContainer
 var _sub: Label
@@ -200,6 +202,7 @@ func show_title() -> void:
 		_button("New game", _confirm_new)
 	else:
 		_button("Start a new game", _start)
+	_button("Harbour economy (test build): %s" % ("on" if bool(settings.harbour) else "off"), _toggle_harbour)
 	_button("Settings", _settings_page.bind("title"))
 	_button("Controls", _controls_page.bind("title"))
 	_button("Watch the opening", _replay_opening)
@@ -297,9 +300,12 @@ func _pause_page() -> void:
 	grid.add_theme_constant_override("h_separation", 8)
 	grid.add_theme_constant_override("v_separation", 8)
 	_box.add_child(grid)
-	for pair in [["Fisher", _fisher_page], ["Bag", _open_screen.bind("bag")], ["Logbook", _open_screen.bind("logbook")],
+	var pairs := [["Fisher", _fisher_page], ["Bag", _open_screen.bind("bag")], ["Logbook", _open_screen.bind("logbook")],
 			["Journal", _open_screen.bind("journal")], ["Map", _open_screen.bind("map_screen")], ["Controls", _controls_page],
-			["Settings", _settings_page.bind("pause")], ["Save" if OS.has_feature("web") else "Save and quit", _quit]]:
+			["Settings", _settings_page.bind("pause")], ["Save" if OS.has_feature("web") else "Save and quit", _quit]]
+	if bool(settings.harbour):  # the Harbour economy (test build) only shows when switched on
+		pairs.insert(4, ["Harbour Exchange", _harbour_page])
+	for pair in pairs:
 		var b := UI.button(str(pair[0]), 24)
 		b.alignment = HORIZONTAL_ALIGNMENT_CENTER
 		b.custom_minimum_size = Vector2(250.0, 0.0)
@@ -325,6 +331,77 @@ func _open_screen(which: String) -> void:
 	visible = false
 	_screen = screen
 	screen.call("open")
+
+
+## The Harbour economy (test build): the title toggle, and the Exchange page in the game menu.
+func _toggle_harbour() -> void:
+	settings.harbour = not bool(settings.harbour)
+	_save_settings()
+	show_title()
+
+
+func _harbour_page() -> void:
+	_clear()
+	_page = "harbour"
+	_sub.text = "Harbour Exchange"
+	var now := int(Time.get_unix_time_from_system())
+	if Harbour.starter_fisher(main.save):
+		main.save_now()
+		hud.toast("The Harbour gives you a starter Fisher (test build).")
+	var t := Harbour.ensure(main.save)
+	var sold_today := int(t.sold) if str(t.day) == Harbour.day_key(now) else 0
+	var crew: int = t.sea.size()
+	var text := "You have %d Shells and %.2f $GULL.\n" % [int(main.save.get("shells", 0)), float(t.gull)]
+	text += "Exchange: %.2f $GULL a Shell, up to %d Shells a day (%d sold today).\n" % [Economy.rate_per_shell(), Economy.SALE_CAP, sold_today]
+	text += "Fishers: %d owned, %d at sea.\n" % [int(t.fishers), crew]
+	if not Harbour.licence(main.save):
+		text += "You need a Harbour Licence (one Fisher) before you can sell Shells.\n"
+	if crew > 0:
+		text += "The crew has earned %d Shells so far. They stop paying after %d hours, so bring them home." % [Harbour.pending(main.save, now), int(Economy.MAX_HOURS)]
+	_box.add_child(_rich(text, 620.0))
+	_button("Sell 100 Shells", _harbour_sell.bind(100))
+	_button("Sell all Shells (up to today's cap)", _harbour_sell.bind(-1))
+	if int(t.fishers) > crew:
+		_button("Send a Fisher to sea", _harbour_send)
+	if crew > 0:
+		_button("Bring the crew home (+%d Shells)" % Harbour.pending(main.save, now), _harbour_home)
+	_button("Buy a Fisher (%d $GULL, test price)" % int(Economy.FISHER_PRICE), _harbour_buy)
+	_button("Back", _pause_page)
+	_focus_first()
+
+
+func _harbour_sell(n: int) -> void:
+	var r := Harbour.sell(main.save, n, int(Time.get_unix_time_from_system()))
+	var msg: String = str(r.get("reason", ""))
+	if r.ok:
+		msg = "Sold %d Shells for %.2f $GULL." % [int(r.sold), float(r.gull)]
+		if bool(r.capped):
+			msg += " That's today's cap."
+	_harbour_done(bool(r.ok), msg)
+
+
+func _harbour_send() -> void:
+	var r := Harbour.send_out(main.save, int(Time.get_unix_time_from_system()))
+	_harbour_done(bool(r.ok), "A Fisher is out at sea." if r.ok else str(r.reason))
+
+
+func _harbour_home() -> void:
+	var r := Harbour.bring_home(main.save, int(Time.get_unix_time_from_system()))
+	_harbour_done(bool(r.ok), "The crew is home with %d Shells." % int(r.shells) if r.ok else str(r.reason))
+
+
+func _harbour_buy() -> void:
+	var r := Harbour.buy_fisher(main.save)
+	_harbour_done(bool(r.ok), "Bought a Fisher (test build, nothing on a chain)." if r.ok else str(r.reason))
+
+
+func _harbour_done(ok: bool, msg: String) -> void:
+	if ok:
+		audio.play("click")
+	main.save_now()
+	hud.set_shells(main.save.get("shells", 0))
+	hud.toast(msg)
+	_harbour_page()
 
 
 func _fisher_page() -> void:

@@ -45,6 +45,7 @@ static func defaults() -> Dictionary:
 		"story": {"ch": 0, "step": 0, "flags": {}},  # the main story
 		"look": {},  # your character: body, skin, hair, colours, clothes
 		"wardrobe": [],  # clothes you own
+		"token": {},  # the Harbour economy (test build): $GULL, Fishers and the crew at sea; see scripts/token/
 	}
 
 
