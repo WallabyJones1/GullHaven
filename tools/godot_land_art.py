@@ -825,6 +825,217 @@ DECOR = {
 }
 
 
+# =========================================================================== outdoor pieces for plots (28 px a metre)
+
+def mailbox(color='#d84a4a'):
+    p = Pix(20, 36)
+    p.box(8, 14, 11, 35, '#7a5030')
+    r = ramp(color)
+    p.box(2, 4, 17, 15, color)
+    p.ellipse(9.5, 5, 7.5, 3, r[4])
+    p.rect(3, 9, 16, 9, r[1])
+    p.box(16, 3, 18, 9, '#f0d040')
+    return p.outline()
+
+
+def bench():
+    p = Pix(44, 26)
+    wood = '#a8743f'
+    for y in (4, 8):
+        p.box(2, y, 41, y + 2, wood)
+    p.box(1, 14, 42, 16, wood)
+    for x in (4, 38):
+        p.box(x, 16, x + 2, 25, '#4a4a58')
+        p.box(x, 2, x + 2, 14, '#4a4a58')
+    return p.outline()
+
+
+def lamppost():
+    p = Pix(16, 64)
+    p.box(6, 12, 9, 61, '#3a3a48')
+    p.box(4, 60, 11, 63, '#3a3a48')
+    p.box(3, 2, 12, 12, '#3a3a48')
+    p.rect(5, 4, 10, 10, '#ffe080')
+    p.rect(6, 5, 7, 7, '#fff8d0')
+    return p.outline()
+
+
+def well():
+    p = Pix(40, 46)
+    for y in range(26, 45, 5):
+        off = (y // 5 % 2) * 4
+        for x in range(2 + off - 4, 38, 8):
+            p.box(max(3, x), y, min(36, x + 7), y + 4, '#9a9488')
+    p.ellipse(20, 26, 16, 4, '#2a3a5a')
+    for x in (5, 33):
+        p.box(x, 6, x + 2, 26, '#7a5030')
+    p.box(1, 2, 38, 7, '#b8503a')
+    p.line(20, 7, 20, 18, '#c8a870')
+    p.box(17, 18, 23, 23, '#8a5a34')
+    return p.outline()
+
+
+def birdbath():
+    p = Pix(28, 32)
+    p.ellipse(14, 8, 12, 4, '#b8b4ac')
+    p.ellipse(14, 7, 9, 2.5, '#6aaad8')
+    p.box(11, 10, 16, 27, '#a8a49c')
+    p.box(6, 27, 21, 31, '#a8a49c')
+    p.px(18, 5, '#3a3a48')
+    p.ellipse(19, 4, 2.5, 1.6, '#8a6a4a')
+    return p.outline()
+
+
+def gnome():
+    p = Pix(18, 30)
+    for y in range(0, 12):
+        w = y * 0.55
+        p.rect(9 - w, y, 8 + w, y, ramp('#d83a3a')[3 if y > 2 else 4])
+    lit(p, 9, 14, 4, 3, '#f0c8a0')
+    p.px(7, 13, '#1a1418')
+    p.px(11, 13, '#1a1418')
+    p.ellipse(9, 18, 5, 4, '#f4f0e8')
+    p.box(3, 19, 14, 26, '#3a6ab8')
+    p.box(4, 26, 7, 29, '#5a3a24')
+    p.box(10, 26, 13, 29, '#5a3a24')
+    return p.outline()
+
+
+def umbrella():
+    p = Pix(48, 52)
+    p.line(24, 10, 24, 51, '#e8e4dc')
+    for y in range(0, 14):
+        w = 4 + y * 1.5
+        for x in range(int(24 - w), int(24 + w)):
+            seg = int((x - (24 - w)) / max(1, (2 * w) / 6)) % 2
+            p.px(x, y, '#e84a5a' if seg else '#f8f0e8')
+    return p.outline()
+
+
+def sale_sign():
+    p = Pix(28, 34)
+    p.box(12, 14, 15, 33, '#8a5a34')
+    p.box(1, 2, 26, 15, '#f4ecd8')
+    p.rect(3, 4, 24, 4, '#c84a3a')
+    p.rect(3, 13, 24, 13, '#c84a3a')
+    for x in range(5, 23, 4):
+        p.rect(x, 7, x + 2, 10, '#5a3a24')
+    return p.outline()
+
+
+def stump():
+    p = Pix(24, 16)
+    p.ellipse(12, 10, 10, 5, '#7a5030')
+    p.ellipse(12, 7, 9, 3.5, '#c8a070')
+    p.ring(12, 7, 3, 4, '#a8804a')
+    return p.outline()
+
+
+OUTDOOR = {'mailbox': mailbox, 'bench': bench, 'lamppost': lamppost, 'well': well, 'birdbath': birdbath, 'gnome': gnome,
+           'umbrella': umbrella, 'sale_sign': sale_sign, 'stump': stump}
+
+
+# =========================================================================== sea monsters and treasure
+
+def serpent_head(f=0):
+    p = Pix(56, 60)
+    skin = '#3a8a7a'
+    for y in range(20, 60):
+        w = 9 + (y - 20) * 0.12
+        x = 28 + math.sin(y * 0.12) * 3
+        p.rect(x - w, y, x + w, y, ramp(skin)[3 if (y // 4) % 2 else 2])
+    lit(p, 28, 18, 16, 12, skin)
+    p.ellipse(16, 22 + f, 10, 5, '#2a6a5a')
+    p.rect(8, 22 + f, 24, 23 + f, '#1a2a2a')
+    for x in range(10, 24, 3):
+        p.px(x, 21 + f, '#f4f0e8')
+    p.ellipse(28, 12, 3, 3, '#ffe060')
+    p.px(28, 12, '#1a1418')
+    for k in range(5):
+        p.line(36 + k * 3, 6 + k * 4, 44 + k * 3, 2 + k * 4, '#e8604a')
+    for y in range(28, 58, 6):
+        p.line(20, y, 36, y, '#a8d8b8')
+    return p.outline()
+
+
+def serpent_hump():
+    p = Pix(44, 26)
+    skin = '#3a8a7a'
+    for x in range(2, 42):
+        h = math.sin((x - 2) / 40 * math.pi) * 20
+        p.rect(x, 25 - h, x, 25, ramp(skin)[3 if (x // 4) % 2 else 2])
+    for x in range(10, 36, 5):
+        h = math.sin((x - 2) / 40 * math.pi) * 20
+        p.line(x, 25 - h - 4, x + 2, 25 - h + 1, '#e8604a')
+    return p.outline()
+
+
+def tentacle(f=0):
+    p = Pix(30, 72)
+    skin = '#a84a7a'
+    for y in range(0, 72):
+        t = y / 71
+        w = 2 + t * 10
+        x = 15 + math.sin(t * 5 + f * 1.4) * (1 - t) * 9
+        p.rect(x - w, y, x + w, y, ramp(skin)[3 if x > 14 else 2])
+        if y % 7 == 3 and t > 0.2:
+            p.ellipse(x + w * 0.4, y, 1.6, 1.6, '#f0c8d8')
+    return p.outline()
+
+
+def chest(open_=False):
+    p = Pix(34, 28)
+    wood = '#8a5a34'
+    p.box(2, 12, 31, 27, wood)
+    p.rect(2, 18, 31, 19, '#c8a048')
+    p.rect(15, 12, 18, 27, '#c8a048')
+    if open_:
+        p.box(2, 0, 31, 8, shift(hx(wood), -0.15))
+        p.ellipse(16, 12, 12, 3, '#ffd84a')
+        for x, y in ((9, 10), (16, 9), (23, 10), (12, 11)):
+            p.px(x, y, '#fff8c0')
+    else:
+        p.box(2, 5, 31, 12, wood)
+        p.ellipse(16.5, 6, 14.5, 3, shift(hx(wood), 0.12))
+        p.rect(15, 5, 18, 12, '#c8a048')
+    p.box(14, 15, 19, 20, '#e8c048')
+    return p.outline()
+
+
+def icon_scale():
+    p = Pix(16, 16)
+    for y in range(2, 15):
+        w = 6 - abs(y - 7) * 0.6
+        p.rect(8 - w, y, 7 + w, y, ramp('#3a9a8a')[4 if y < 6 else 3])
+    p.line(8, 3, 8, 13, '#2a6a5a')
+    return p.outline()
+
+
+def icon_harpoon():
+    p = Pix(16, 16)
+    p.line(2, 14, 12, 4, '#8a6a4a')
+    p.line(12, 4, 14, 1, '#b8b8c8')
+    p.line(11, 3, 14, 3, '#b8b8c8')
+    p.line(13, 6, 13, 2, '#b8b8c8')
+    p.line(2, 14, 1, 15, '#c8a870')
+    return p.outline()
+
+
+def icon_tmap():
+    p = Pix(16, 16)
+    p.box(1, 3, 14, 13, '#e8d8a8')
+    p.line(3, 11, 6, 7, '#a85a3a')
+    p.line(6, 7, 9, 9, '#a85a3a')
+    p.line(10, 5, 12, 7, '#d83a3a')
+    p.line(12, 5, 10, 7, '#d83a3a')
+    return p.outline()
+
+
+SEA = {'serpent_head_0': lambda: serpent_head(0), 'serpent_head_1': lambda: serpent_head(2), 'serpent_hump': serpent_hump,
+       'tentacle_0': lambda: tentacle(0), 'tentacle_1': lambda: tentacle(1), 'chest': chest, 'chest_open': lambda: chest(True)}
+ICONS.update({'serpent_scale': icon_scale, 'harpoon': icon_harpoon, 'treasure_map': icon_tmap, 'kraken_ink': lambda: icon_bowl('#2a1a3a')})
+
+
 def save_img(img, rel):
     path = os.path.join(OUT, rel)
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -852,6 +1063,10 @@ def main():
         out.append(save_img(animal(kind), 'land/animals/%s.png' % kind))
     for k, fn in DECOR.items():
         out.append(fn().save('decor/%s.png' % k))
+    for k, fn in OUTDOOR.items():
+        out.append(fn().save('land/outdoor/%s.png' % k))
+    for k, fn in SEA.items():
+        out.append(fn().save('land/sea/%s.png' % k))
     print('land art: %d icons, %d crops, %d decor pieces' % (len(ICONS), len(CROP_LOOK) * 4, len(DECOR)))
     if preview:
         os.makedirs(PREVIEW, exist_ok=True)

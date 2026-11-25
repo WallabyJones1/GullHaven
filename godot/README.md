@@ -228,10 +228,32 @@ still here and plays the same; none of this gets in its way.
   floors; bought once, swapped back free).
 - **Townsfolk requests** no longer sit in the corner of the screen. They're listed in the
   Journal (Quests), and Settings can put them back in the corner.
+- **Your own plot on Driftwood Lane** (west of Gullhaven, twelve plots). Walk to a for-sale
+  sign and it's yours: a cosy cottage, a picket fence and a mailbox. The mailbox opens the
+  plot planner: walls, paint, roof, door, trim, chimney and window boxes; grow to a family
+  house or a grand villa (Shells, wood and stone; more room inside); fences and hedges;
+  and the Garden Centre (veg patches that grow crops like Gran's garden, trees, bushes,
+  flowers, a bench, lamps, a well, a gnome and more). Walk where a thing goes and press
+  Space. Inside, the Home Catalogue does wallpaper, floors and furniture in every colour.
+- **Sea monsters.** Out in a boat on the reef, kelp, wrecks, open blue or the deep, a sea
+  serpent, a kraken or (out in the deep) the leviathan sometimes surfaces, more at night
+  and in storms. Space throws a harpoon (Delve sells them; three from Gran's bench): hit
+  when the gold line's in the red. Drive it off for Shells, scales, ink or teeth, and often
+  a treasure map. Let it reach you and it rams the boat. The new Corsair Sloop (28,000
+  Shells, Gullhaven boatyard) is the fastest boat and harpoons hit harder from it.
+- **Treasure hunts.** Pip, on the beach by Gran's hut, finds a map in a bottle every day
+  (the same map for everyone that day); monsters leave maps too. A red ring on the world
+  map, then warmer, warmer, hot in the corner. Dig on the X with your hoe for Shells,
+  gems, gold, garden things or furniture.
 - **Play online.** Main menu, Play online with friends: run the server in `mp-server/`
-  (`npm install`, `npm start`) and join it. You see each other, Enter opens the chat, and
-  the game menu's Online page lets you visit each other's huts. Your own save comes with
+  (`npm install`, `npm start`) and join it, or open the hosted game (Railway serves the web
+  build and the town together, and joins it for you). You see each other (in your boats
+  too), Enter opens the chat, 1-5 are emotes, plots and homes are shared and you can walk
+  into anyone's house; the game menu's Online page visits huts. Your own save comes with
   you. Single player is unchanged.
+- **Phones and tablets.** On a touch screen you get a thumbstick and buttons (action, back,
+  tool, bait, bag, map, journal, build, chat, emotes); drag to turn the camera, pinch to
+  zoom. Settings, Touch controls switches them on or off.
 
 Art for all of it: `python3 tools/godot_land_art.py` (icons, crops, rocks, animals, the
 yard and the furniture).

@@ -87,6 +87,8 @@ var requests_panel: PanelContainer
 var objective2_panel: PanelContainer  # the Harbour Life story's next step
 var objective2_title: Label
 var objective2_label: Label
+var treasure_panel: PanelContainer  # the treasure map you're following
+var treasure_label: Label
 var show_requests := false  # townsfolk fish requests in the corner (off unless chosen in Settings)
 var _last_reqs: Array = []
 var requests_list: VBoxContainer
@@ -216,6 +218,13 @@ func setup(s: Node, sv: Dictionary) -> void:
 	o2.add_child(objective2_label)
 	objective2_panel.visible = false
 	right.add_child(objective2_panel)
+	treasure_panel = UI.panel()
+	treasure_label = UI.label("", 19, Color(1.0, 0.75, 0.55))
+	treasure_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	treasure_label.custom_minimum_size = Vector2(340.0, 0.0)
+	treasure_panel.add_child(treasure_label)
+	treasure_panel.visible = false
+	right.add_child(treasure_panel)
 	requests_panel = UI.panel()
 	right.add_child(requests_panel)
 	var rcol := VBoxContainer.new()
@@ -468,6 +477,13 @@ func set_objective2(heading: String, text: String) -> void:
 	objective2_panel.visible = text != ""
 	objective2_title.text = heading
 	objective2_label.text = Glyphs.plain(text)
+
+
+func set_treasure(text: String) -> void:
+	if treasure_panel == null:
+		return
+	treasure_panel.visible = text != ""
+	treasure_label.text = Glyphs.plain(text)
 
 
 ## Townsfolk requests only sit in the corner if you've asked for them (Settings); otherwise

@@ -27,13 +27,20 @@ const PROTOCOL = 1;
 // A small list of words that get starred out in chat and names. Keep it short and obvious.
 const BLOCKED = ['fuck', 'shit', 'cunt', 'bitch', 'nigger', 'faggot', 'retard', 'whore', 'slut'];
 
+// What's kept between restarts: huts (by player name) and plots on Driftwood Lane (by slot).
 let huts = {};
-try { huts = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')) || {}; } catch (e) { huts = {}; }
+let plots = {};  // slot -> {owner, data}
+const PLOT_SLOTS = 12;
+try {
+  const saved = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')) || {};
+  if (saved.huts || saved.plots) { huts = saved.huts || {}; plots = saved.plots || {}; } else { huts = saved; }
+} catch (e) { huts = {}; }
 let hutsDirty = false;
+function snapshot() { return JSON.stringify({ huts, plots }); }
 function saveHuts() {
   if (!hutsDirty) return;
   hutsDirty = false;
-  fs.writeFile(DATA_FILE, JSON.stringify(huts), () => {});
+  fs.writeFile(DATA_FILE, snapshot(), () => {});
 }
 setInterval(saveHuts, 10000);
 
@@ -94,6 +101,70 @@ function cleanHut(data) {
   return out;
 }
 
+const WORD = /^[#a-z0-9_]{1,24}$/;
+const TEX = /^[a-z0-9_\/]{1,48}$/;
+
+function cleanFurniture(list, max) {
+  const out = [];
+  if (!Array.isArray(list)) return out;
+  for (const it of list.slice(0, max)) {
+    if (!it || typeof it !== 'object' || typeof it.id !== 'string' || !/^[a-z_@0-9]{1,40}$/.test(it.id)) continue;
+    const f = { id: it.id };
+    if (typeof it.side === 'string' && /^(back|left|right)$/.test(it.side)) {
+      f.side = it.side; f.along = num(it.along, -10, 10);
+    } else {
+      f.x = num(it.x, -10, 10); f.z = num(it.z, -10, 10); f.rot = Math.round(num(it.rot, 0, 3));
+    }
+    out.push(f);
+  }
+  return out;
+}
+
+// A plot: its slot, the house outside, the fence, garden things (veg patches with their
+// crops) and the inside of the home.
+function cleanPlot(data) {
+  if (!data || typeof data !== 'object') return null;
+  const slot = Math.round(num(data.slot, -1, PLOT_SLOTS - 1));
+  if (slot < 0) return null;
+  const out = { slot, house: {}, fence: 'none', items: [], home: {} };
+  const h = data.house && typeof data.house === 'object' ? data.house : {};
+  out.house.size = Math.round(num(h.size, 0, 2));
+  for (const k of ['wall', 'tint', 'roof', 'rtint', 'door', 'trim']) if (typeof h[k] === 'string' && WORD.test(h[k])) out.house[k] = h[k];
+  for (const k of ['chimney', 'boxes']) if (typeof h[k] === 'boolean') out.house[k] = h[k];
+  if (typeof data.fence === 'string' && WORD.test(data.fence)) out.fence = data.fence;
+  if (Array.isArray(data.items)) {
+    for (const it of data.items.slice(0, 60)) {
+      if (!it || typeof it.id !== 'string' || !/^[a-z_]{1,24}$/.test(it.id)) continue;
+      const o = { id: it.id, x: num(it.x, 0, 20), z: num(it.z, 0, 20) };
+      if (typeof it.s === 'string' && /^(wild|tilled|crop)$/.test(it.s)) o.s = it.s;
+      if (typeof it.crop === 'string' && /^[a-z]{1,16}$/.test(it.crop)) o.crop = it.crop;
+      if (it.grow != null) o.grow = num(it.grow, 0, 100000);
+      if (it.wet != null) o.wet = num(it.wet, 0, 1e12);
+      out.items.push(o);
+    }
+  }
+  const home = data.home && typeof data.home === 'object' ? data.home : {};
+  if (typeof home.wall === 'string' && TEX.test(home.wall)) out.home.wall = home.wall;
+  if (typeof home.floor === 'string' && TEX.test(home.floor)) out.home.floor = home.floor;
+  out.home.furniture = cleanFurniture(home.furniture, 120);
+  if (JSON.stringify(out).length > 40000) return null;
+  return out;
+}
+
+// Put a player's plot in its slot (or tell them it's taken). Returns true if it changed.
+function setPlot(p, data) {
+  const plot = cleanPlot(data);
+  if (!plot) return false;
+  const have = plots[plot.slot];
+  if (have && have.owner.toLowerCase() !== p.name.toLowerCase()) return false;
+  for (const k of Object.keys(plots)) {  // one plot each
+    if (+k !== plot.slot && plots[k].owner.toLowerCase() === p.name.toLowerCase()) delete plots[k];
+  }
+  plots[plot.slot] = { owner: p.name, data: plot };
+  hutsDirty = true;
+  return true;
+}
+
 const players = new Map(); // id -> {ws, id, name, look, x, y, z, fx, fz, a, in, lastChat}
 let nextId = 1;
 
@@ -119,7 +190,7 @@ function uniqueName(want) {
 }
 
 function info(p) {
-  return { id: p.id, name: p.name, look: p.look, x: p.x, y: p.y, z: p.z, fx: p.fx, fz: p.fz, a: p.a, in: p.in };
+  return { id: p.id, name: p.name, look: p.look, x: p.x, y: p.y, z: p.z, fx: p.fx, fz: p.fz, a: p.a, in: p.in, b: p.b || '', h: p.h || 0 };
 }
 
 const PUBLIC = process.env.PUBLIC_DIR || path.join(__dirname, 'public');
@@ -199,8 +270,10 @@ wss.on('connection', (ws) => {
       const hut = cleanHut(msg.hut);
       if (hut) { huts[me.name.toLowerCase()] = { owner: me.name, data: hut }; hutsDirty = true; }
       players.set(me.id, me);
+      const plotChanged = msg.plot ? setPlot(me, msg.plot) : false;
       send(ws, { t: 'welcome', id: me.id, name: me.name, protocol: PROTOCOL,
-        players: [...players.values()].filter((p) => p !== me).map(info) });
+        players: [...players.values()].filter((p) => p !== me).map(info), plots });
+      if (plotChanged) broadcast({ t: 'plots', plots }, ws);
       broadcast({ t: 'join', ...info(me) }, ws);
       broadcast({ t: 'sys', text: me.name + ' arrived in Gullhaven.' }, ws);
       return;
@@ -210,6 +283,8 @@ wss.on('connection', (ws) => {
         me.x = num(msg.x, -50, 1400); me.y = num(msg.y, -50, 400); me.z = num(msg.z, -50, 1200);
         me.fx = num(msg.fx, -1, 1); me.fz = num(msg.fz, -1, 1); me.a = Math.round(num(msg.a, 0, 4));
         me.in = typeof msg.in === 'string' ? msg.in.slice(0, 40) : '';
+        me.b = typeof msg.b === 'string' && /^[a-z_]{0,16}$/.test(msg.b) ? msg.b : '';
+        me.h = num(msg.h, -10, 10);
         me.dirty = true;
         break;
       case 'chat': {
@@ -230,6 +305,10 @@ wss.on('connection', (ws) => {
         if (hut) { huts[me.name.toLowerCase()] = { owner: me.name, data: hut }; hutsDirty = true; }
         break;
       }
+      case 'plot':
+        if (setPlot(me, msg.data)) broadcast({ t: 'plots', plots });
+        else send(ws, { t: 'plots', plots });
+        break;
       case 'visit': {
         let rec = null;
         const target = players.get(Number(msg.id));
@@ -238,6 +317,14 @@ wss.on('connection', (ws) => {
         if (rec) send(ws, { t: 'hut', owner: rec.owner, data: rec.data });
         else send(ws, { t: 'sys', text: "That hut's door is locked (nobody's home)." });
         if (target && target !== me) send(target.ws, { t: 'sys', text: me.name + ' is visiting your hut.' });
+        break;
+      }
+      case 'brag': {
+        const now = Date.now();
+        if (now - (me.lastBrag || 0) < 5000) return;
+        me.lastBrag = now;
+        const text = clean(msg.text, 80);
+        if (text) broadcast({ t: 'sys', text: me.name + ' ' + text });
         break;
       }
       case 'emote':
@@ -262,7 +349,7 @@ setInterval(() => {
   for (const p of players.values()) {
     if (p.dirty) {
       p.dirty = false;
-      moved.push([p.id, +p.x.toFixed(2), +p.y.toFixed(2), +p.z.toFixed(2), +p.fx.toFixed(2), +p.fz.toFixed(2), p.a, p.in]);
+      moved.push([p.id, +p.x.toFixed(2), +p.y.toFixed(2), +p.z.toFixed(2), +p.fx.toFixed(2), +p.fz.toFixed(2), p.a, p.in, p.b || '', +(p.h || 0).toFixed(2)]);
     }
   }
   if (moved.length) broadcast({ t: 'state', p: moved });
@@ -273,7 +360,7 @@ if (require.main === module) {
 }
 
 process.on('SIGTERM', () => {
-  try { fs.writeFileSync(DATA_FILE, JSON.stringify(huts)); } catch (e) { /* nothing to keep */ }
+  try { fs.writeFileSync(DATA_FILE, snapshot()); } catch (e) { /* nothing to keep */ }
   process.exit(0);
 });
 

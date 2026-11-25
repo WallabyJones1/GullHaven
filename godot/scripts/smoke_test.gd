@@ -96,6 +96,21 @@ func setup(m: Node, quick := false) -> void:
 		["visit a friend's hut", _visit_hut, 40],
 		["look round it", _visit_check, 5],
 		["leave the friend's hut", _leave_visit, 40],
+		["claim a plot on Driftwood Lane", _plot_claim, 10],
+		["finish the talk", _skip_talk, 5],
+		["do up the house and buy for the garden", _plot_build, 10],
+		["put a gnome in the garden", _plot_place, 10],
+		["check the garden", _plot_place_check, 10],
+		["into your own home", _plot_enter, 40],
+		["leave your home", _plot_leave, 40],
+		["sail the Corsair Sloop into open water", _sea_out, 30],
+		["a sea serpent surfaces", _monster_up, 30],
+		["harpoon it", _monster_fight, 10],
+		["check it fled", _monster_check, 60],
+		["Pip's treasure map", _treasure_pip, 5],
+		["take the map", _skip_talk, 10],
+		["dig up the treasure", _treasure_dig, 10],
+		["check the chest", _treasure_check, 10],
 		["Harbour Life so far", _land_check, 5],
 		["zoom with the wheel, a trackpad and keys", _zoom, 30],
 		["check the zoom", _zoom_check, 5],
@@ -344,6 +359,165 @@ func _visit_check() -> void:
 
 func _leave_visit() -> void:
 	main.interiors.leave()
+
+
+var _plot_n := 0
+
+
+func _plot_claim() -> void:
+	var pl: Node = main.plots
+	_check(int(pl.my_slot()) < 0, "no plot yet")
+	var sign: Vector3 = pl._signs.get(0, Vector3.INF)
+	_check(sign != Vector3.INF, "plot 1 has a for-sale sign")
+	main.player.global_position = sign + Vector3(0.0, 0.3, 1.2)
+	var it: Dictionary = pl.near(main.player.global_position, Vector3.FORWARD)
+	_check(str(it.get("kind", "")) == "claim", "standing at the sign offers the plot (%s)" % str(it.get("text", "nothing")))
+	pl._claim(0)
+	_check(int(pl.my_slot()) == 0, "plot 1 is ours")
+
+
+func _plot_build() -> void:
+	var pl: Node = main.plots
+	main.save.shells = int(main.save.shells) + 20000
+	main.land.add_item("mat:wood", 40)
+	main.land.add_item("stone", 30)
+	pl._set_house("wall", "stone")
+	pl._set_house("tint", "#b8d8f0")
+	pl._set_fence("hedge")
+	pl._upgrade(1)
+	_check(int(main.save.plot.house.size) == 1, "upgraded to a family house")
+	pl._buy("gnome")
+	pl._buy("veg_patch")
+	_check(int(main.save.plot.inv.get("gnome", 0)) == 1, "bought a garden gnome")
+	pl.close_menu()
+	_plot_n = (main.save.plot.items as Array).size()
+
+
+func _plot_place() -> void:
+	var r: Rect2 = main.plots.slot_rect(0)
+	main.player.global_position = Vector3(r.position.x + 2.0, float(main.harbour.height_at(r.position.x + 2.0, r.position.y + 8.4)) + 0.3, r.position.y + 8.4)
+	main.player.facing = Vector3(0.0, 0.0, 1.0)
+	main.plots.start_placing("gnome")
+	var ev := InputEventAction.new()
+	ev.action = "action"
+	ev.pressed = true
+	Input.parse_input_event(ev)
+
+
+func _plot_place_check() -> void:
+	var ev := InputEventAction.new()
+	ev.action = "action"
+	ev.pressed = false
+	Input.parse_input_event(ev)
+	if main.plots._placing != "":
+		main.plots._stop_placing()
+	_check((main.save.plot.items as Array).size() == _plot_n + 1, "the gnome's in the garden (%d things)" % (main.save.plot.items as Array).size())
+	var share: Dictionary = main.plots.share_data()
+	_check(int(share.slot) == 0 and str(share.house.wall) == "stone" and share.has("home"), "the plot's ready to share with the town")
+
+
+func _plot_enter() -> void:
+	main.plots._enter(0)
+
+
+func _plot_leave() -> void:
+	_check(bool(main.interiors.is_inside()), "inside our own home on Driftwood Lane")
+	main.interiors.leave()
+
+
+func _sea_out() -> void:
+	_check(not bool(main.interiors.is_inside()), "back out on the lane")
+	var w: Node3D = main.harbour
+	var at := Vector3.INF
+	for r in range(40, 400, 12):
+		for k in 16:
+			var a := k * TAU / 16.0
+			var x := 566.0 + cos(a) * r
+			var z := 826.0 + sin(a) * r
+			if at == Vector3.INF and w.is_water(x, z) and float(w.water_depth(x, z)) > 6.0:
+				var ok := true
+				for j in 8:
+					var b := j * TAU / 8.0
+					if not w.is_water(x + cos(b) * 34.0, z + sin(b) * 34.0):
+						ok = false
+				if ok:
+					at = Vector3(x, 0.0, z)
+	_check(at != Vector3.INF, "found open water")
+	if at == Vector3.INF:
+		return
+	(main.save.boats as Array).append("sloop")
+	main.save.boat = "sloop"
+	main.boats.spawn(at, 0.0)
+	main.boats.board()
+	_check(bool(main.boats.aboard) and str(main.boats.info.get("n", "")) == "Corsair Sloop", "aboard the Corsair Sloop")
+
+
+func _monster_up() -> void:
+	_check(bool(main.monsters.force("serpent")), "a sea serpent surfaced")
+
+
+func _monster_fight() -> void:
+	var m: Node = main.monsters
+	_check(bool(m.active()), "the serpent is still about")
+	if not bool(m.active()):
+		return
+	var p: Vector3 = main.player.global_position
+	var mp: Vector3 = m._m.pos
+	var away := Vector3(mp.x - p.x, 0.0, mp.z - p.z).normalized()
+	m._m.pos = p + away * 14.0
+	m._m.up = 1.0
+	m._m.dive = 8.0
+	main.land.add_item("harpoon", 12)
+	var it: Dictionary = m.near(p, Vector3.FORWARD)
+	_check(str(it.get("kind", "")) == "harpoon", "close enough to throw (%s)" % str(it.get("text", "nothing")))
+	var tries := 0
+	while m.active() and not bool(m._m.gone) and tries < 10:
+		m.use({})
+		m._throw(true)
+		tries += 1
+	_mark_f = float(main.land.count("harpoon"))
+
+
+func _monster_check() -> void:
+	_check(int(main.save.monsters.get("serpent", 0)) == 1, "drove off the serpent")
+	_check(int(main.land.count("serpent_scale")) >= 1, "it left serpent scales")
+	_check(not bool(main.monsters.active()), "it's gone back to the deep")
+	_check((main.treasure.maps() as Array).size() >= 1, "and a treasure map washed up")
+	main.boats.aboard = false
+	main.player.riding = false
+	main.player.can_move = true
+	main.save.boat = "row"
+	main.boats.spawn_at_dock(Vector3(436.0, 0.0, 566.0))
+	main.player.global_position = Vector3(438.0, float(main.harbour.height_at(438.0, 700.0)) + 0.5, 700.0)
+
+
+func _treasure_pip() -> void:
+	_plot_n = (main.treasure.maps() as Array).size()
+	_check(bool(main.treasure._on_talk("Pip")), "Pip has today's map")
+	_check(not bool(main.treasure._on_talk("Pip")), "only one a day")
+
+
+func _treasure_dig() -> void:
+	var maps: Array = main.treasure.maps()
+	_check(maps.size() == _plot_n + 1, "Pip's map is ours (%d maps)" % maps.size())
+	_check((main.map_screen.treasure_pins as Array).size() == maps.size(), "every map is pinned on the world map")
+	var mp: Dictionary = maps[maps.size() - 1]
+	var again: Dictionary = main.treasure.give_map("a test", int(main.treasure._today()) * 7907 + 31, true)
+	_check(Vector2(float(again.x), float(again.z)).distance_to(Vector2(float(mp.x), float(mp.z))) < 0.01, "the daily map is the same for everyone")
+	maps.erase(again)
+	main.treasure._refresh_pins()
+	main.player.global_position = Vector3(float(mp.x), float(main.harbour.height_at(float(mp.x), float(mp.z))) + 0.4, float(mp.z))
+	var it: Dictionary = main.treasure.near(main.player.global_position, Vector3.FORWARD)
+	_check(str(it.get("kind", "")) == "dig", "standing on the X (%s, %s)" % [str(mp.where), str(it.get("text", "nothing"))])
+	_mark_f = float(main.save.shells)
+	if not it.is_empty():
+		main.treasure.use(it)
+
+
+func _treasure_check() -> void:
+	_check(int(main.save.treasure.dug) == 1, "dug up a chest")
+	_check(float(main.save.shells) > _mark_f, "full of Shells")
+	_check(str(main.hud.treasure_label.text).begins_with("Treasure map") or (main.treasure.maps() as Array).is_empty(), "the corner shows the next map")
 
 
 func _land_check() -> void:

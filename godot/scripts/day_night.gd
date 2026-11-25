@@ -121,7 +121,8 @@ func _apply(delta: float) -> void:
 	# Lamps and windows come on through dusk (and in dark weather) and stay on until dawn.
 	var lamps_on := clampf(smoothstep(0.45, 0.85, night) + _overcast * 0.5 * day, 0.0, 1.0)
 	for l in harbour.lamps:
-		l.light_energy = lamps_on * 1.6
+		if is_instance_valid(l):
+			l.light_energy = lamps_on * 1.6
 	for m in harbour.glow_mats:
 		m.emission_energy_multiplier = lamps_on * float(m.get_meta("glow", 3.0))
 	var water: ShaderMaterial = harbour.water_material

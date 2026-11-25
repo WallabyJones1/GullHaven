@@ -319,7 +319,7 @@ func in_hut() -> bool:
 
 ## In your home (Harbour economy build): the plot house you bought.
 func in_home() -> bool:
-	return is_inside() and str(inside.get("kind", "")) == "plot_home"
+	return is_inside() and str(inside.get("kind", "")) == "plot_home" and not inside.has("visit")
 
 
 ## Somewhere you can arrange your furniture: your hut, or your home.
@@ -766,12 +766,19 @@ func visiting() -> bool:
 
 ## Your home: your wallpaper and floor, your furniture, and the catalogue by the door.
 func _home_room() -> void:
-	var h := Homes.ensure(save)
-	_shell(str(h.floor), str(h.wall), str(h.wall))
+	var v: Dictionary = inside.get("visit", {})
+	var h: Dictionary = v if not v.is_empty() else Homes.ensure(save)
+	_shell(str(h.get("floor", Homes.DEFAULT_FLOOR)), str(h.get("wall", Homes.DEFAULT_WALL)), str(h.get("wall", Homes.DEFAULT_WALL)))
 	_wall("window", "back", -_w * 0.3, 0.9)
 	_wall("window", "back", _w * 0.3, 0.9)
-	for item in h.furniture:
-		place_furniture(item)
+	for item in h.get("furniture", []):
+		if item is Dictionary:
+			place_furniture(item)
+	if not v.is_empty():
+		_things.append({"pos": _to_world(Vector3(0.0, 0.0, _d * 0.5 - 1.0)), "text": "Space: Look around",
+			"kind": "look", "data": "%s's home. Make yourself comfortable (but no moving the furniture)." % str(v.get("owner", "A friend"))})
+		_keeper_at = Vector3.ZERO
+		return
 	_things.append({"pos": _to_world(Vector3(-1.4, 0.0, _d * 0.5 - 1.0)), "text": "Space: Arrange your furniture (or press B)",
 		"kind": "arrange", "data": 0})
 	_things.append({"pos": _to_world(Vector3(1.4, 0.0, _d * 0.5 - 1.0)), "text": "Space: Browse the Home Catalogue",

@@ -48,6 +48,19 @@ class Marks extends Control:
 			var outline := gem.duplicate()
 			outline.append(gem[0])
 			draw_polyline(outline, Color(0.3, 0.18, 0.05), 2.0)
+		# treasure maps: a red ring round where the X is (somewhere inside it)
+		for tp in s.treasure_pins:
+			var c: Vector2 = s.to_map(float(tp.x), float(tp.z))
+			var edge: Vector2 = s.to_map(float(tp.x) + float(tp.r), float(tp.z))
+			var rr := maxf(6.0, edge.x - c.x)
+			draw_arc(c, rr, 0.0, TAU, 32, Color(0.9, 0.2, 0.15), 2.5)
+			draw_line(c + Vector2(-5, -5), c + Vector2(5, 5), Color(0.9, 0.2, 0.15), 3.0)
+			draw_line(c + Vector2(5, -5), c + Vector2(-5, 5), Color(0.9, 0.2, 0.15), 3.0)
+		# your plot on Driftwood Lane
+		if s.plot_pin != Vector2.INF:
+			var lp: Vector2 = s.to_map(s.plot_pin.x, s.plot_pin.y)
+			draw_colored_polygon(PackedVector2Array([lp + Vector2(-7, 2), lp + Vector2(0, -7), lp + Vector2(7, 2), lp + Vector2(5, 2),
+				lp + Vector2(5, 7), lp + Vector2(-5, 7), lp + Vector2(-5, 2)]), Color(0.5, 0.9, 0.5))
 		# your hut
 		var hut: Dictionary = s.world.meta.hut
 		var hp: Vector2 = s.to_map(float(hut.x), float(hut.z))
@@ -86,6 +99,8 @@ var hud: CanvasLayer
 var audio: Node
 var save: Dictionary
 var story_pin := Vector2.INF  # the story's next step (x, z)
+var treasure_pins: Array = []  # {x, z, r}: treasure maps you're following
+var plot_pin := Vector2.INF  # your plot on Driftwood Lane
 var is_open := false
 var _cols := 40
 var _rows := 32

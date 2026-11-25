@@ -31,6 +31,10 @@ func setup(m: Node, dir: String) -> void:
 		[_bench_menu, 20], [_shot.bind("bench_menu"), 5], [_close_menu, 10],
 		[_shop_menu, 20], [_shot.bind("shop_menu"), 5], [_close_menu, 10],
 		[_visit, 60], [_shot.bind("visit_hut"), 5], [_leave, 60],
+		[_plot, 120], [_shot.bind("plot"), 5], [_plot_menu, 20], [_shot.bind("plot_menu"), 5], [_close_plot_menu, 10],
+		[_sea.bind("serpent"), 150], [_shot.bind("serpent"), 5], [_aim_harpoon, 20], [_shot.bind("harpoon"), 5],
+		[_sea.bind("kraken"), 150], [_shot.bind("kraken"), 5],
+		[_chest, 40], [_shot.bind("treasure"), 5],
 		[_online, 60], [_shot.bind("online"), 5],
 		[_quit, 5],
 	]
@@ -166,6 +170,78 @@ func _visit() -> void:
 		{"id": "planter", "x": -1.0, "z": -2.0, "rot": 0}, {"id": "crystal_lamp", "x": 3.0, "z": -2.5, "rot": 0},
 		{"id": "pumpkin_lantern", "x": 2.4, "z": 1.0, "rot": 0}, {"id": "copper_pots", "side": "right", "along": -1.0},
 		{"id": "ore_shelf", "x": 0.6, "z": -3.3, "rot": 0}, {"id": "scarecrow", "x": -3.2, "z": 1.5, "rot": 0}]})
+
+
+func _plot() -> void:
+	var pl: Node = main.plots
+	pl._ensure()["slot"] = 1
+	main.save.plot.house = {"size": 2, "wall": "timber", "tint": "#f4e2b8", "roof": "roof_blue", "rtint": "#ffffff", "door": "#c83a3a",
+		"trim": "#ffffff", "chimney": true, "boxes": true}
+	main.save.plot.fence = "picket"
+	main.save.plot.items = [{"id": "veg_patch", "x": 2.0, "z": 9.5, "s": "crop", "crop": "pumpkin", "grow": 0.9, "wet": 0},
+		{"id": "veg_patch", "x": 4.0, "z": 9.5, "s": "crop", "crop": "carrot", "grow": 0.6, "wet": 0},
+		{"id": "gnome", "x": 11.5, "z": 10.5}, {"id": "lamppost", "x": 1.2, "z": 7.0}, {"id": "well", "x": 12.0, "z": 7.5},
+		{"id": "flowers_a", "x": 6.0, "z": 10.8}, {"id": "bench", "x": 9.0, "z": 10.6}, {"id": "birch", "x": 1.5, "z": 1.8}]
+	pl._built_key.erase(1)
+	pl.rebuild_all()
+	var r: Rect2 = pl.slot_rect(1)
+	var sx := r.position.x + 7.0
+	var sz := r.position.y + 14.0
+	_stand(Vector3(sx, float(main.harbour.height_at(sx, sz)) + 0.5, sz), Vector3(0.0, 0.0, -1.0))
+
+
+func _plot_menu() -> void:
+	main.plots.open_menu(2)
+
+
+func _close_plot_menu() -> void:
+	main.plots.close_menu()
+
+
+func _sea(kind: String) -> void:
+	var w: Node3D = main.harbour
+	var at := Vector3(640.0, 0.0, 760.0)
+	for r in range(40, 400, 12):
+		var found := false
+		for k in 16:
+			var a := k * TAU / 16.0
+			var x := 566.0 + cos(a) * r
+			var z := 826.0 + sin(a) * r
+			if w.is_water(x, z) and float(w.water_depth(x, z)) > 6.0 and w.is_water(x + 30.0, z) and w.is_water(x - 30.0, z) and w.is_water(x, z - 30.0):
+				at = Vector3(x, 0.0, z)
+				found = true
+				break
+		if found:
+			break
+	if not (main.save.boats as Array).has("sloop"):
+		(main.save.boats as Array).append("sloop")
+	main.save.boat = "sloop"
+	main.boats.spawn(at, 0.0)
+	main.boats.board()
+	main.monsters.force(kind)
+	var p: Vector3 = main.player.global_position
+	main.monsters._m.pos = p + Vector3(4.0, 0.0, -13.0)
+	main.monsters._m.up = 1.0
+	main.monsters._m.dive = 30.0
+	main.monsters._m.life = 60.0
+	main.land.add_item("harpoon", 6)
+
+
+func _aim_harpoon() -> void:
+	main.monsters.use({})
+
+
+func _chest() -> void:
+	main.monsters._end_aim()
+	main.monsters._despawn()
+	main.boats.aboard = false
+	main.player.riding = false
+	main.player.can_move = true
+	if int(main.land.tool_tier("hoe")) <= 0:
+		main.save.land.tools["hoe"] = 1
+	var mp: Dictionary = main.treasure.give_map("a test")
+	_stand(Vector3(float(mp.x), float(main.harbour.height_at(float(mp.x), float(mp.z) + 2.0)) + 0.5, float(mp.z) + 2.0), Vector3(0.0, 0.0, -1.0))
+	main.treasure.use({"map": mp})
 
 
 func _leave() -> void:

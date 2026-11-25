@@ -145,6 +145,15 @@ func _quest_text() -> String:
 		lines.append("[color=#8ad08a][b]Harbour Life[/b][/color]")
 		lines.append_array(land_story.journal_lines())
 		lines.append("")
+	var mainn: Node = get_parent()
+	if mainn and mainn.get("treasure"):
+		lines.append("[color=#ff9a7a][b]Treasure hunts[/b][/color]")
+		lines.append_array(mainn.treasure.journal_lines())
+		lines.append("")
+	if mainn and mainn.get("monsters"):
+		lines.append("[color=#7ad0c8][b]Sea monsters[/b][/color]")
+		lines.append_array(mainn.monsters.journal_lines())
+		lines.append("")
 	var reqs: Array = save.requests
 	if not reqs.is_empty():
 		lines.append("[color=#ffd24d][b]Townsfolk requests[/b][/color] (optional: catch one that fits and bring it over)")

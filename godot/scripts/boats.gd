@@ -17,6 +17,8 @@ const BOATS := [
 		"d": "A little sail. Out past Gull Rock to Mossbank and Kelpwood."},
 	{"k": "skiff", "n": "Skiff", "price": 12500, "tier": 3, "hold": 16, "spd": 1.2, "len": 4.8, "hull": "#3f86bd",
 		"d": "An outboard and a cuddy. Lantern Key, the Atoll and the reef."},
+	{"k": "sloop", "n": "Corsair Sloop", "price": 28000, "tier": 3, "hold": 20, "spd": 1.5, "len": 5.6, "hull": "#4a2a5a",
+		"d": "Black sails and a harpoon at the bow: the fastest thing afloat, and made for monster hunting."},
 	{"k": "trawler", "n": "Trawler", "price": 42000, "tier": 4, "hold": 24, "spd": 1.15, "len": 6.2, "hull": "#c84a3a",
 		"d": "Heavy and steady. Through the breakers to Wrecker's Cove."},
 	{"k": "cutter", "n": "Deep-sea Cutter", "price": 125000, "tier": 5, "hold": 34, "spd": 1.35, "len": 7.2, "hull": "#2a3a5a",

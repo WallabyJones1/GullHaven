@@ -60,6 +60,11 @@ const ITEMS := {
 	"ember_lantern": {"n": "Ember lantern", "cat": "craft", "price": 400, "d": "A crystal that glows like a coal and never goes out."},
 	"ember_charm": {"n": "Ember charm", "cat": "craft", "price": 300, "d": "Warm in your pocket. Said to bring luck."},
 	"old_map": {"n": "Gran's hill map", "cat": "craft", "price": 0, "d": "Gran's own map of the hills, with the old quarries marked."},
+	# from the sea monsters and the treasure hunts
+	"harpoon": {"n": "Harpoon", "cat": "craft", "price": 15, "d": "For sea monsters. Throw it from your boat."},
+	"serpent_scale": {"n": "Serpent scale", "cat": "trophy", "price": 180, "d": "Big as a dinner plate and shimmers like oil."},
+	"kraken_ink": {"n": "Kraken ink", "cat": "trophy", "price": 260, "d": "A jar of the darkest ink in the world."},
+	"leviathan_tooth": {"n": "Leviathan tooth", "cat": "trophy", "price": 900, "d": "From the thing that lives past the shelf."},
 }
 
 # Tools: kind -> tiers (the item id for each tier, its name and what it does)
@@ -151,6 +156,7 @@ const RECIPES := [
 	{"id": "pick_stone", "at": "bench", "tab": "Tools", "needs": {"mat:wood": 3, "stone": 4}, "gives": {"tool:pick": 1}, "lv": 1},
 	{"id": "bow", "at": "bench", "tab": "Tools", "needs": {"mat:wood": 5, "twine": 2}, "gives": {"tool:bow": 1}, "lv": 1},
 	{"id": "arrows", "at": "bench", "tab": "Tools", "needs": {"mat:wood": 1, "stone": 1}, "gives": {"arrows": 5}, "lv": 1},
+	{"id": "harpoon", "at": "bench", "tab": "Tools", "needs": {"mat:wood": 2, "iron_bar": 1, "twine": 1}, "gives": {"harpoon": 3}, "lv": 1},
 	{"id": "axe_copper", "at": "bench", "tab": "Tools", "needs": {"mat:wood": 2, "copper_bar": 2}, "gives": {"tool:axe": 2}, "lv": 2},
 	{"id": "pick_copper", "at": "bench", "tab": "Tools", "needs": {"mat:wood": 2, "copper_bar": 3}, "gives": {"tool:pick": 2}, "lv": 2},
 	{"id": "axe_iron", "at": "bench", "tab": "Tools", "needs": {"mat:wood": 2, "iron_bar": 2}, "gives": {"tool:axe": 3}, "lv": 3},
@@ -199,7 +205,7 @@ const MERCHANTS := {
 	"bramble": {"n": "Bramble's Garden Stall", "buys": ["crop", "forage", "meal", "seed"],
 		"sells": ["seed_turnip", "seed_carrot", "seed_wheat", "seed_potato", "seed_strawberry", "seed_pumpkin", "compost"],
 		"tools": {"hoe": 40, "can": 60, "axe": 90}, "beds": true},
-	"delve": {"n": "Delve's Forge", "buys": ["ore", "bar", "gem", "craft"], "sells": ["coal", "stone"],
+	"delve": {"n": "Delve's Forge", "buys": ["ore", "bar", "gem", "craft", "trophy"], "sells": ["coal", "stone", "harpoon"],
 		"tools": {"pick": 150, "axe": 90}},
 	"ash": {"n": "Ash's Hunting Camp", "buys": ["game", "meal"], "sells": ["arrows", "feather"],
 		"tools": {"bow": 250}},

@@ -50,6 +50,9 @@ const LandMenu := preload("res://scripts/land_menu.gd")
 const LandStory := preload("res://scripts/land_story.gd")
 const Online := preload("res://scripts/online.gd")
 const Touch := preload("res://scripts/touch.gd")
+const Plots := preload("res://scripts/plots.gd")
+const Monsters := preload("res://scripts/monsters.gd")
+const Treasure := preload("res://scripts/treasure.gd")
 
 var env: Environment
 var world_env: WorldEnvironment
@@ -97,6 +100,9 @@ var land_menu: CanvasLayer
 var land_story: Node3D
 var online: Node  # the shared town (multiplayer), when you play online
 var touch: CanvasLayer  # thumbstick and buttons on phones and tablets
+var plots: Node3D  # Driftwood Lane: everyone's plot, house and garden
+var monsters: Node3D  # sea monsters out in the deep
+var treasure: Node3D  # treasure maps and buried chests
 var _first_time := false
 var skip_save := false  # starting a new game: don't write the old save back on the way out
 var save: Dictionary
@@ -126,6 +132,7 @@ func _ready() -> void:
 	harbour.load_world()
 	Land.add_folk(harbour.meta)
 	Land.clear_yard(harbour)
+	Plots.clear_lane(harbour)
 	harbour.permits = save.permits
 	harbour.hut_tier = int(save.hut_tier)
 	harbour.build()
@@ -323,6 +330,22 @@ func _ready() -> void:
 	land_menu.setup(land, save, audio, hud)
 	land.menu = land_menu
 
+	plots = Plots.new()
+	plots.name = "Plots"
+	add_child(plots)
+	plots.dialogue = dialogue
+	plots.setup(harbour, player, hud, audio, sea, save, town, interiors, land)
+
+	monsters = Monsters.new()
+	monsters.name = "Monsters"
+	add_child(monsters)
+	monsters.setup(self)
+
+	treasure = Treasure.new()
+	treasure.name = "Treasure"
+	add_child(treasure)
+	treasure.setup(self)
+
 	journal = Journal.new()
 	journal.name = "Journal"
 	add_child(journal)
@@ -366,6 +389,7 @@ func _ready() -> void:
 	online.name = "Online"
 	add_child(online)
 	online.setup(self)
+	plots.online = online
 
 	ambient = Ambient.new()
 	ambient.name = "Ambient"

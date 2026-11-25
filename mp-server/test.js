@@ -54,6 +54,20 @@ function client(port) {
   assert.strictEqual(hut.data.tier, 2);
   assert.strictEqual(hut.data.furniture.length, 1, 'bad furniture ids are dropped');
   await a.wait((m) => m.t === 'sys' && /visiting your hut/.test(m.text));
+  // plots on Driftwood Lane: a claims slot 2, b can't take it, b gets slot 5
+  a.json({ t: 'plot', data: { slot: 2, house: { size: 1, wall: 'stone', tint: '#f0b8b0', hack: 'x' }, fence: 'hedge',
+    items: [{ id: 'veg_patch', x: 3, z: 9, s: 'crop', crop: 'turnip', grow: 100, wet: 0 }, { id: '<script>' }],
+    home: { wall: 'home/wall_plain_cream', floor: 'home/floor_planks_oak', furniture: [{ id: 'sofa@red', x: 0, z: 0, rot: 0 }] } } });
+  const pl = await b.wait((m) => m.t === 'plots' && m.plots['2']);
+  assert.strictEqual(pl.plots['2'].owner, 'Wren');
+  assert.strictEqual(pl.plots['2'].data.items.length, 1, 'bad garden items are dropped');
+  assert.strictEqual(pl.plots['2'].data.house.hack, undefined);
+  assert.strictEqual(pl.plots['2'].data.home.furniture[0].id, 'sofa@red');
+  b.json({ t: 'plot', data: { slot: 2, house: {} } });
+  const denied = await b.wait((m) => m.t === 'plots' && m !== pl);
+  assert.strictEqual(denied.plots['2'].owner, 'Wren', "someone else's plot can't be taken");
+  b.json({ t: 'plot', data: { slot: 5, house: {} } });
+  await a.wait((m) => m.t === 'plots' && m.plots['5'] && m.plots['5'].owner === 'Wren 2');
   b.close();
   await a.wait((m) => m.t === 'leave' && m.id === wb.id);
   assert.strictEqual(clean('a\u0000b', 10), 'ab');

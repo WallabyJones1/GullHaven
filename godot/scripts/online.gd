@@ -14,7 +14,7 @@ const Glyphs := preload("res://scripts/input_glyphs.gd")
 
 const DEFAULT_SERVER := "ws://localhost:8787"
 const SEND_EVERY := 0.1
-const HUT_EVERY := 20.0
+const HUT_EVERY := 15.0
 const LOG_LINES := 7
 const LOG_FADE := 14.0
 const BUBBLE_TIME := 6.0
@@ -36,6 +36,7 @@ var _send_t := 0.0
 var _hut_t := 0.0
 var _last_pos := ""
 var _last_hut := ""
+var _last_plot := ""
 var _font: Font
 var _layer: CanvasLayer
 var _log_box: VBoxContainer
@@ -104,6 +105,9 @@ func connect_to(url: String, name: String) -> void:
 
 
 func leave(quiet := false) -> void:
+	var pl: Node = main.get("plots") if main else null
+	if pl:
+		pl.set_others({}, "")
 	if ws:
 		ws.close()
 	ws = null
@@ -160,6 +164,9 @@ func _process(delta: float) -> void:
 		state = "off"
 		for id in remotes.keys():
 			_drop(int(id))
+		var pl3: Node = main.get("plots")
+		if pl3:
+			pl3.set_others({}, "")
 		if was == "connecting":
 			_say_system("Couldn't connect to %s. Is the server running?" % server_url)
 		elif was == "online":
@@ -189,8 +196,23 @@ func _hut() -> Dictionary:
 func _hello() -> void:
 	state = "online"  # (until the welcome arrives the server just waits for this)
 	var p: Vector3 = main.player.global_position
-	_send({"t": "hello", "name": _wanted_name, "look": _look(), "x": p.x, "y": p.y, "z": p.z, "hut": _hut(), "v": 1})
+	var hello := {"t": "hello", "name": _wanted_name, "look": _look(), "x": p.x, "y": p.y, "z": p.z, "hut": _hut(), "v": 1}
+	var plots: Node = main.get("plots")
+	if plots and int(plots.my_slot()) >= 0:
+		hello["plot"] = plots.share_data()
+		_last_plot = JSON.stringify(hello.plot)
+	_send(hello)
 	_last_hut = JSON.stringify(_hut())
+
+
+## Your plot on Driftwood Lane (house, garden, crops and the inside of your home).
+func send_plot() -> void:
+	var plots: Node = main.get("plots")
+	if plots == null or not is_online():
+		return
+	var d: Dictionary = plots.share_data()
+	_last_plot = JSON.stringify(d)
+	_send({"t": "plot", "data": d})
 
 
 func _send_pos() -> void:
@@ -204,20 +226,33 @@ func _send_pos() -> void:
 		a = 4
 	elif pl.velocity.length() > 0.5:
 		a = 1
-	var key := "%.2f,%.2f,%.2f,%.2f,%.2f,%d" % [p.x, p.y, p.z, f.x, f.z, a]
+	var bk := ""
+	var bh := 0.0
+	if main.boats and bool(main.boats.aboard):
+		bk = str(main.save.get("boat", ""))
+		bh = float(main.boats.heading)
+	var key := "%.2f,%.2f,%.2f,%.2f,%.2f,%d,%s,%.2f" % [p.x, p.y, p.z, f.x, f.z, a, bk, bh]
 	if key == _last_pos:
 		return
 	_last_pos = key
 	_send({"t": "pos", "x": snappedf(p.x, 0.01), "y": snappedf(p.y, 0.01), "z": snappedf(p.z, 0.01), "fx": snappedf(f.x, 0.01),
-		"fz": snappedf(f.z, 0.01), "a": a, "in": ""})
+		"fz": snappedf(f.z, 0.01), "a": a, "in": "", "b": bk, "h": snappedf(wrapf(bh, -PI, PI), 0.01)})
 
 
 func _send_hut() -> void:
+	var plots: Node = main.get("plots")
+	if plots and int(plots.my_slot()) >= 0 and JSON.stringify(plots.share_data()) != _last_plot:
+		send_plot()
 	var h := _hut()
 	var s := JSON.stringify(h)
 	if s != _last_hut:
 		_last_hut = s
 		_send({"t": "hut", "data": h})
+
+
+## Tell the town about something you did ("dug up today's treasure on Mossbank!").
+func announce(text: String) -> void:
+	_send({"t": "brag", "text": text})
 
 
 ## Wave, dance, cheer... (over your head, and everyone else's screen).
@@ -249,6 +284,9 @@ func _on_message(msg: Dictionary) -> void:
 			for p in msg.get("players", []):
 				if p is Dictionary:
 					_add(p)
+			var pl: Node = main.get("plots")
+			if pl:
+				pl.set_others(msg.get("plots", {}), my_name)
 			_say_system("You're in the shared town as %s. Enter to chat, 1 to 5 to wave, dance, cheer..." % my_name)
 			main.hud.toast("Online: %d other %s here." % [remotes.size(), "player" if remotes.size() == 1 else "players"])
 			changed.emit()
@@ -269,6 +307,8 @@ func _on_message(msg: Dictionary) -> void:
 						if f.length() > 0.1:
 							r.facing = f.normalized()
 						r.a = int(row[6])
+						if row.size() >= 10:
+							_set_boat(r, str(row[8]), float(row[9]))
 		"chat":
 			var who := str(msg.get("name", "?"))
 			var text := str(msg.get("text", ""))
@@ -294,6 +334,10 @@ func _on_message(msg: Dictionary) -> void:
 			var data: Dictionary = msg.get("data", {})
 			data["owner"] = str(msg.get("owner", "A friend"))
 			main.interiors.visit_hut(data)
+		"plots":
+			var pl2: Node = main.get("plots")
+			if pl2:
+				pl2.set_others(msg.get("plots", {}), my_name)
 		"emote":
 			var eid := int(msg.get("id", -1))
 			var kind := str(msg.get("e", ""))
@@ -362,7 +406,28 @@ func _add(p: Dictionary) -> void:
 	bubble.position = Vector3(0.0, 2.45, 0.0)
 	remotes[id] = {"name": str(p.get("name", "?")), "look": p.get("look", {}), "node": node, "label": label, "bubble": bubble,
 		"bubble_t": 0.0, "pos": pos, "target": pos, "facing": Vector3(float(p.get("fx", 0.0)), 0.0, float(p.get("fz", 1.0))),
-		"a": int(p.get("a", 0)), "walk": 0.0}
+		"a": int(p.get("a", 0)), "walk": 0.0, "bk": "", "bh": 0.0, "boat": null}
+	_set_boat(remotes[id], str(p.get("b", "")), float(p.get("h", 0.0)))
+
+
+## Out on the water, other players sit in their own boats.
+func _set_boat(r: Dictionary, kind: String, heading: float) -> void:
+	r.bh = heading
+	if kind == str(r.get("bk", "")):
+		return
+	r.bk = kind
+	var old: Variant = r.get("boat")
+	if old is Node3D and is_instance_valid(old):
+		(old as Node3D).queue_free()
+	r.boat = null
+	if kind == "" or main.boats == null:
+		return
+	var b: Dictionary = main.boats.boat_info(kind)
+	if b.is_empty():
+		return
+	var model: Node3D = main.boats.build_model(b, Color(0, 0, 0, 0), false)
+	main.add_child(model)
+	r.boat = model
 
 
 func _drop(id: int) -> void:
@@ -372,6 +437,9 @@ func _drop(id: int) -> void:
 	var node: Sprite3D = r.node
 	if is_instance_valid(node):
 		node.queue_free()
+	var boat: Variant = r.get("boat")
+	if boat is Node3D and is_instance_valid(boat):
+		(boat as Node3D).queue_free()
 	remotes.erase(id)
 
 
@@ -390,6 +458,15 @@ func _update_remotes(delta: float) -> void:
 		r.pos = pos
 		node.global_position = pos
 		node.visible = absf(pos.y - me.y) < 60.0
+		var boat: Variant = r.get("boat")
+		if boat is Node3D and is_instance_valid(boat):
+			var bm: Node3D = boat
+			var h := lerp_angle(bm.rotation.y, float(r.bh), minf(1.0, delta * 8.0))
+			var seat := Vector3(0.0, 0.0, float(main.boats.boat_info(str(r.bk)).get("len", 3.0)) * 0.12).rotated(Vector3.UP, h)
+			var wl := float(main.harbour.water_level_at(pos.x, pos.z))
+			bm.rotation.y = h
+			bm.global_position = Vector3(pos.x - seat.x, wl, pos.z - seat.z)
+			bm.visible = node.visible
 		var row := Billboard.row_for(r.facing, cam)
 		var col := 0
 		r.emote_t = float(r.get("emote_t", 0.0)) - delta
