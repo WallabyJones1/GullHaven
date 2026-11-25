@@ -1,0 +1,5 @@
+node_modules/
+state/localnet*.json
+*.keypair.json
+mint-site/dist/
+mint-site/mint-config.json

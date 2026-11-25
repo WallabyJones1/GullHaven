@@ -14,6 +14,7 @@ const InputSetup := preload("res://scripts/input_setup.gd")
 const Glyphs := preload("res://scripts/input_glyphs.gd")
 const Harbour := preload("res://scripts/token/harbour.gd")
 const Economy := preload("res://scripts/token/economy.gd")
+const Wallet := preload("res://scripts/token/wallet.gd")
 
 const SETTINGS := "user://settings.cfg"
 const PAD_CONTROLS := """[b]Walk / steer[/b]  left stick      [b]Camera[/b]  right stick, LB / RB
@@ -61,6 +62,7 @@ var _page := ""  # which page of the game menu is showing
 var _waiting := ""  # the action waiting for a new key
 var _waiting_btn: Button
 var keys := {}  # action -> physical keycode, only the ones you've changed
+var wallet: Node  # the player's Solana wallet (browser version), see token/wallet.gd
 
 
 func setup(m: Node, h: CanvasLayer, a: Node, p: CharacterBody3D, c: Camera3D) -> void:
@@ -73,6 +75,10 @@ func setup(m: Node, h: CanvasLayer, a: Node, p: CharacterBody3D, c: Camera3D) ->
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_load_settings()
 	_apply_settings()
+	wallet = Wallet.new()
+	wallet.name = "Wallet"
+	add_child(wallet)
+	wallet.changed.connect(_on_wallet_changed)
 	# the game menu: a panel in the middle of the screen
 	_root = Control.new()
 	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -353,21 +359,47 @@ func _harbour_page() -> void:
 	var crew: int = t.sea.size()
 	var text := "You have %d Shells and %.2f $GULL.\n" % [int(main.save.get("shells", 0)), float(t.gull)]
 	text += "Exchange: %.2f $GULL a Shell, up to %d Shells a day (%d sold today).\n" % [Economy.rate_per_shell(), Economy.SALE_CAP, sold_today]
-	text += "Fishers: %d owned, %d at sea.\n" % [int(t.fishers), crew]
+	text += "Fishers: %d to sail (%d in this save, %d in your wallet), %d at sea.\n" % [Harbour.owned(main.save), int(t.fishers), int(t.chain_fishers), crew]
 	if not Harbour.licence(main.save):
 		text += "You need a Harbour Licence (one Fisher) before you can sell Shells.\n"
 	if crew > 0:
 		text += "The crew has earned %d Shells so far. They stop paying after %d hours, so bring them home." % [Harbour.pending(main.save, now), int(Economy.MAX_HOURS)]
 	_box.add_child(_rich(text, 620.0))
+	var wl := _rich(str(wallet.summary()), 620.0)
+	wl.add_theme_color_override("default_color", UI.SKY)
+	_box.add_child(wl)
+	if Wallet.is_web() and wallet.launched():
+		if wallet.connected():
+			_button("Refresh wallet", wallet.refresh)
+			_button("Disconnect wallet", wallet.disconnect_wallet)
+		else:
+			_button("Connect wallet (Phantom)", wallet.connect_wallet)
+	if str(wallet.chain.get("mint_page_url", "")) != "":
+		_button("Mint Fishers (opens the mint page)", wallet.open_mint_page)
 	_button("Sell 100 Shells", _harbour_sell.bind(100))
 	_button("Sell all Shells (up to today's cap)", _harbour_sell.bind(-1))
-	if int(t.fishers) > crew:
+	if Harbour.owned(main.save) > crew:
 		_button("Send a Fisher to sea", _harbour_send)
 	if crew > 0:
 		_button("Bring the crew home (+%d Shells)" % Harbour.pending(main.save, now), _harbour_home)
 	_button("Buy a Fisher (%d $GULL, test price)" % int(Economy.FISHER_PRICE), _harbour_buy)
 	_button("Back", _pause_page)
 	_focus_first()
+
+
+## The wallet read something new: count its Fishers towards your Licence and crew, and
+## redraw the Harbour page if it's open.
+func _on_wallet_changed() -> void:
+	if main == null or not (main.get("save") is Dictionary):
+		return
+	var t := Harbour.ensure(main.save)
+	var n := int(wallet.state.get("fishers", 0)) if wallet.connected() else 0
+	if n != int(t.chain_fishers):
+		t.chain_fishers = n
+		if (t.sea as Array).size() > Harbour.owned(main.save):
+			t.sea = (t.sea as Array).slice(0, Harbour.owned(main.save))  # Fishers that left the wallet come home
+	if _page == "harbour" and visible:
+		_harbour_page()
 
 
 func _harbour_sell(n: int) -> void:

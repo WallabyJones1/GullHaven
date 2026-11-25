@@ -1,0 +1,78 @@
+{
+ "name": "Gullhaven Fisher #2507",
+ "symbol": "GULLF",
+ "description": "One of 3,333 fishers from Gullhaven, a cosy pixel-art fishing town. Hand-coded 64 x 64 pixel portraits with Solana-coloured gear, harbour classics and rare finds.",
+ "seller_fee_basis_points": 500,
+ "image": "2506.png",
+ "attributes": [
+  {
+   "trait_type": "Background",
+   "value": "Night Harbour"
+  },
+  {
+   "trait_type": "Skin",
+   "value": "Brown"
+  },
+  {
+   "trait_type": "Hair",
+   "value": "Ponytail"
+  },
+  {
+   "trait_type": "Hair Colour",
+   "value": "Brown"
+  },
+  {
+   "trait_type": "Eyes",
+   "value": "Normal"
+  },
+  {
+   "trait_type": "Mouth",
+   "value": "Grin"
+  },
+  {
+   "trait_type": "Facial Hair",
+   "value": "None"
+  },
+  {
+   "trait_type": "Clothing",
+   "value": "Rain Jacket"
+  },
+  {
+   "trait_type": "Clothing Colour",
+   "value": "Forest"
+  },
+  {
+   "trait_type": "Hat",
+   "value": "Sou'wester"
+  },
+  {
+   "trait_type": "Hat Colour",
+   "value": "Orange"
+  },
+  {
+   "trait_type": "Eyewear",
+   "value": "Pixel Shades"
+  },
+  {
+   "trait_type": "Necklace",
+   "value": "Gold Chain"
+  },
+  {
+   "trait_type": "Earring",
+   "value": "None"
+  },
+  {
+   "trait_type": "Pet",
+   "value": "Ginger Cat"
+  }
+ ],
+ "properties": {
+  "files": [
+   {
+    "uri": "2506.png",
+    "type": "image/png"
+   }
+  ],
+  "category": "image"
+ }
+}

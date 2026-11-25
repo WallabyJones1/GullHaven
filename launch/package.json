@@ -1,0 +1,31 @@
+{
+  "name": "gullhaven-launch",
+  "private": true,
+  "type": "module",
+  "description": "Launch kit for the $GULL token and the Gullhaven Fishers NFT collection (devnet by default).",
+  "scripts": {
+    "check-assets": "node scripts/check-assets.mjs",
+    "token": "node scripts/token.mjs",
+    "nft:upload": "node scripts/nft-upload.mjs",
+    "nft:collection": "node scripts/nft-collection.mjs",
+    "nft:candy": "node scripts/nft-candy.mjs",
+    "nft:mint": "node scripts/nft-mint.mjs",
+    "status": "node scripts/status.mjs",
+    "test:local": "bash test/local-e2e.sh"
+  },
+  "dependencies": {
+    "@metaplex-foundation/mpl-core": "^1.10.0",
+    "@metaplex-foundation/mpl-core-candy-machine": "^0.3.0",
+    "@metaplex-foundation/mpl-toolbox": "^0.12.0",
+    "@metaplex-foundation/umi": "^1.6.0",
+    "@metaplex-foundation/umi-bundle-defaults": "^1.6.0",
+    "@metaplex-foundation/umi-signer-wallet-adapters": "^1.6.0",
+    "@metaplex-foundation/umi-storage-mock": "^1.6.0",
+    "@metaplex-foundation/umi-uploader-irys": "^1.6.0",
+    "@metaplex-foundation/umi-web3js-adapters": "^1.6.0",
+    "@solana/spl-token": "^0.4.15",
+    "@solana/spl-token-metadata": "^0.1.6",
+    "@solana/web3.js": "^1.99.0",
+    "esbuild": "^0.28.2"
+  }
+}

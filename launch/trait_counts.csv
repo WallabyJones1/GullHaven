@@ -1,0 +1,214 @@
+trait,value,count,percent
+Background,Sea Blue,290,8.7
+Background,Harbour Sunset,281,8.43
+Background,Slate,258,7.74
+Background,Sand,253,7.59
+Background,Seafoam,252,7.56
+Background,Coral,246,7.38
+Background,Lilac,243,7.29
+Background,Blush,237,7.11
+Background,Butter,236,7.08
+Background,Night Harbour,207,6.21
+Background,Underwater,192,5.76
+Background,Storm,136,4.08
+Background,Gradient,131,3.93
+Background,Candle Chart,131,3.93
+Background,Mainnet Grid,106,3.18
+Background,To The Moon,94,2.82
+Background,Gold,40,1.2
+Skin,Rose,518,15.54
+Skin,Fair,509,15.27
+Skin,Deep,484,14.52
+Skin,Tan,476,14.28
+Skin,Olive,473,14.19
+Skin,Brown,447,13.41
+Skin,Zombie,106,3.18
+Skin,Alien,80,2.4
+Skin,Shadow,76,2.28
+Skin,Robot,66,1.98
+Skin,Ghost,48,1.44
+Skin,Gold,33,0.99
+Skin,Gradient,17,0.51
+Hair,Short,805,24.15
+Hair,Messy,286,8.58
+Hair,Side Part,260,7.8
+Hair,Bob,258,7.74
+Hair,Ponytail,254,7.62
+Hair,Long,250,7.5
+Hair,Curly,219,6.57
+Hair,Buzz,193,5.79
+Hair,Wavy,192,5.76
+Hair,Afro,155,4.65
+Hair,Braids,124,3.72
+Hair,Pigtails,99,2.97
+Hair,Bald,99,2.97
+Hair,Bun,60,1.8
+Hair,Spiky,52,1.56
+Hair,Mohawk,27,0.81
+Hair Colour,Black,532,15.96
+Hair Colour,Dark Brown,505,15.15
+Hair Colour,Brown,471,14.13
+Hair Colour,Blonde,365,10.95
+Hair Colour,Auburn,288,8.64
+Hair Colour,Ginger,271,8.13
+Hair Colour,Grey,241,7.23
+Hair Colour,White,147,4.41
+Hair Colour,Blue,121,3.63
+Hair Colour,Purple,100,3.0
+Hair Colour,Mint,94,2.82
+Hair Colour,Pink,86,2.58
+Hair Colour,None,71,2.13
+Hair Colour,Gradient,41,1.23
+Eyes,Normal,1860,55.81
+Eyes,Happy,263,7.89
+Eyes,Sleepy,206,6.18
+Eyes,Wink,165,4.95
+Eyes,Angry,159,4.77
+Eyes,Surprised,152,4.56
+Eyes,Side Eye,141,4.23
+Eyes,Closed,139,4.17
+Eyes,Glowing,86,2.58
+Eyes,Stars,64,1.92
+Eyes,Hearts,52,1.56
+Eyes,Laser,28,0.84
+Eyes,Mint Laser,18,0.54
+Mouth,Smile,1023,30.69
+Mouth,Grin,432,12.96
+Mouth,Neutral,387,11.61
+Mouth,Smirk,354,10.62
+Mouth,Open,247,7.41
+Mouth,Tongue,165,4.95
+Mouth,Frown,149,4.47
+Mouth,Gold Tooth,115,3.45
+Mouth,Pipe,112,3.36
+Mouth,Grass Stem,106,3.18
+Mouth,Whistle,105,3.15
+Mouth,Bubblegum,82,2.46
+Mouth,Fish Snack,56,1.68
+Facial Hair,None,2361,70.84
+Facial Hair,Stubble,288,8.64
+Facial Hair,Short Beard,189,5.67
+Facial Hair,Mustache,150,4.5
+Facial Hair,Goatee,133,3.99
+Facial Hair,Full Beard,129,3.87
+Facial Hair,Handlebar,83,2.49
+Clothing,Tee,377,11.31
+Clothing,Hoodie,264,7.92
+Clothing,Striped Tee,200,6.0
+Clothing,Rain Jacket,193,5.79
+Clothing,Puffer,167,5.01
+Clothing,Gull Tee,157,4.71
+Clothing,Overalls,155,4.65
+Clothing,Captain Coat,151,4.53
+Clothing,Fisher Knit,141,4.23
+Clothing,Island Shirt,135,4.05
+Clothing,Tracksuit,131,3.93
+Clothing,Hoodie Up,130,3.9
+Clothing,Bomber,129,3.87
+Clothing,Suit,125,3.75
+Clothing,Life Vest,121,3.63
+Clothing,Turtleneck,111,3.33
+Clothing,Leather Jacket,101,3.03
+Clothing,GM Tee,96,2.88
+Clothing,Wetsuit,88,2.64
+Clothing,WAGMI Tee,87,2.61
+Clothing,HODL Tee,84,2.52
+Clothing,Candle Tee,70,2.1
+Clothing,Robe,62,1.86
+Clothing,Validator Jacket,58,1.74
+Clothing Colour,Navy,585,17.55
+Clothing Colour,Black,439,13.17
+Clothing Colour,Red,356,10.68
+Clothing Colour,Forest,276,8.28
+Clothing Colour,Teal,271,8.13
+Clothing Colour,Cream,259,7.77
+Clothing Colour,Mustard,254,7.62
+Clothing Colour,Purple,231,6.93
+Clothing Colour,Sky,173,5.19
+Clothing Colour,Orange,154,4.62
+Clothing Colour,Pink,153,4.59
+Clothing Colour,Mint,147,4.41
+Clothing Colour,Gradient,35,1.05
+Hat,None,854,25.62
+Hat,Beanie,221,6.63
+Hat,Cap,198,5.94
+Hat,Bucket Hat,166,4.98
+Hat,Pom Beanie,143,4.29
+Hat,Sou'wester,127,3.81
+Hat,Straw Hat,119,3.57
+Hat,Backwards Cap,117,3.51
+Hat,Headphones,117,3.51
+Hat,Bandana,116,3.48
+Hat,Trucker Cap,104,3.12
+Hat,Cowboy Hat,100,3.0
+Hat,Captain Hat,96,2.88
+Hat,Durag,85,2.55
+Hat,Party Hat,71,2.13
+Hat,Beret,66,1.98
+Hat,Pirate Hat,57,1.71
+Hat,Top Hat,57,1.71
+Hat,Wizard Hat,52,1.56
+Hat,Hard Hat,49,1.47
+Hat,Gull,48,1.44
+Hat,Propeller Cap,46,1.38
+Hat,Gradient Headphones,42,1.26
+Hat,Viking Helmet,42,1.26
+Hat,Halo,42,1.26
+Hat,Devil Horns,40,1.2
+Hat,Fish Hat,36,1.08
+Hat,Chef Hat,32,0.96
+Hat,Traffic Cone,30,0.9
+Hat,Crown,29,0.87
+Hat,Astronaut Helmet,17,0.51
+Hat,Gradient Crown,14,0.42
+Hat Colour,None,1296,38.88
+Hat Colour,Red,314,9.42
+Hat Colour,Navy,277,8.31
+Hat Colour,Black,256,7.68
+Hat Colour,Purple,172,5.16
+Hat Colour,Mustard,168,5.04
+Hat Colour,Teal,149,4.47
+Hat Colour,Cream,143,4.29
+Hat Colour,Mint,127,3.81
+Hat Colour,Orange,110,3.3
+Hat Colour,Forest,98,2.94
+Hat Colour,Sky,88,2.64
+Hat Colour,Pink,87,2.61
+Hat Colour,Gradient,48,1.44
+Eyewear,None,2140,64.21
+Eyewear,Round Glasses,200,6.0
+Eyewear,Shades,183,5.49
+Eyewear,Specs,154,4.62
+Eyewear,Aviators,152,4.56
+Eyewear,Pixel Shades,79,2.37
+Eyewear,Heart Shades,64,1.92
+Eyewear,3D Glasses,62,1.86
+Eyewear,Gradient Shades,57,1.71
+Eyewear,Ski Goggles,53,1.59
+Eyewear,Monocle,52,1.56
+Eyewear,Eyepatch,49,1.47
+Eyewear,Dive Mask,47,1.41
+Eyewear,VR Visor,41,1.23
+Necklace,None,2197,65.92
+Necklace,Gold Chain,269,8.07
+Necklace,Gull Coin,188,5.64
+Necklace,Shell Necklace,177,5.31
+Necklace,Fish Hook,133,3.99
+Necklace,Whistle,107,3.21
+Necklace,Gradient Gem,94,2.82
+Necklace,Cold Wallet,84,2.52
+Necklace,Diamond Chain,84,2.52
+Earring,None,2490,74.71
+Earring,Gold Stud,274,8.22
+Earring,Gold Hoop,224,6.72
+Earring,Hook,142,4.26
+Earring,Diamond,114,3.42
+Earring,Gradient Drop,89,2.67
+Pet,None,2608,78.25
+Pet,Gull,173,5.19
+Pet,Crab,129,3.87
+Pet,Tabby Cat,103,3.09
+Pet,Ginger Cat,91,2.73
+Pet,Black Cat,89,2.67
+Pet,Parrot,87,2.61
+Pet,Octopus,53,1.59

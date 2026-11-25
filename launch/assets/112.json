@@ -1,0 +1,78 @@
+{
+ "name": "Gullhaven Fisher #113",
+ "symbol": "GULLF",
+ "description": "One of 3,333 fishers from Gullhaven, a cosy pixel-art fishing town. Hand-coded 64 x 64 pixel portraits with Solana-coloured gear, harbour classics and rare finds.",
+ "seller_fee_basis_points": 500,
+ "image": "112.png",
+ "attributes": [
+  {
+   "trait_type": "Background",
+   "value": "Sea Blue"
+  },
+  {
+   "trait_type": "Skin",
+   "value": "Fair"
+  },
+  {
+   "trait_type": "Hair",
+   "value": "Bob"
+  },
+  {
+   "trait_type": "Hair Colour",
+   "value": "Auburn"
+  },
+  {
+   "trait_type": "Eyes",
+   "value": "Angry"
+  },
+  {
+   "trait_type": "Mouth",
+   "value": "Smile"
+  },
+  {
+   "trait_type": "Facial Hair",
+   "value": "None"
+  },
+  {
+   "trait_type": "Clothing",
+   "value": "Striped Tee"
+  },
+  {
+   "trait_type": "Clothing Colour",
+   "value": "Red"
+  },
+  {
+   "trait_type": "Hat",
+   "value": "Cowboy Hat"
+  },
+  {
+   "trait_type": "Hat Colour",
+   "value": "Black"
+  },
+  {
+   "trait_type": "Eyewear",
+   "value": "None"
+  },
+  {
+   "trait_type": "Necklace",
+   "value": "Diamond Chain"
+  },
+  {
+   "trait_type": "Earring",
+   "value": "Gold Hoop"
+  },
+  {
+   "trait_type": "Pet",
+   "value": "None"
+  }
+ ],
+ "properties": {
+  "files": [
+   {
+    "uri": "112.png",
+    "type": "image/png"
+   }
+  ],
+  "category": "image"
+ }
+}

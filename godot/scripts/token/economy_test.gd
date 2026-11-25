@@ -100,6 +100,17 @@ func _run() -> void:
 	check(got.ok and got.shells == 240 and int(save.shells) == 240 and (t.sea as Array).is_empty(), "bringing home pays the catch and recalls the crew")
 	check(not Harbour.bring_home(save, T0 + 3 * 3600).ok, "nothing to bring home when none are out")
 
+	# Fishers in a connected wallet count too
+	save = {"shells": 100}
+	t = Harbour.ensure(save)
+	t.chain_fishers = 2
+	check(Harbour.licence(save) and Harbour.owned(save) == 2, "wallet Fishers give a Harbour Licence")
+	check(Harbour.sell(save, 10, T0).ok, "...so Shells can be sold with only wallet Fishers")
+	t.fishers = 1
+	for i in 3:
+		Harbour.send_out(save, T0)
+	check((t.sea as Array).size() == 3 and not Harbour.send_out(save, T0).ok, "save + wallet Fishers can all go to sea, and no more")
+
 	# many at sea: the 25th earns half
 	save = {}
 	t = Harbour.ensure(save)

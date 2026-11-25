@@ -1,0 +1,78 @@
+{
+ "name": "Gullhaven Fisher #2066",
+ "symbol": "GULLF",
+ "description": "One of 3,333 fishers from Gullhaven, a cosy pixel-art fishing town. Hand-coded 64 x 64 pixel portraits with Solana-coloured gear, harbour classics and rare finds.",
+ "seller_fee_basis_points": 500,
+ "image": "2065.png",
+ "attributes": [
+  {
+   "trait_type": "Background",
+   "value": "Blush"
+  },
+  {
+   "trait_type": "Skin",
+   "value": "Rose"
+  },
+  {
+   "trait_type": "Hair",
+   "value": "Buzz"
+  },
+  {
+   "trait_type": "Hair Colour",
+   "value": "Dark Brown"
+  },
+  {
+   "trait_type": "Eyes",
+   "value": "Surprised"
+  },
+  {
+   "trait_type": "Mouth",
+   "value": "Smirk"
+  },
+  {
+   "trait_type": "Facial Hair",
+   "value": "None"
+  },
+  {
+   "trait_type": "Clothing",
+   "value": "Overalls"
+  },
+  {
+   "trait_type": "Clothing Colour",
+   "value": "Teal"
+  },
+  {
+   "trait_type": "Hat",
+   "value": "Captain Hat"
+  },
+  {
+   "trait_type": "Hat Colour",
+   "value": "Cream"
+  },
+  {
+   "trait_type": "Eyewear",
+   "value": "None"
+  },
+  {
+   "trait_type": "Necklace",
+   "value": "None"
+  },
+  {
+   "trait_type": "Earring",
+   "value": "None"
+  },
+  {
+   "trait_type": "Pet",
+   "value": "Black Cat"
+  }
+ ],
+ "properties": {
+  "files": [
+   {
+    "uri": "2065.png",
+    "type": "image/png"
+   }
+  ],
+  "category": "image"
+ }
+}

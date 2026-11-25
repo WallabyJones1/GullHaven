@@ -9,7 +9,8 @@ const Economy := preload("res://scripts/token/economy.gd")
 static func defaults() -> Dictionary:
 	return {
 		"gull": 0.0,  # your $GULL balance (local stand-in for a wallet)
-		"fishers": 0,  # Fishers you own
+		"fishers": 0,  # Fishers you own in this save (test build: starter and bought with local $GULL)
+		"chain_fishers": 0,  # Gullhaven Fishers in your connected wallet (read from the chain, see wallet.gd)
 		"sea": [],  # Fishers out now: {sent: unix time}; index + 1 is the stacking rank
 		"day": "",  # the UTC day the sale count is for
 		"sold": 0,  # Shells sold today
@@ -31,8 +32,14 @@ static func ensure(save: Dictionary) -> Dictionary:
 	return t
 
 
+## Every Fisher you can use: the save's own plus the ones in your connected wallet.
+static func owned(save: Dictionary) -> int:
+	var t := ensure(save)
+	return int(t.fishers) + int(t.chain_fishers)
+
+
 static func licence(save: Dictionary) -> bool:
-	return int(ensure(save).fishers) >= Economy.LICENCE_FISHERS
+	return owned(save) >= Economy.LICENCE_FISHERS
 
 
 static func day_key(now: int) -> String:
@@ -101,7 +108,7 @@ static func send_out(save: Dictionary, now: int) -> Dictionary:
 	var at_sea: Array = t.sea
 	if at_sea.size() >= Economy.MAX_AT_SEA:
 		return {"ok": false, "reason": "No more than %d Fishers can be at sea." % Economy.MAX_AT_SEA}
-	if at_sea.size() >= int(t.fishers):
+	if at_sea.size() >= owned(save):
 		return {"ok": false, "reason": "All your Fishers are already at sea."}
 	at_sea.append({"sent": now})
 	return {"ok": true, "rank": at_sea.size()}
