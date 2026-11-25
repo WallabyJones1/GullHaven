@@ -22,6 +22,19 @@ func setup(m: Node, dir: String) -> void:
 	if dir.ends_with("_quick"):
 		_steps = [[_noop, 60], [_into_game, 30], [_yard, 60], [_shot.bind("yard"), 5], [_online, 60], [_shot.bind("online"), 5], [_quit, 5]]
 		return
+	if dir.ends_with("_sea"):
+		_steps = [[_noop, 60], [_into_game, 30], [_sea.bind("serpent"), 150], [_shot.bind("serpent"), 5], [_sea.bind("kraken"), 150],
+			[_shot.bind("kraken"), 5], [_sea.bind("leviathan"), 150], [_shot.bind("leviathan"), 5], [_quit, 5]]
+		return
+	if dir.ends_with("_dock"):
+		_steps = [[_noop, 60], [_into_game, 30], [_empire, 150], [_shot.bind("empire_dock"), 5], [_quit, 5]]
+		return
+	if dir.ends_with("_new"):
+		_steps = [[_noop, 60], [_into_game, 30], [_midday, 5], [_yard, 90], [_shot.bind("yard"), 5], [_quarry, 120], [_shot.bind("quarry"), 5],
+			[_empire, 150], [_shot.bind("empire_dock"), 5], [_ledger, 20], [_shot.bind("ledger"), 5], [_close_ledger, 10],
+			[_hall, 90], [_shot.bind("harbour_hall"), 5], [_show_fish, 30], [_shot.bind("held_fish"), 5],
+			[_sea.bind("serpent"), 150], [_shot.bind("serpent"), 5], [_sea.bind("kraken"), 150], [_shot.bind("kraken"), 5], [_quit, 5]]
+		return
 	_steps = [
 		[_noop, 60], [_into_game, 30], [_garden, 90], [_shot.bind("garden"), 5],
 		[_yard, 60], [_shot.bind("yard"), 5],
@@ -35,6 +48,9 @@ func setup(m: Node, dir: String) -> void:
 		[_sea.bind("serpent"), 150], [_shot.bind("serpent"), 5], [_aim_harpoon, 20], [_shot.bind("harpoon"), 5],
 		[_sea.bind("kraken"), 150], [_shot.bind("kraken"), 5],
 		[_chest, 40], [_shot.bind("treasure"), 5],
+		[_empire, 150], [_shot.bind("empire_dock"), 5], [_ledger, 20], [_shot.bind("ledger"), 5], [_close_ledger, 10],
+		[_hall, 90], [_shot.bind("harbour_hall"), 5],
+		[_show_fish, 30], [_shot.bind("held_fish"), 5],
 		[_online, 60], [_shot.bind("online"), 5],
 		[_quit, 5],
 	]
@@ -172,6 +188,55 @@ func _visit() -> void:
 		{"id": "ore_shelf", "x": 0.6, "z": -3.3, "rot": 0}, {"id": "scarecrow", "x": -3.2, "z": 1.5, "rot": 0}]})
 
 
+## Noon, so things are easy to see.
+func _midday() -> void:
+	var h := fposmod(float(main.sea.env.get("hour", 12.0)), 24.0)
+	main.sea.skip_hours(fposmod(12.5 - h, 24.0))
+
+
+func _empire() -> void:
+	_midday()
+	var em: Node = main.empire
+	main.save.shells = int(main.save.shells) + 200000
+	for k in ["wood", "rope", "scrap"]:
+		main.save.materials[k] = 900
+	em._build("dock", 1)
+	em._build("dock", 2)
+	em._build("dock", 3)
+	em._build("bunks", 1)
+	em._build("bunks", 2)
+	for kind in ["trawler", "skiff", "dinghy", "sloop"]:
+		em._buy_boat(kind)
+	for i in 6:
+		em._hire(2, 700)
+	em.close_menu()
+	var j: Dictionary = main.harbour.meta.hut.jetty
+	var ex := float(j.x) + float(j.w) + 4.0
+	_stand(Vector3(ex, float(main.harbour.stand_height(ex, float(j.z))) + 0.3, float(j.z)), Vector3(0.0, 0.0, 1.0))
+	main.cam.zoom_by(1.7)
+
+
+func _ledger() -> void:
+	main.empire.open_menu(0)
+
+
+func _close_ledger() -> void:
+	main.empire.close_menu()
+
+
+func _hall() -> void:
+	main.save.hut_tier = 5
+	main.harbour.rebuild_hut(5)
+	_stand(Vector3(420.0, float(main.harbour.stand_height(420.0, 690.0)) + 0.3, 690.0), Vector3(0.0, 0.0, -1.0))
+
+
+func _show_fish() -> void:
+	main.cam.zoom_by(0.5)
+	var held = load("res://scripts/models.gd").make("fish", "coral_trout")
+	held.scale = Vector3.ONE * 0.9
+	main.player.show_off_model(held)
+
+
 func _plot() -> void:
 	var pl: Node = main.plots
 	pl._ensure()["slot"] = 1
@@ -199,6 +264,7 @@ func _close_plot_menu() -> void:
 
 
 func _sea(kind: String) -> void:
+	_midday()
 	var w: Node3D = main.harbour
 	var at := Vector3(640.0, 0.0, 760.0)
 	for r in range(40, 400, 12):
@@ -220,7 +286,7 @@ func _sea(kind: String) -> void:
 	main.boats.board()
 	main.monsters.force(kind)
 	var p: Vector3 = main.player.global_position
-	main.monsters._m.pos = p + Vector3(4.0, 0.0, -13.0)
+	main.monsters._m.pos = p + Vector3(5.0, 0.0, -8.0)
 	main.monsters._m.up = 1.0
 	main.monsters._m.dive = 30.0
 	main.monsters._m.life = 60.0

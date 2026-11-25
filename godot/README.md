@@ -245,6 +245,20 @@ still here and plays the same; none of this gets in its way.
   (the same map for everyone that day); monsters leave maps too. A red ring on the world
   map, then warmer, warmer, hot in the corner. Dig on the X with your hoe for Shells,
   gems, gold, garden things or furniture.
+- **Your fishing empire.** The ledger board at the head of your jetty, by Gran's hut. Buy
+  boats for a fleet (they moor at your own dock), hire crews from the harbour, and send them
+  out: along the coast (15 minutes), to the islands (an hour), past the reef (four hours) or
+  overnight. Trips run on real time, so they fish while you play or while the game's closed;
+  unload them at the board for Shells, materials and the odd treasure map. Build the dock
+  out (more berths), a bunkhouse (more crew) and a smokehouse (more for each catch); Tess
+  builds the hut on up to a fishing house and a harbour hall. Ranks run from Lone fisher to
+  Tycoon of the Coast.
+- **Ride along.** Fit passenger benches at the boatyard and, online, friends without a boat
+  can climb aboard yours (Space by your boat) and ride out with you; Esc hops off by a dock or
+  a beach.
+- **3D models.** Trees, bushes, flowers, reeds and rocks, gulls, crabs, butterflies,
+  dolphins and whales, the sea monsters, chests, garden things and every fish are low-poly
+  Blender models now (see `models/README.md`), with the characters still pixel sprites.
 - **Play online.** Main menu, Play online with friends: run the server in `mp-server/`
   (`npm install`, `npm start`) and join it, or open the hosted game (Railway serves the web
   build and the town together, and joins it for you). You see each other (in your boats

@@ -168,6 +168,8 @@ func _process(delta: float) -> void:
 	if _held.visible:
 		_held_t += delta
 		_held.position.y = 2.15 + absf(sin(_held_t * 5.0)) * 0.08
+		if _held.get_child_count() > 0 and cam:
+			(_held.get_child(-1) as Node3D).global_rotation = Vector3(0.0, cam.global_rotation.y, 0.25 * sin(_held_t * 3.0))
 
 
 ## Turn to face a direction without walking (used when casting and fighting).
@@ -188,8 +190,22 @@ func show_off(tex: Texture2D, tint := Color.WHITE) -> void:
 	_held_t = 0.0
 
 
+## Hold a 3D catch up over your head, side on to the camera.
+func show_off_model(model: Node3D) -> void:
+	pose = "cheer"
+	_held.texture = null
+	_held.visible = true
+	for c in _held.get_children():
+		c.queue_free()
+	_held.add_child(model)
+	model.position = Vector3(0.0, 0.15, 0.0)
+	_held_t = 0.0
+
+
 func hide_held() -> void:
 	_held.visible = false
+	for c in _held.get_children():
+		c.queue_free()
 	pose = ""
 
 

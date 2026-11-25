@@ -474,10 +474,11 @@ func hut(h: Dictionary, tier: int) -> Node3D:
 	world.add_child(root)
 	var y := float(h.y)
 	var pos := Vector3(float(h.x), y, float(h.z))
-	var sizes := [Vector3(4.0, 2.6, 3.6), Vector3(5.5, 3.0, 4.5), Vector3(7.0, 3.4, 5.5), Vector3(9.0, 4.2, 6.5)]
-	var walls := ["planks", "timber", "plaster", "stone"]
-	var roofs := ["roof_red", "roof_blue", "roof_green", "roof_red"]
-	var t := clampi(tier, 0, 3)
+	var sizes := [Vector3(4.0, 2.6, 3.6), Vector3(5.5, 3.0, 4.5), Vector3(7.0, 3.4, 5.5), Vector3(9.0, 4.2, 6.5),
+		Vector3(10.5, 5.4, 7.0), Vector3(12.0, 6.6, 7.5)]
+	var walls := ["planks", "timber", "plaster", "stone", "timber", "stone"]
+	var roofs := ["roof_red", "roof_blue", "roof_green", "roof_red", "roof_blue", "roof_green"]
+	var t := clampi(tier, 0, sizes.size() - 1)
 	var b := {"kind": "hut", "x": pos.x, "z": pos.z, "y": y, "w": sizes[t].x, "h": sizes[t].y, "d": sizes[t].z, "rot": int(h.rot),
 		"wall": walls[t], "roof": roofs[t], "name": "Your Hut", "sign": "", "role": "hut"}
 	building(root, b, {"id": "hut", "h": y})

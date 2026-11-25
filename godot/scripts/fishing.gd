@@ -16,6 +16,7 @@ extends Node
 
 const Sea := preload("res://scripts/sea.gd")
 const SaveGame := preload("res://scripts/save_game.gd")
+const Models := preload("res://scripts/models.gd")
 
 enum State { IDLE, CHARGING, CASTING, WAITING, BITE, FIGHT, LANDED, REELING }
 
@@ -104,7 +105,8 @@ var line_mat: StandardMaterial3D
 var alert: Label3D
 var splash: CPUParticles3D
 var ink: CPUParticles3D
-var jumper: Sprite3D
+var jumper: Node3D  # the hooked fish leaping out (a 3D model, or a sprite for anything without one)
+var _jumper_sprite: Sprite3D
 
 var _rng := RandomNumberGenerator.new()
 var _state_t := 0.0
@@ -606,9 +608,7 @@ func _begin_phase(p: String, st: Dictionary, r: float) -> void:
 		"jump":
 			_phase_t = 0.9
 			_jump_t = 0.0
-			jumper.texture = _icon(str(catch_e.id))
-			jumper.modulate = _tint()
-			jumper.pixel_size = (1.0 / 44.0) * (0.8 + Sea.size_class(catch_e) * 0.35)
+			_set_jumper(catch_e)
 			jumper.visible = true
 			audio.play("jump", -1.0, 1.0, 0.1)
 	cam.shake(0.25)
@@ -643,7 +643,11 @@ func _move_bobber(delta: float) -> void:
 		var k := clampf(_jump_t / 0.9, 0.0, 1.0)
 		var height := (1.2 + Sea.size_class(catch_e) * 0.3) * sin(k * PI)
 		jumper.global_position = b + Vector3(fish_dir * (k - 0.5) * 0.8, height + 0.2, 0.0)
-		jumper.rotation.z = (k - 0.5) * 2.4 * fish_dir
+		if _jumper_sprite.visible:
+			jumper.rotation = Vector3.ZERO
+			_jumper_sprite.rotation.z = (k - 0.5) * 2.4 * fish_dir
+		else:
+			jumper.rotation = Vector3(0.0, 0.0 if fish_dir > 0.0 else PI, (0.5 - k) * 2.4)
 	elif phase != "calm":
 		_splash_t -= delta
 		if _splash_t <= 0.0:
@@ -798,7 +802,14 @@ func award(e: Dictionary, cm: float, var_kind: String, tier: String, fought_as :
 	var mats_note := str(rec.mats_note)
 
 	var icon := _icon(id)
-	player.show_off(icon, _tint())
+	var held := Models.make("fish", id)
+	if held:
+		held.scale = Vector3.ONE * minf(model_length(e) * 1.1, 1.6)
+		if variant != "":
+			Models.tint(held, _tint())
+		player.show_off_model(held)
+	else:
+		player.show_off(icon, _tint())
 	cam.shake(0.2)
 	_cheer(e, is_new)
 	if value > 0:
@@ -988,6 +999,28 @@ func _total_here() -> int:
 	return n
 
 
+## How long a 3D fish model is drawn (they're made 1 m long): bigger fish, bigger model.
+static func model_length(e: Dictionary) -> float:
+	return 0.45 + float(Sea.size_class(e)) * 0.22
+
+
+func _set_jumper(e: Dictionary) -> void:
+	for c in jumper.get_children():
+		if c != _jumper_sprite:
+			c.queue_free()
+	var m := Models.make("fish", str(e.id))
+	_jumper_sprite.visible = m == null
+	if m:
+		m.scale = Vector3.ONE * model_length(e)
+		if variant != "":
+			Models.tint(m, _tint())
+		jumper.add_child(m)
+	else:
+		_jumper_sprite.texture = _icon(str(e.id))
+		_jumper_sprite.modulate = _tint()
+		_jumper_sprite.pixel_size = (1.0 / 44.0) * (0.8 + Sea.size_class(e) * 0.35)
+
+
 func _icon(id: String) -> Texture2D:
 	var path := "res://art/fish2/%s.png" % id
 	if not ResourceLoader.exists(path):
@@ -1079,14 +1112,16 @@ func _build_gear() -> void:
 	ink = _particles(Color(0.12, 0.08, 0.18), 40, 1.4, 0.2, 0.7, 0.4, 0.22)
 	ink.spread = 180.0
 
-	jumper = Sprite3D.new()
-	jumper.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
-	jumper.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	jumper.shaded = true
-	jumper.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
-	jumper.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	jumper = Node3D.new()
 	jumper.visible = false
 	add_child(jumper)
+	_jumper_sprite = Sprite3D.new()
+	_jumper_sprite.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
+	_jumper_sprite.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	_jumper_sprite.shaded = true
+	_jumper_sprite.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
+	_jumper_sprite.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	jumper.add_child(_jumper_sprite)
 
 
 func _particles(color: Color, amount: int, life: float, v_min: float, v_max: float, gravity: float, size: float) -> CPUParticles3D:

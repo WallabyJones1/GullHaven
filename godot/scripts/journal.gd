@@ -146,6 +146,10 @@ func _quest_text() -> String:
 		lines.append_array(land_story.journal_lines())
 		lines.append("")
 	var mainn: Node = get_parent()
+	if mainn and mainn.get("empire"):
+		lines.append("[color=#ffd24d][b]Your fishing empire[/b][/color]")
+		lines.append_array(mainn.empire.journal_lines())
+		lines.append("")
 	if mainn and mainn.get("treasure"):
 		lines.append("[color=#ff9a7a][b]Treasure hunts[/b][/color]")
 		lines.append_array(mainn.treasure.journal_lines())

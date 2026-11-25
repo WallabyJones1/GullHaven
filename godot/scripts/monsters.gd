@@ -10,6 +10,7 @@ extends Node3D
 const SaveGame := preload("res://scripts/save_game.gd")
 const UI := preload("res://scripts/ui_kit.gd")
 const Glyphs := preload("res://scripts/input_glyphs.gd")
+const Models := preload("res://scripts/models.gd")
 
 const KINDS := {
 	"serpent": {"n": "Sea Serpent", "hp": 3, "zone": 0.16, "speed": 6.0, "shells": [400, 900], "drop": "serpent_scale", "drops": [1, 3],
@@ -134,15 +135,17 @@ func _spawn(kind: String, at: Vector3) -> void:
 	var parts: Array = []
 	if kind == "kraken":
 		for i in 6:
-			var t := _part(_tex.tentacle_0, 1.0 / 14.0, root)
-			parts.append({"node": t, "off": Vector3(cos(i * TAU / 6.0) * 2.4, 0.0, sin(i * TAU / 6.0) * 2.4), "ph": i * 0.9})
+			var t := _part3d("tentacle", 1.0, root)
+			t.rotation.y = i * TAU / 6.0 + PI
+			parts.append({"node": t, "off": Vector3(cos(i * TAU / 6.0) * 2.6, 0.0, sin(i * TAU / 6.0) * 2.6), "ph": i * 0.9, "h": 4.3,
+				"turn": i * TAU / 6.0 + PI})
 	else:
-		var scale := 1.6 if kind == "leviathan" else 1.0
-		var head := _part(_tex.serpent_head_0, 1.0 / (16.0 / scale), root)
-		parts.append({"node": head, "off": Vector3.ZERO, "ph": 0.0, "head": true})
+		var scale := 1.7 if kind == "leviathan" else 1.0
+		var head := _part3d("serpent_head", scale, root)
+		parts.append({"node": head, "off": Vector3.ZERO, "ph": 0.0, "head": true, "h": 4.2 * scale})
 		for i in 4:
-			var h := _part(_tex.serpent_hump, 1.0 / (14.0 / scale), root)
-			parts.append({"node": h, "off": Vector3(0.0, 0.0, 3.2 * scale * (i + 1)), "ph": i * 1.1})
+			var h := _part3d("serpent_hump", scale, root)
+			parts.append({"node": h, "off": Vector3(-3.6 * scale * (i + 1), 0.0, 0.0), "ph": i * 1.1, "h": 2.0 * scale})
 	var info: Dictionary = KINDS[kind]
 	_m = {"kind": kind, "root": root, "parts": parts, "pos": at, "hp": int(info.hp), "t": 0.0, "up": 0.0, "dive": 0.0,
 		"heading": 0.0, "gone": false, "life": 75.0}
@@ -151,6 +154,13 @@ func _spawn(kind: String, at: Vector3) -> void:
 	main.cam.shake(0.6)
 	main.hud.show_banner("A %s!" % str(info.n), "Something huge is in the water")
 	main.hud.toast("Throw harpoons with %s when it surfaces near you." % Glyphs.key("action"))
+
+
+func _part3d(kind: String, scale_by: float, parent: Node3D) -> Node3D:
+	var n := Models.make("sea", kind)
+	n.scale = Vector3.ONE * scale_by
+	parent.add_child(n)
+	return n
 
 
 func _part(tex: Texture2D, px: float, parent: Node3D) -> Sprite3D:
@@ -185,7 +195,7 @@ func _step(delta: float) -> void:
 		if main.harbour.is_water(pos.x + step.x, pos.z + step.y):
 			pos.x += step.x
 			pos.z += step.y
-		_m.heading = atan2(step.x, step.y)
+		_m.heading = atan2(-step.y, step.x)  # the way it's swimming, for a model facing +X
 	_m.pos = pos
 	_m.dive = float(_m.dive) - delta
 	if float(_m.dive) <= 0.0 and _aim.is_empty():
@@ -196,17 +206,19 @@ func _step(delta: float) -> void:
 	var root: Node3D = _m.root
 	root.global_position = Vector3(pos.x, wl, pos.z)
 	var t := float(_m.t)
+	var kraken := str(_m.kind) == "kraken"
+	if not kraken:
+		root.rotation.y = lerp_angle(root.rotation.y, float(_m.heading), minf(1.0, delta * 2.0))
 	for part in _m.parts:
-		var node: Sprite3D = part.node
+		var node: Node3D = part.node
 		var off: Vector3 = part.off
-		off = off.rotated(Vector3.UP, float(_m.heading))
-		var h := node.texture.get_height() * node.pixel_size
+		var h := float(part.h)
 		var bob := sin(t * 2.0 + float(part.ph)) * 0.3
-		node.position = off + Vector3(0.0, -h * 0.5 + (h * 0.9 * float(_m.up)) + bob - 0.2, 0.0)
+		node.position = off + Vector3(0.0, -h + h * float(_m.up) + bob, 0.0)
 		if part.has("head"):
-			node.texture = _tex.serpent_head_1 if int(t * 2.0) % 2 == 0 else _tex.serpent_head_0
-		elif str(_m.kind) == "kraken":
-			node.texture = _tex.tentacle_1 if int(t * 3.0 + float(part.ph)) % 2 == 0 else _tex.tentacle_0
+			node.rotation.z = sin(t * 1.3) * 0.08
+		elif kraken:
+			node.rotation = Vector3(sin(t * 1.7 + float(part.ph)) * 0.25, float(part.turn), sin(t * 1.1 + float(part.ph)) * 0.2)
 	# too close: it rams you
 	if d < 5.0 and float(_m.up) > 0.5 and _aim.is_empty():
 		_ram()

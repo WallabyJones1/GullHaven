@@ -111,6 +111,12 @@ func setup(m: Node, quick := false) -> void:
 		["take the map", _skip_talk, 10],
 		["dig up the treasure", _treasure_dig, 10],
 		["check the chest", _treasure_check, 10],
+		["start a fishing empire", _empire_start, 10],
+		["send a boat out", _empire_send, 90],
+		["the boat comes home", _empire_back, 10],
+		["unload and build the dock out", _empire_unload, 10],
+		["the biggest hut", _empire_hut, 30],
+		["close the ledger", _empire_close, 10],
 		["Harbour Life so far", _land_check, 5],
 		["zoom with the wheel, a trackpad and keys", _zoom, 30],
 		["check the zoom", _zoom_check, 5],
@@ -518,6 +524,67 @@ func _treasure_check() -> void:
 	_check(int(main.save.treasure.dug) == 1, "dug up a chest")
 	_check(float(main.save.shells) > _mark_f, "full of Shells")
 	_check(str(main.hud.treasure_label.text).begins_with("Treasure map") or (main.treasure.maps() as Array).is_empty(), "the corner shows the next map")
+
+
+func _empire_start() -> void:
+	var em: Node = main.empire
+	main.player.global_position = em._board_at + Vector3(0.6, 0.3, 0.6)
+	var it: Dictionary = em.near(main.player.global_position, Vector3.FORWARD)
+	_check(str(it.get("kind", "")) == "ledger", "the ledger board is at the head of the jetty (%s)" % str(it.get("text", "nothing")))
+	_check(int(em.berths()) >= 1, "there's a berth at your dock (%d)" % int(em.berths()))
+	main.save.shells = int(main.save.shells) + 60000
+	em.open_menu(0)
+	em._buy_boat("dinghy")
+	_check((em.E().fleet as Array).size() == 1, "bought a dinghy for the fleet")
+	em._hire(1, 200)
+	em._hire(3, 2000)
+	_check((em.E().crew as Array).size() == 2, "hired two crew")
+	em._show_tab(1)
+
+
+func _empire_send() -> void:
+	var em: Node = main.empire
+	var b: Dictionary = em.E().fleet[0]
+	em._crew_up(int(b.id))
+	_check(em._crew_of(int(b.id)).size() == 2, "the dinghy has a crew of two")
+	em._trip_pick = 0
+	_mark_f = float(em._estimate(b, 0))
+	em._send(int(b.id))
+	_check(not (b.trip as Dictionary).is_empty(), "she's away (expected about %d Shells)" % int(_mark_f))
+	b.trip.end = int(em.now()) - 1
+
+
+func _empire_back() -> void:
+	var b: Dictionary = main.empire.E().fleet[0]
+	_check(bool(b.trip.get("back", false)), "the dinghy's back at the dock")
+	_mark_f = float(main.save.shells)
+
+
+func _empire_unload() -> void:
+	var em: Node = main.empire
+	var b: Dictionary = em.E().fleet[0]
+	em._unload(int(b.id))
+	_check(float(main.save.shells) > _mark_f, "unloading her catch paid out (%d Shells)" % int(float(main.save.shells) - _mark_f))
+	_check(int(em.E().trips) == 1, "one trip in the books")
+	main.save.materials["wood"] = int(main.save.materials.get("wood", 0)) + 200
+	main.save.materials["rope"] = int(main.save.materials.get("rope", 0)) + 50
+	main.save.materials["scrap"] = int(main.save.materials.get("scrap", 0)) + 50
+	em._build("dock", 1)
+	em._build("bunks", 1)
+	em._build("smoke", 1)
+	_check(int(em.E().dock) == 1 and int(em.E().smoke) == 1, "built a finger pier and a smoke shed")
+	print("  berths now %d, rank %s, worth %d" % [int(em.berths()), str(em.rank_name()), int(em.value())])
+
+
+func _empire_hut() -> void:
+	main.harbour.rebuild_hut(5)
+	_check(main.harbour.hut_node != null, "the harbour hall builds")
+
+
+func _empire_close() -> void:
+	main.harbour.rebuild_hut(int(main.save.hut_tier))
+	main.empire.close_menu()
+	_check(not bool(main.empire.is_menu_open()), "closed the ledger")
 
 
 func _land_check() -> void:

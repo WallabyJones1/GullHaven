@@ -75,6 +75,10 @@ const HUT := [
 		"d": "Plastered walls and twice the room. Comes with a bookshelf and a rug."},
 	{"n": "Harbour lodge", "price": 15000, "mats": {"wood": 120, "rope": 25, "scrap": 30}, "gift": ["fireplace", "clock"],
 		"d": "Stone walls and space to spare. Comes with a fireplace and a clock."},
+	{"n": "Fishing house", "price": 45000, "mats": {"wood": 220, "rope": 50, "scrap": 60}, "gift": ["bookshelf", "rug_blue"],
+		"d": "Two storeys of it, with a sail loft. The house of someone with a fleet."},
+	{"n": "Harbour hall", "price": 140000, "mats": {"wood": 380, "rope": 90, "scrap": 120}, "gift": ["fireplace", "clock"],
+		"d": "The grandest place on the coast: a hall for your crews and a tower to watch the boats come in."},
 ]
 
 

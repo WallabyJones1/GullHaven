@@ -396,7 +396,7 @@ func _build_room(b: Dictionary) -> void:
 		wd = b.get("room", Vector2(8.0, 7.0))
 	elif key == "hut":
 		var tier_now := int((b.get("visit", {}) as Dictionary).get("tier", world.hut_tier))
-		wd = [Vector2(7.0, 6.0), Vector2(8.5, 7.0), Vector2(10.0, 8.0), Vector2(12.0, 9.0)][clampi(tier_now, 0, 3)]
+		wd = [Vector2(7.0, 6.0), Vector2(8.5, 7.0), Vector2(10.0, 8.0), Vector2(12.0, 9.0), Vector2(13.5, 10.0), Vector2(15.0, 11.0)][clampi(tier_now, 0, 5)]
 	_w = wd.x
 	_d = wd.y
 	_keeper_at = Vector3(0.0, 0.0, -_d * 0.5 + 1.7)
@@ -718,14 +718,14 @@ func _cottage(b: Dictionary) -> void:
 func _hut_room() -> void:
 	# someone else's hut (online), or your own
 	var v: Dictionary = inside.get("visit", {})
-	var tier := clampi(int(v.get("tier", world.hut_tier)), 0, 3)
+	var tier := clampi(int(v.get("tier", world.hut_tier)), 0, 5)
 	var style: Dictionary = v.get("style", save.get("hut_style", {}))
 	var floor_k := str(style.get("floor", "own"))
 	if floor_k == "own" or not FLOORS.has(floor_k):
-		floor_k = ["wood", "wood", "dark", "dark"][tier]
+		floor_k = ["wood", "wood", "dark", "dark", "wood", "dark"][tier]
 	var wall_k := str(style.get("wall", "own"))
 	if wall_k == "own" or not Furniture.WALLS.has(wall_k):
-		wall_k = ["wall_wood", "wall_wood_light", "wall_paper", "wall_paper_green"][tier]
+		wall_k = ["wall_wood", "wall_wood_light", "wall_paper", "wall_paper_green", "wall_wood_light", "wall_paper"][tier]
 	_shell(floor_k, "wall_wood", wall_k)
 	# fixed: the bed, the trophy board and a window; the rest is yours to arrange
 	_bed(Vector3(-_w * 0.3, 0.0, -_d * 0.5 + 1.2), "quilt_red", v.is_empty())

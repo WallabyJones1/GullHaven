@@ -14,6 +14,11 @@ const SaveGame := preload("res://scripts/save_game.gd")
 const UI := preload("res://scripts/ui_kit.gd")
 const Glyphs := preload("res://scripts/input_glyphs.gd")
 const D := preload("res://scripts/land_data.gd")
+const Models := preload("res://scripts/models.gd")
+## Garden things drawn with a Blender model: id -> [group, model]
+const MODEL_OF := {"oak": ["plants", "oak0"], "birch": ["plants", "birch0"], "autumn": ["plants", "autumn0"], "palm": ["plants", "palm0"],
+	"bush_pink": ["plants", "bush_pink"], "bush_yellow": ["plants", "bush_yellow"], "bush_white": ["plants", "bush_white"],
+	"flowers_a": ["plants", "flowers0"], "flowers_b": ["plants", "flowers2"], "flowers_c": ["plants", "flowers4"]}
 const Homes := preload("res://scripts/token/homes.gd")
 
 const ORIGIN := Vector2(306.0, 656.0)
@@ -203,14 +208,16 @@ func _rebuild(i: int) -> void:
 	var r := slot_rect(i)
 	if data.is_empty():
 		var at := _ground(r.position.x + r.size.x * 0.5, r.end.y - 1.0)
-		_sprite(root, load("res://art/land/outdoor/sale_sign.png"), 28.0, at)
+		if not _model(root, "outdoor", "sale_sign", at):
+			_sprite(root, load("res://art/land/outdoor/sale_sign.png"), 28.0, at)
 		_signs[i] = at
 		return
 	var hs: Dictionary = data.get("house", {})
 	_house(root, i, hs, owner, mine, data.get("home", {}))
 	_fence(root, r, str(data.get("fence", "none")))
 	var mb := _ground(r.end.x - 1.2, r.end.y - 0.8)
-	_sprite(root, load("res://art/land/outdoor/mailbox.png"), 28.0, mb)
+	if not _model(root, "outdoor", "mailbox", mb, PI * 0.5):
+		_sprite(root, load("res://art/land/outdoor/mailbox.png"), 28.0, mb)
 	if mine:
 		_mailbox = mb
 	var items: Array = data.get("items", [])
@@ -223,8 +230,16 @@ func _rebuild(i: int) -> void:
 		if bool(info.get("veg", false)):
 			_veg_patch(root, it, at, mine, i, k)
 		else:
-			var tex: Texture2D = load(str(info.tex))
-			_sprite(root, tex, float(info.px), at)
+			var id := str(it.get("id", ""))
+			var src: Array = MODEL_OF.get(id, ["outdoor", id])
+			var turn := 0.0  # models' fronts face Blender's -Y, which is the camera's way
+			if str(src[0]) == "plants":
+				turn = fposmod(float(it.get("x", 0.0)) * 2.3 + float(it.get("z", 0.0)) * 1.7, TAU)
+			elif id in ["gnome", "pumpkin_lantern"]:
+				turn = -PI * 0.5  # these face +X
+			if not _model(root, str(src[0]), str(src[1]), at, turn):
+				var tex: Texture2D = load(str(info.tex))
+				_sprite(root, tex, float(info.px), at)
 			if bool(info.get("light", false)):
 				var l := OmniLight3D.new()
 				l.light_color = Color(1.0, 0.85, 0.55)
@@ -250,6 +265,18 @@ func _key_of(data: Dictionary) -> Dictionary:
 
 func _ground(x: float, z: float) -> Vector3:
 	return Vector3(x, float(world.height_at(x, z)), z)
+
+
+## A Blender model on the ground (facing the lane, so its front faces the camera); false if
+## there's no model for it.
+func _model(parent: Node3D, group: String, name: String, at: Vector3, turn := 0.0) -> bool:
+	var n := Models.make(group, name)
+	if n == null:
+		return false
+	parent.add_child(n)
+	n.global_position = at
+	n.rotation.y = turn
+	return true
 
 
 func _sprite(parent: Node3D, tex: Texture2D, px_per_m: float, at: Vector3) -> Sprite3D:
@@ -359,14 +386,20 @@ func _house(root: Node3D, i: int, hs: Dictionary, owner: String, mine: bool, hom
 		_box(pivot, Vector3(0.8, 0.8, 0.1), Vector3(wx, size.y * 0.55, front + 0.02), glass)
 		if bool(hs.get("boxes", true)):
 			_box(pivot, Vector3(1.0, 0.22, 0.3), Vector3(wx, size.y * 0.55 - 0.6, front + 0.15), _mat("planks", "#ffffff"))
-			var fl := Sprite3D.new()
-			fl.texture = load("res://art/plants/flowers%d.png" % ((i + k) % 5))
-			fl.pixel_size = 1.0 / 40.0
-			fl.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
-			fl.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
-			fl.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-			pivot.add_child(fl)
-			fl.position = Vector3(wx, size.y * 0.55 - 0.35, front + 0.18)
+			var fl3 := Models.make("plants", "flowers%d" % ((i + k) % 5))
+			if fl3:
+				pivot.add_child(fl3)
+				fl3.scale = Vector3(1.0, 0.7, 0.35)
+				fl3.position = Vector3(wx, size.y * 0.55 - 0.49, front + 0.15)
+			else:
+				var fl := Sprite3D.new()
+				fl.texture = load("res://art/plants/flowers%d.png" % ((i + k) % 5))
+				fl.pixel_size = 1.0 / 40.0
+				fl.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
+				fl.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
+				fl.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+				pivot.add_child(fl)
+				fl.position = Vector3(wx, size.y * 0.55 - 0.35, front + 0.18)
 	# a name board over the door
 	var l := Label3D.new()
 	l.text = "%s home" % owner if owner == "Your" else "%s home" % owner

@@ -27,6 +27,8 @@ const BOATS := [
 const PAINT := ["#c86a3a", "#e8e2d0", "#3f86bd", "#c84a3a", "#2a3a5a", "#5fae6a", "#f0c040", "#8a5ac8", "#e88aa8", "#3a3a40"]
 const PARTS := {
 	"lamp": {"n": "Deck lamp", "price": 900, "d": "A bright lantern at the bow. Finds the way through fog, and lights the water at night."},
+	"benches": {"n": "Passenger benches", "price": 1500,
+		"d": "Seats for friends. In the shared town, fishers without a boat can climb aboard yours and ride along."},
 }
 const BASE_SPEED := 6.0
 const TURN := 1.9  # radians per second at full lock
@@ -97,6 +99,13 @@ static func boat_info(k: String) -> Dictionary:
 		if b.k == k:
 			return b
 	return {}
+
+
+## How many friends can ride along (online): none without the passenger benches.
+func seats() -> int:
+	if not has_part("benches") or info.is_empty():
+		return 0
+	return clampi(int(float(info.len) / 1.5), 1, 4)
 
 
 func tier() -> int:

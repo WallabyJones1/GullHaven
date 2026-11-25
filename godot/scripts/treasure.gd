@@ -9,6 +9,7 @@ const SaveGame := preload("res://scripts/save_game.gd")
 const Homes := preload("res://scripts/token/homes.gd")
 const Glyphs := preload("res://scripts/input_glyphs.gd")
 const Plots := preload("res://scripts/plots.gd")
+const Models := preload("res://scripts/models.gd")
 const DIRS := ["north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"]
 const PLACES := [
 	{"n": "the beach south of Gran's hut", "x": 438.0, "z": 705.0, "r": 26.0},
@@ -27,7 +28,7 @@ const PLACES := [
 const GARDEN_LOOT := ["well", "umbrella", "gnome", "anchor", "lamppost", "birdbath", "palm"]
 
 var main: Node
-var _chest: Sprite3D
+var _chest: Node3D
 var _chest_t := 0.0
 var _hud_t := 0.0
 var _rng := RandomNumberGenerator.new()
@@ -193,14 +194,10 @@ func use(it: Dictionary) -> void:
 	var at := Vector3(float(mp.x), float(main.harbour.height_at(float(mp.x), float(mp.z))), float(mp.z))
 	if _chest:
 		_chest.queue_free()
-	_chest = Sprite3D.new()
-	_chest.texture = load("res://art/land/sea/chest_open.png")
-	_chest.pixel_size = 1.0 / 26.0
-	_chest.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
-	_chest.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	_chest.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
+	_chest = Models.make("sea", "chest_open")
 	add_child(_chest)
-	_chest.global_position = at + Vector3(0.0, 0.55, 0.0)
+	_chest.global_position = at + Vector3(0.0, -0.05, 0.0)
+	_chest.scale = Vector3.ONE * 1.2
 	_chest_t = 8.0
 	var parts: Array[String] = []
 	var shells := _rng.randi_range(300, 1500) * (2 if bool(mp.get("daily", false)) else 1)

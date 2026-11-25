@@ -6,6 +6,7 @@ extends Node3D
 ## Everything here is decoration: it lives near you and is recycled as you move.
 
 const Boats := preload("res://scripts/boats.gd")
+const Models := preload("res://scripts/models.gd")
 
 const GULLS := 8
 const CRABS := 5
@@ -40,6 +41,7 @@ var _whale_t := 25.0
 var _gull_cry_t := 8.0
 var _recycle_t := 0.0
 var _fish_icons: Array[Texture2D] = []
+var _fish_ids: Array[String] = []  # the 3D fish that leap
 var _rng := RandomNumberGenerator.new()
 
 
@@ -51,20 +53,17 @@ func setup(w: Node3D, p: CharacterBody3D, c: Camera3D, a: Node, s: Node, b: Node
 	sea = s
 	boats = b
 	_rng.randomize()
-	var gull_tex: Texture2D = load("res://art/critters/gull.png")
 	for i in GULLS:
-		var g := _sprite(gull_tex, 4, 1.0 / 20.0)
+		var g := _model("gull", 1.25)
 		_gulls.append({"node": g, "state": "fly", "center": Vector3.ZERO, "angle": _rng.randf() * TAU, "radius": _rng.randf_range(8.0, 20.0),
 			"height": _rng.randf_range(7.0, 14.0), "speed": _rng.randf_range(0.25, 0.45), "perch": Vector3.ZERO, "timer": _rng.randf_range(8.0, 30.0)})
-	var crab_tex: Texture2D = load("res://art/critters/crab.png")
 	for i in CRABS:
-		var c2 := _sprite(crab_tex, 2, 1.0 / 26.0)
+		var c2 := _model("crab", 0.75)
 		c2.visible = false
 		_crabs.append({"node": c2, "dir": Vector3.RIGHT, "timer": 0.0, "fleeing": false})
-	var fly_tex: Texture2D = load("res://art/critters/butterfly.png")
 	for i in BUTTERFLIES:
-		var f := _sprite(fly_tex, 2, 1.0 / 30.0)
-		f.modulate = BUTTERFLY_COLOURS[i % BUTTERFLY_COLOURS.size()]
+		var f := _model("butterfly", 2.6)
+		Models.tint(f, BUTTERFLY_COLOURS[i % BUTTERFLY_COLOURS.size()])
 		f.visible = false
 		_flies.append({"node": f, "home": Vector3.ZERO, "phase": _rng.randf() * TAU})
 	var bug_tex := _glow_tex()
@@ -92,6 +91,26 @@ func setup(w: Node3D, p: CharacterBody3D, c: Camera3D, a: Node, s: Node, b: Node
 		var path2 := "res://art/fish2/%s.png" % id
 		if ResourceLoader.exists(path2):
 			_fish_icons.append(load(path2))
+		if Models.has("fish", id):
+			_fish_ids.append(id)
+
+
+## A 3D critter, scaled (models are life size: a gull's 0.6 m, so they're nudged up to read
+## from the camera).
+func _model(kind: String, scale_by: float) -> Node3D:
+	var n := Models.make("critters", kind)
+	n.scale = Vector3.ONE * scale_by
+	add_child(n)
+	return n
+
+
+## Flap a model's wings: angle 0 is spread flat, folded tucks them along the body.
+func _flap(node: Node3D, angle: float, folded := false) -> void:
+	for side in [["Wing_L", 1.0], ["Wing_R", -1.0]]:
+		var w := Models.part(node, str(side[0]))
+		if w:
+			var sg: float = side[1]
+			w.rotation = Vector3(angle * sg, 1.4 * sg if folded else 0.0, 0.0)
 
 
 func _sprite(tex: Texture2D, frames: int, px: float) -> Sprite3D:
@@ -180,7 +199,7 @@ func _process(delta: float) -> void:
 func _update_gulls(delta: float, p: Vector3, night: bool, wet: bool) -> void:
 	var coast: float = clampf(_coastness(p), 0.0, 1.0)
 	for g in _gulls:
-		var node: Sprite3D = g.node
+		var node: Node3D = g.node
 		node.visible = (coast > 0.1 or (school != null and bool(school.frenzy_on))) and not night
 		if not node.visible:
 			g.center = p
@@ -204,8 +223,8 @@ func _update_gulls(delta: float, p: Vector3, night: bool, wet: bool) -> void:
 				at.y += float(world.sea_level)
 				_face_sprite(node, at - node.global_position)
 				node.global_position = node.global_position.lerp(at, minf(1.0, delta * 2.0))
-				var flap := int(_t * 9.0 + r) % 6
-				node.frame = [0, 1, 2, 1, 1, 1][flap]  # flap, flap, glide
+				var flap := fmod(_t * 1.5 + r, 1.0)
+				_flap(node, sin(_t * 14.0 + r) * 0.75 if flap < 0.45 else 0.08)  # flap, flap, glide
 				g.timer = float(g.timer) - delta
 				if float(g.timer) <= 0.0 and not wet:
 					var perch := _perch_near(p)
@@ -218,12 +237,12 @@ func _update_gulls(delta: float, p: Vector3, night: bool, wet: bool) -> void:
 				var to := target - node.global_position
 				_face_sprite(node, to)
 				node.global_position += to.limit_length(6.0 * delta)
-				node.frame = 1
+				_flap(node, sin(_t * 18.0) * 0.6)
 				if to.length() < 0.15:
 					g.state = "sit"
 					g.timer = _rng.randf_range(5.0, 18.0)
 			"sit":
-				node.frame = 3
+				_flap(node, 0.0, true)
 				g.timer = float(g.timer) - delta
 				var scared := Vector2(p.x - node.global_position.x, p.z - node.global_position.z).length() < 3.5
 				if float(g.timer) <= 0.0 or scared or wet:
@@ -238,11 +257,16 @@ func _update_gulls(delta: float, p: Vector3, night: bool, wet: bool) -> void:
 			audio.play("gull", -14.0 + coast * 4.0, _rng.randf_range(0.85, 1.2))
 
 
-func _face_sprite(node: Sprite3D, dir: Vector3) -> void:
+func _face_sprite(node: Node3D, dir: Vector3) -> void:
 	if dir.length() < 0.01:
 		return
-	var right: Vector3 = cam.global_transform.basis.x
-	node.flip_h = dir.dot(right) < 0.0
+	if node is Sprite3D:
+		var right: Vector3 = cam.global_transform.basis.x
+		(node as Sprite3D).flip_h = dir.dot(right) < 0.0
+	else:
+		var cur := node.rotation.y
+		var want := atan2(-dir.z, dir.x)
+		node.rotation.y = lerp_angle(cur, want, 0.25)
 
 
 ## How coastal it is around you (0 inland, 1 on the shore).
@@ -274,7 +298,7 @@ func _perch_near(p: Vector3) -> Vector3:
 
 func _update_crabs(delta: float, p: Vector3, recycle: bool, night: bool) -> void:
 	for c in _crabs:
-		var node: Sprite3D = c.node
+		var node: Node3D = c.node
 		if node.visible:
 			var to := node.global_position - p
 			to.y = 0.0
@@ -294,13 +318,14 @@ func _update_crabs(delta: float, p: Vector3, recycle: bool, night: bool) -> void
 			if float(c.timer) <= 0.0 and not bool(c.fleeing):
 				c.timer = _rng.randf_range(1.5, 4.0)
 				c.dir = Vector3(_rng.randf_range(-1, 1), 0.0, _rng.randf_range(-1, 1)).normalized()
-			next.y = float(world.height_at(next.x, next.z)) + 0.12
+			next.y = float(world.height_at(next.x, next.z)) + 0.02 + (absf(sin(_t * 20.0)) * 0.03 if speed > 0.0 else 0.0)
 			node.global_position = next
-			node.frame = int(_t * 10.0) % 2 if speed > 0.0 else 0
+			var cd: Vector3 = c.dir
+			node.rotation.y = atan2(-cd.z, cd.x) + PI * 0.5  # crabs scuttle sideways
 		elif recycle and not night and _rng.randf() < 0.3:
 			var spot := _sand_near(p, 8.0, 22.0)
 			if spot != Vector3.INF:
-				node.global_position = spot + Vector3(0.0, 0.12, 0.0)
+				node.global_position = spot + Vector3(0.0, 0.02, 0.0)
 				node.visible = true
 				c.fleeing = false
 				c.timer = 0.0
@@ -322,7 +347,7 @@ func _sand_near(p: Vector3, r0: float, r1: float) -> Vector3:
 
 func _update_flies(_delta: float, p: Vector3, recycle: bool, off: bool) -> void:
 	for f in _flies:
-		var node: Sprite3D = f.node
+		var node: Node3D = f.node
 		if off:
 			node.visible = false
 			continue
@@ -335,7 +360,7 @@ func _update_flies(_delta: float, p: Vector3, recycle: bool, off: bool) -> void:
 			var at := home + Vector3(sin(_t * 0.7 + ph) * 2.5, 0.8 + sin(_t * 1.9 + ph) * 0.4, cos(_t * 0.5 + ph * 1.3) * 2.5)
 			_face_sprite(node, at - node.global_position)
 			node.global_position = at
-			node.frame = int(_t * 12.0 + ph) % 2
+			_flap(node, sin(_t * 22.0 + ph) * 1.1)
 		elif recycle and _rng.randf() < 0.3:
 			var spot := _green_near(p, 5.0, 20.0)
 			if spot != Vector3.INF:
@@ -430,7 +455,11 @@ func _jumps(delta: float, p: Vector3, night: bool) -> void:
 	if _jump_t <= 0.0:
 		_jump_t = _rng.randf_range(3.5, 9.0)
 		var spot := _water_near(p, 8.0, 28.0, 0.8)
-		if spot != Vector3.INF and not _fish_icons.is_empty():
+		if spot != Vector3.INF and not _fish_ids.is_empty():
+			var fishm := Models.make("fish", _fish_ids[_rng.randi() % _fish_ids.size()])
+			fishm.scale = Vector3.ONE * _rng.randf_range(0.3, 0.45)
+			_leap_model(fishm, spot, _rng.randf_range(0.6, 1.2), 1.4, 0.7)
+		elif spot != Vector3.INF and not _fish_icons.is_empty():
 			_leap(_fish_icons[_rng.randi() % _fish_icons.size()], spot, 1.0 / 60.0, _rng.randf_range(0.6, 1.2), 1.4, 0.7)
 	_dolphin_t -= delta
 	if _dolphin_t <= 0.0:
@@ -438,10 +467,9 @@ func _jumps(delta: float, p: Vector3, night: bool) -> void:
 		var spot2 := _water_near(p, 25.0, 60.0, 4.0)
 		if spot2 != Vector3.INF and not night:
 			var heading := Vector3(_rng.randf_range(-1, 1), 0.0, _rng.randf_range(-1, 1)).normalized()
-			var tex: Texture2D = load("res://art/critters/dolphin.png")
 			for k in _rng.randi_range(2, 4):
 				var at := spot2 + heading * k * 3.0 + heading.cross(Vector3.UP) * _rng.randf_range(-1.5, 1.5)
-				get_tree().create_timer(k * 0.45).timeout.connect(_leap.bind(tex, at, 1.0 / 14.0, 1.6, 4.0, 1.0, heading))
+				get_tree().create_timer(k * 0.45).timeout.connect(_leap_dolphin.bind(at, heading))
 	_whale_t -= delta
 	if _whale_t <= 0.0:
 		_whale_t = _rng.randf_range(30.0, 60.0)
@@ -486,6 +514,32 @@ func _leap(tex: Texture2D, at: Vector3, px: float, height: float, length: float,
 		audio.play("plop", -10.0 - d * 0.5, _rng.randf_range(0.8, 1.2))
 
 
+func _leap_dolphin(at: Vector3, heading: Vector3) -> void:
+	var d := Models.make("critters", "dolphin")
+	_leap_model(d, at, 1.6, 4.0, 1.0, heading)
+
+
+## A 3D fish or dolphin arcs out of the water, nose first, and back in.
+func _leap_model(n: Node3D, at: Vector3, height: float, length: float, time: float, dir := Vector3.ZERO) -> void:
+	add_child(n)
+	if dir == Vector3.ZERO:
+		dir = Vector3(_rng.randf_range(-1, 1), 0.0, _rng.randf_range(-1, 1)).normalized()
+	var from := at
+	var to := at + dir * length
+	n.global_position = from
+	_ring(from)
+	var yaw := atan2(-dir.z, dir.x)
+	var tw := n.create_tween()
+	tw.tween_method(func(k: float) -> void:
+		n.global_position = from.lerp(to, k) + Vector3(0.0, sin(k * PI) * height - 0.3, 0.0)
+		n.rotation = Vector3(0.0, yaw, (0.5 - k) * 2.0), 0.0, 1.0, time)
+	tw.tween_callback(_ring.bind(to))
+	tw.tween_callback(n.queue_free)
+	var d := at.distance_to(player.global_position)
+	if d < 30.0:
+		audio.play("plop", -10.0 - d * 0.5, _rng.randf_range(0.8, 1.2))
+
+
 func _leap_step(k: float, s: Sprite3D, from: Vector3, to: Vector3, height: float) -> void:
 	s.global_position = from.lerp(to, k) + Vector3(0.0, sin(k * PI) * height, 0.0)
 	s.rotation.z = (0.6 - k * 1.2) * (-1.0 if s.flip_h else 1.0)
@@ -513,12 +567,9 @@ func _ring(at: Vector3) -> void:
 
 
 func _whale(at: Vector3) -> void:
-	var tail := Sprite3D.new()
-	tail.texture = load("res://art/critters/whale_tail.png")
-	tail.pixel_size = 1.0 / 8.0
-	tail.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	tail.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	tail.alpha_cut = SpriteBase3D.ALPHA_CUT_DISCARD
+	var tail := Models.make("critters", "whale_tail")
+	tail.scale = Vector3.ONE * 2.4
+	tail.rotation.y = _rng.randf() * TAU
 	add_child(tail)
 	var base := Vector3(at.x, float(world.sea_level) - 2.6, at.z)
 	tail.global_position = base

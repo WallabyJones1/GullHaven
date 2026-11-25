@@ -9,6 +9,8 @@ const Billboard := preload("res://scripts/billboard.gd")
 const TownBuilder := preload("res://scripts/town_builder.gd")
 
 const PLANT_SHADER := preload("res://shaders/plant.gdshader")
+const PLANT3D_SHADER := preload("res://shaders/plant3d.gdshader")
+const Models := preload("res://scripts/models.gd")
 const CHUNK := 32
 const VIEW_CHUNKS := 4
 const KEEP_CHUNKS := 6
@@ -175,6 +177,7 @@ func _process(delta: float) -> void:
 		return
 	for m in _plant_mats:
 		m.set_shader_parameter("wind", wind)
+		m.set_shader_parameter("focus", at)
 	for w in walkers:
 		_update_walker(w, delta, cam)
 	if mill_fixed:
@@ -521,7 +524,8 @@ func _build_veg(c: Vector2i) -> void:
 			var z := float(p[1])
 			var s := 0.88 + fposmod(x * 7.31 + z * 3.17, 0.28)
 			var pos := Vector3(x, height_at(x, z), z)
-			mm.set_instance_transform(i, Transform3D(Basis().scaled(Vector3(s, s, s)), pos))
+			var turn := fposmod(x * 1.913 + z * 2.771, TAU)  # 3D plants each face their own way
+			mm.set_instance_transform(i, Transform3D(Basis(Vector3.UP, turn).scaled(Vector3(s, s, s)), pos))
 			if trunk:
 				var col := CollisionShape3D.new()
 				var shape := CylinderShape3D.new()
@@ -540,6 +544,10 @@ func _build_veg(c: Vector2i) -> void:
 func _plant_mesh(kind: String) -> Mesh:
 	if _plant_meshes.has(kind):
 		return _plant_meshes[kind]
+	var m3 := _plant_mesh_3d(kind)
+	if m3:
+		_plant_meshes[kind] = m3
+		return m3
 	var tex: Texture2D = load("res://art/plants/%s.png" % kind)
 	var px := 1.0 / 20.0 if kind in SMALL_PLANTS else 1.0 / 16.0
 	var size := Vector2(tex.get_width(), tex.get_height()) * px
@@ -564,6 +572,39 @@ func _plant_mesh(kind: String) -> Mesh:
 	q.material = m
 	_plant_meshes[kind] = q
 	return q
+
+
+## The Blender model of a plant, its materials swapped for the swaying plant shader.
+func _plant_mesh_3d(kind: String) -> Mesh:
+	var src: Mesh = Models.mesh("plants", kind)
+	if src == null:
+		return null
+	var me: Mesh = src.duplicate()
+	var h := maxf(me.get_aabb().end.y, 0.5)
+	var sway := 0.0
+	if kind.begins_with("rock") or kind.begins_with("boulder"):
+		sway = 0.0
+	elif kind.begins_with("bush"):
+		sway = 0.5
+	elif kind in SMALL_PLANTS or kind.begins_with("reeds") or kind.begins_with("fern") or kind.begins_with("flowers"):
+		sway = 1.0
+	else:
+		sway = 0.35
+	for i in me.get_surface_count():
+		var base := me.surface_get_material(i) as BaseMaterial3D
+		var m := ShaderMaterial.new()
+		m.shader = PLANT3D_SHADER
+		if base and base.albedo_texture:
+			m.set_shader_parameter("tex", base.albedo_texture)
+			m.set_shader_parameter("use_tex", true)
+		else:
+			m.set_shader_parameter("use_tex", false)
+		m.set_shader_parameter("colour", base.albedo_color if base else Color.WHITE)
+		m.set_shader_parameter("sway", sway)
+		m.set_shader_parameter("height", h)
+		_plant_mats.append(m)
+		me.surface_set_material(i, m)
+	return me
 
 
 # --- water, materials, falls -----------------------------------------------------

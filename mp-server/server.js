@@ -190,7 +190,7 @@ function uniqueName(want) {
 }
 
 function info(p) {
-  return { id: p.id, name: p.name, look: p.look, x: p.x, y: p.y, z: p.z, fx: p.fx, fz: p.fz, a: p.a, in: p.in, b: p.b || '', h: p.h || 0 };
+  return { id: p.id, name: p.name, look: p.look, x: p.x, y: p.y, z: p.z, fx: p.fx, fz: p.fz, a: p.a, in: p.in, b: p.b || '', h: p.h || 0, st: p.st || 0 };
 }
 
 const PUBLIC = process.env.PUBLIC_DIR || path.join(__dirname, 'public');
@@ -285,6 +285,7 @@ wss.on('connection', (ws) => {
         me.in = typeof msg.in === 'string' ? msg.in.slice(0, 40) : '';
         me.b = typeof msg.b === 'string' && /^[a-z_]{0,16}$/.test(msg.b) ? msg.b : '';
         me.h = num(msg.h, -10, 10);
+        me.st = Math.round(num(msg.st, 0, 4));
         me.dirty = true;
         break;
       case 'chat': {
@@ -349,7 +350,7 @@ setInterval(() => {
   for (const p of players.values()) {
     if (p.dirty) {
       p.dirty = false;
-      moved.push([p.id, +p.x.toFixed(2), +p.y.toFixed(2), +p.z.toFixed(2), +p.fx.toFixed(2), +p.fz.toFixed(2), p.a, p.in, p.b || '', +(p.h || 0).toFixed(2)]);
+      moved.push([p.id, +p.x.toFixed(2), +p.y.toFixed(2), +p.z.toFixed(2), +p.fx.toFixed(2), +p.fz.toFixed(2), p.a, p.in, p.b || '', +(p.h || 0).toFixed(2), p.st || 0]);
     }
   }
   if (moved.length) broadcast({ t: 'state', p: moved });

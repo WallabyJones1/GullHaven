@@ -53,6 +53,7 @@ const Touch := preload("res://scripts/touch.gd")
 const Plots := preload("res://scripts/plots.gd")
 const Monsters := preload("res://scripts/monsters.gd")
 const Treasure := preload("res://scripts/treasure.gd")
+const Empire := preload("res://scripts/empire.gd")
 
 var env: Environment
 var world_env: WorldEnvironment
@@ -103,6 +104,7 @@ var touch: CanvasLayer  # thumbstick and buttons on phones and tablets
 var plots: Node3D  # Driftwood Lane: everyone's plot, house and garden
 var monsters: Node3D  # sea monsters out in the deep
 var treasure: Node3D  # treasure maps and buried chests
+var empire: Node3D  # your fleet, crews and dock
 var _first_time := false
 var skip_save := false  # starting a new game: don't write the old save back on the way out
 var save: Dictionary
@@ -345,6 +347,10 @@ func _ready() -> void:
 	treasure.name = "Treasure"
 	add_child(treasure)
 	treasure.setup(self)
+	empire = Empire.new()
+	empire.name = "Empire"
+	add_child(empire)
+	empire.setup(self)
 
 	journal = Journal.new()
 	journal.name = "Journal"

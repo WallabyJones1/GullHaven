@@ -9,6 +9,7 @@ extends Node
 
 const Character := preload("res://scripts/character.gd")
 const Billboard := preload("res://scripts/billboard.gd")
+const Boats := preload("res://scripts/boats.gd")
 const UI := preload("res://scripts/ui_kit.gd")
 const Glyphs := preload("res://scripts/input_glyphs.gd")
 
@@ -57,6 +58,7 @@ func setup(m: Node) -> void:
 	_my_bubble.modulate = Color(1.0, 0.95, 0.75)
 	_my_bubble.visible = false
 	main.add_child.call_deferred(_my_bubble)
+	main.town.providers.append(self)
 
 
 ## In a browser, the page the game came from may be a shared-town server itself (the
@@ -105,6 +107,8 @@ func connect_to(url: String, name: String) -> void:
 
 
 func leave(quiet := false) -> void:
+	if _ride >= 0:
+		_hop_off(true)
 	var pl: Node = main.get("plots") if main else null
 	if pl:
 		pl.set_others({}, "")
@@ -228,15 +232,18 @@ func _send_pos() -> void:
 		a = 1
 	var bk := ""
 	var bh := 0.0
+	var seats := 0
 	if main.boats and bool(main.boats.aboard):
 		bk = str(main.save.get("boat", ""))
 		bh = float(main.boats.heading)
-	var key := "%.2f,%.2f,%.2f,%.2f,%.2f,%d,%s,%.2f" % [p.x, p.y, p.z, f.x, f.z, a, bk, bh]
+		seats = int(main.boats.seats())
+	var key := "%.2f,%.2f,%.2f,%.2f,%.2f,%d,%s,%.2f,%d,%d" % [p.x, p.y, p.z, f.x, f.z, a, bk, bh, seats, _ride]
 	if key == _last_pos:
 		return
 	_last_pos = key
 	_send({"t": "pos", "x": snappedf(p.x, 0.01), "y": snappedf(p.y, 0.01), "z": snappedf(p.z, 0.01), "fx": snappedf(f.x, 0.01),
-		"fz": snappedf(f.z, 0.01), "a": a, "in": "", "b": bk, "h": snappedf(wrapf(bh, -PI, PI), 0.01)})
+		"fz": snappedf(f.z, 0.01), "a": a, "in": "ride:%d" % _ride if _ride >= 0 else "", "b": bk,
+		"h": snappedf(wrapf(bh, -PI, PI), 0.01), "st": seats})
 
 
 func _send_hut() -> void:
@@ -248,6 +255,105 @@ func _send_hut() -> void:
 	if s != _last_hut:
 		_last_hut = s
 		_send({"t": "hut", "data": h})
+
+
+# --- riding along in a friend's boat ---------------------------------------------------------
+
+var _ride := -1  # whose boat you're riding in (their id), or -1
+
+
+func riding_with() -> String:
+	return str((remotes[_ride] as Dictionary).name) if remotes.has(_ride) else ""
+
+
+func near(pos: Vector3, _facing: Vector3) -> Dictionary:
+	if not is_online() or main.boats.aboard or _ride >= 0 or main.interiors.is_inside():
+		return {}
+	for id in remotes:
+		var r: Dictionary = remotes[id]
+		var bm: Variant = r.get("boat")
+		if not (bm is Node3D) or not is_instance_valid(bm) or int(r.get("seats", 0)) <= 0:
+			continue
+		var bp: Vector3 = (bm as Node3D).global_position
+		var d := Vector2(bp.x - pos.x, bp.z - pos.z).length()
+		if d < 4.0:
+			var bn := str(Boats.boat_info(str(r.bk)).get("n", "boat")).to_lower()
+			return {"kind": "ride", "id": id, "dist": d * 0.5, "text": "Space: Climb aboard %s's %s and ride along" % [r.name, bn]}
+	return {}
+
+
+func use(it: Dictionary) -> void:
+	if str(it.get("kind", "")) != "ride" or not remotes.has(int(it.id)):
+		return
+	var riders := 0
+	for id in remotes:
+		if str((remotes[id] as Dictionary).get("in", "")) == "ride:%d" % int(it.id):
+			riders += 1
+	if riders >= int((remotes[int(it.id)] as Dictionary).get("seats", 0)):
+		main.hud.toast("Their benches are full.")
+		return
+	_ride = int(it.id)
+	main.player.riding = true
+	main.player.can_move = false
+	main.audio.play("step_wood", -2.0)
+	main.hud.toast("Aboard %s's boat! Sit back, or cast a line. %s hops off by a dock or a beach." % [riding_with(), Glyphs.key("cancel")])
+	_send({"t": "chat", "text": "climbed aboard %s's boat!" % riding_with()})
+
+
+func _update_ride() -> void:
+	if _ride < 0:
+		return
+	if not remotes.has(_ride):
+		_hop_off(true)
+		return
+	var r: Dictionary = remotes[_ride]
+	var bm: Variant = r.get("boat")
+	if not (bm is Node3D) or not is_instance_valid(bm):
+		_hop_off(true)  # they've stepped ashore
+		return
+	var b := bm as Node3D
+	var info: Dictionary = Boats.boat_info(str(r.bk))
+	var seat := b.global_transform * Vector3(0.0, 0.5, -float(info.get("len", 3.0)) * 0.18)
+	main.player.global_position = seat
+	if Input.is_action_just_pressed("cancel") and not main.hud.modal:
+		_hop_off(false)
+
+
+func _hop_off(forced: bool) -> void:
+	if _ride < 0:
+		return
+	var p: Vector3 = main.player.global_position
+	var w: Node3D = main.harbour
+	var spot := Vector3.INF
+	for ring in [1.5, 2.5, 3.5, 5.0, 7.0]:
+		for i in 16:
+			var a := TAU * i / 16.0
+			var x: float = p.x + cos(a) * ring
+			var z: float = p.z + sin(a) * ring
+			var on_dock := false
+			for d in w.docks:
+				if (d.rect as Rect2).grow(-0.3).has_point(Vector2(x, z)):
+					on_dock = true
+			if on_dock or (not w.is_water(x, z) and w.walkable(x, z)):
+				spot = Vector3(x, float(w.stand_height(x, z)) + 0.15, z)
+				break
+		if spot != Vector3.INF:
+			break
+	if spot == Vector3.INF:
+		if not forced:
+			main.hud.toast("Too far out to hop off! Wait till they're by a dock or a beach.")
+			return
+		spot = main.boats.landing_spot() if main.boats.boat else Vector3.INF
+		if spot == Vector3.INF:
+			var j: Dictionary = w.meta.hut.jetty
+			spot = Vector3(float(j.x) - 1.0, float(w.stand_height(float(j.x) - 1.0, float(j.z))) + 0.2, float(j.z))
+		main.hud.toast("Dropped back at the shore.")
+	_ride = -1
+	main.player.global_position = spot
+	main.player.velocity = Vector3.ZERO
+	main.player.riding = false
+	main.player.can_move = true
+	main.audio.play("step_wood", -2.0)
 
 
 ## Tell the town about something you did ("dug up today's treasure on Mossbank!").
@@ -307,8 +413,11 @@ func _on_message(msg: Dictionary) -> void:
 						if f.length() > 0.1:
 							r.facing = f.normalized()
 						r.a = int(row[6])
+						r["in"] = str(row[7]) if row.size() >= 8 else ""
 						if row.size() >= 10:
 							_set_boat(r, str(row[8]), float(row[9]))
+						if row.size() >= 11:
+							r.seats = int(row[10])
 		"chat":
 			var who := str(msg.get("name", "?"))
 			var text := str(msg.get("text", ""))
@@ -408,6 +517,7 @@ func _add(p: Dictionary) -> void:
 		"bubble_t": 0.0, "pos": pos, "target": pos, "facing": Vector3(float(p.get("fx", 0.0)), 0.0, float(p.get("fz", 1.0))),
 		"a": int(p.get("a", 0)), "walk": 0.0, "bk": "", "bh": 0.0, "boat": null}
 	_set_boat(remotes[id], str(p.get("b", "")), float(p.get("h", 0.0)))
+	remotes[id]["seats"] = int(p.get("st", 0))
 
 
 ## Out on the water, other players sit in their own boats.
@@ -431,6 +541,8 @@ func _set_boat(r: Dictionary, kind: String, heading: float) -> void:
 
 
 func _drop(id: int) -> void:
+	if id == _ride:
+		_hop_off(true)
 	if not remotes.has(id):
 		return
 	var r: Dictionary = remotes[id]
@@ -484,6 +596,7 @@ func _update_remotes(delta: float) -> void:
 		r.bubble_t = float(r.bubble_t) - delta
 		var b: Label3D = r.bubble
 		b.visible = float(r.bubble_t) > 0.0
+	_update_ride()
 	_my_bubble_t -= delta
 	_my_bubble.visible = _my_bubble_t > 0.0 and is_online()
 	if _my_bubble.visible:
