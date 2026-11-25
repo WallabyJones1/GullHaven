@@ -38,7 +38,32 @@ const ITEMS := {
 	"life_ring": {"n": "Life ring", "kind": "wall", "y": 1.6, "shop": "salvager", "price": 80, "mats": {}},
 	"net_wall": {"n": "Fishing net", "kind": "wall", "y": 1.0, "shop": "salvager", "price": 100, "mats": {"rope": 2}},
 	"telescope": {"n": "Telescope", "kind": "floor", "cells": Vector2i(1, 1), "shop": "salvager", "price": 500, "mats": {}},
+	# made at Gran's workbench from what you farm, forage, mine and hunt (see land_data.gd)
+	"chair": {"n": "Wooden chair", "kind": "floor", "cells": Vector2i(1, 1), "shop": "craft", "price": 50, "mats": {}},
+	"rocking_chair": {"n": "Rocking chair", "kind": "floor", "cells": Vector2i(2, 2), "shop": "craft", "price": 220, "mats": {}},
+	"planter": {"n": "Herb planter", "kind": "floor", "cells": Vector2i(3, 1), "shop": "craft", "price": 90, "mats": {}},
+	"pumpkin_lantern": {"n": "Pumpkin lantern", "kind": "floor", "cells": Vector2i(1, 1), "shop": "craft", "price": 140, "mats": {}},
+	"wheat_sheaf": {"n": "Wheat sheaf", "kind": "floor", "cells": Vector2i(1, 1), "shop": "craft", "price": 80, "mats": {}},
+	"hay_bale": {"n": "Hay bale", "kind": "floor", "cells": Vector2i(2, 2), "shop": "craft", "price": 60, "mats": {}},
+	"scarecrow": {"n": "Scarecrow", "kind": "floor", "cells": Vector2i(2, 1), "shop": "craft", "price": 110, "mats": {}},
+	"flower_vase": {"n": "Vase of wildflowers", "kind": "floor", "cells": Vector2i(1, 1), "shop": "craft", "price": 70, "mats": {}},
+	"mushroom_lamp": {"n": "Toadstool lamp", "kind": "floor", "cells": Vector2i(1, 1), "shop": "craft", "price": 180, "mats": {}},
+	"crystal_lamp": {"n": "Ember crystal lamp", "kind": "floor", "cells": Vector2i(1, 1), "shop": "craft", "price": 600, "mats": {}},
+	"ore_shelf": {"n": "Rock and gem shelf", "kind": "floor", "cells": Vector2i(3, 1), "shop": "craft", "price": 450, "mats": {}},
+	"rug_hide": {"n": "Hide rug", "kind": "rug", "cells": Vector2i(4, 3), "shop": "craft", "price": 200, "mats": {}},
+	"antler_mount": {"n": "Antler mount", "kind": "wall", "y": 1.6, "shop": "craft", "price": 260, "mats": {}},
+	"copper_pots": {"n": "Copper pans", "kind": "wall", "y": 1.4, "shop": "craft", "price": 160, "mats": {}},
+	"stone_hearth": {"n": "Stone hearth", "kind": "wall", "y": 0.0, "shop": "craft", "price": 500, "mats": {}},
 }
+# Walls and floors for your hut, chosen at Fern's Home Goods (the Decorate tab) or in your
+# hut while arranging. The first of each is the hut's own, so it costs nothing.
+const WALLS := {"own": {"n": "As built", "price": 0}, "wall_wood": {"n": "Dark planks", "price": 120},
+	"wall_wood_light": {"n": "Pale planks", "price": 120}, "wall_paper": {"n": "Cream paper", "price": 200},
+	"wall_paper_green": {"n": "Sage paper", "price": 200}, "wall_paper_blue": {"n": "Sea-blue paper", "price": 200},
+	"wall_plaster": {"n": "Whitewash", "price": 150}, "wall_stone": {"n": "Dressed stone", "price": 300}}
+const FLOOR_STYLES := {"own": {"n": "As built", "price": 0}, "wood": {"n": "Oak boards", "price": 150},
+	"dark": {"n": "Dark boards", "price": 150}, "tile": {"n": "Terracotta tiles", "price": 250},
+	"blue": {"n": "Blue tiles", "price": 250}, "stone": {"n": "Flagstones", "price": 300}}
 # The hut's upgrades, built by Tess the carpenter. Each comes with a housewarming gift.
 const HUT := [
 	{"n": "Beach shack", "price": 0, "mats": {}, "gift": [], "d": "Four walls and a leaky roof. Home."},

@@ -44,6 +44,10 @@ const Story := preload("res://scripts/story.gd")
 const Wardrobe := preload("res://scripts/wardrobe.gd")
 const Music := preload("res://scripts/music.gd")
 const Opening := preload("res://scripts/opening.gd")
+const Land := preload("res://scripts/land.gd")
+const LandMenu := preload("res://scripts/land_menu.gd")
+const LandStory := preload("res://scripts/land_story.gd")
+const Online := preload("res://scripts/online.gd")
 
 var env: Environment
 var world_env: WorldEnvironment
@@ -85,6 +89,10 @@ var story: Node3D
 var wardrobe: CanvasLayer
 var music: Node
 var opening: CanvasLayer
+var land: Node3D  # Harbour Life: farming, foraging, mining, hunting, crafting
+var land_menu: CanvasLayer
+var land_story: Node3D
+var online: Node  # the shared town (multiplayer), when you play online
 var _first_time := false
 var skip_save := false  # starting a new game: don't write the old save back on the way out
 var save: Dictionary
@@ -112,6 +120,8 @@ func _ready() -> void:
 	harbour.name = "World"
 	add_child(harbour)
 	harbour.load_world()
+	Land.add_folk(harbour.meta)
+	Land.clear_yard(harbour)
 	harbour.permits = save.permits
 	harbour.hut_tier = int(save.hut_tier)
 	harbour.build()
@@ -290,6 +300,19 @@ func _ready() -> void:
 	for prov in [boats, mystery, sidequests, companion, minigames, kit]:
 		town.providers.append(prov)
 
+	land = Land.new()
+	land.name = "Land"
+	add_child(land)
+	land.progress = progress
+	land.dialogue = dialogue
+	land.interiors = interiors
+	land.setup(harbour, player, cam, hud, audio, sea, save, town)
+	land_menu = LandMenu.new()
+	land_menu.name = "LandMenu"
+	add_child(land_menu)
+	land_menu.setup(land, save, audio, hud)
+	land.menu = land_menu
+
 	journal = Journal.new()
 	journal.name = "Journal"
 	add_child(journal)
@@ -304,6 +327,7 @@ func _ready() -> void:
 	add_child(bag)
 	bag.setup(save, sea, hud, audio)
 	bag.extra_sections.append(_bag_kit)
+	bag.extra_sections.append(land.bag_text)
 
 	story = Story.new()
 	story.name = "Story"
@@ -317,6 +341,21 @@ func _ready() -> void:
 	story.mystery = mystery
 	story.start()
 	journal.story = story
+
+	land_story = LandStory.new()
+	land_story.name = "LandStory"
+	add_child(land_story)
+	land_story.dialogue = dialogue
+	land_story.progress = progress
+	land_story.interiors = interiors
+	land_story.setup(harbour, player, hud, audio, sea, save, town, land)
+	land_story.start()
+	journal.land_story = land_story
+
+	online = Online.new()
+	online.name = "Online"
+	add_child(online)
+	online.setup(self)
 
 	ambient = Ambient.new()
 	ambient.name = "Ambient"
@@ -350,6 +389,12 @@ func _ready() -> void:
 		smoke.name = "SmokeTest"
 		add_child(smoke)
 		smoke.call("setup", self, web_check)
+	for arg in OS.get_cmdline_user_args():
+		if str(arg).begins_with("--shots"):
+			var shots: Node = load("res://scripts/shots.gd").new()
+			shots.name = "Shots"
+			add_child(shots)
+			shots.call("setup", self, str(arg).trim_prefix("--shots").trim_prefix("="))
 	if Menus.fresh_start:
 		# New game from the menu: straight into making your fisher
 		Menus.fresh_start = false
@@ -490,8 +535,10 @@ func save_summary() -> String:
 	var bits: Array[String] = []
 	if story:
 		bits.append(str(story.summary()))
+	if land_story:
+		bits.append(str(land_story.summary()))
 	if progress:
-		bits.append("Fisher level %d" % int(progress.level()))
+		bits.append("Level %d" % int(progress.level()))
 	bits.append("%d Shells" % int(save.shells))
 	var found: Dictionary = save.log
 	bits.append("%d in your Logbook" % found.size())
@@ -552,6 +599,8 @@ func fisher_text() -> String:
 	out += "Boats owned: %d   Shells: %d\n" % [(save.boats as Array).size(), int(save.shells)]
 	if str(save.companion) != "":
 		out += "Your cat: %s\n" % str(companion.cat_name(str(save.companion)))
+	if land:
+		out += "\n" + str(land.skills_text())
 	return out
 
 

@@ -10,7 +10,7 @@ const SaveGame := preload("res://scripts/save_game.gd")
 const Furniture := preload("res://scripts/furniture.gd")
 
 const TABS := {
-	"carpenter": ["Your hut", "Projects", "Furniture", "Materials"],
+	"carpenter": ["Your hut", "Decorate", "Projects", "Furniture", "Materials"],
 	"home": ["Furniture"],
 	"salvager": ["Furniture", "Materials"],
 }
@@ -149,6 +149,8 @@ func _show_tab(i: int, focus_row := 0) -> void:
 			rows = _hut_rows()
 		"Projects":
 			rows = _project_rows()
+		"Decorate":
+			rows = _decorate_rows()
 		"Furniture":
 			rows = _furniture_rows()
 		_:
@@ -186,6 +188,49 @@ func _hut_rows() -> Array[Button]:
 				row.add_theme_color_override("font_color", UI.DIM)
 		out.append(row)
 	return out
+
+
+## Walls and floors for your hut. Bought once, swapped back for free.
+func _decorate_rows() -> Array[Button]:
+	var out: Array[Button] = []
+	var style: Dictionary = save.hut_style
+	var owned: Array = save.hut_styles_owned
+	for part in ["wall", "floor"]:
+		var table: Dictionary = Furniture.WALLS if part == "wall" else Furniture.FLOOR_STYLES
+		for k in table:
+			var info: Dictionary = table[k]
+			var key := "%s:%s" % [part, k]
+			var have: bool = k == "own" or owned.has(key)
+			var on: bool = str(style.get(part, "own")) == k
+			var row := UI.button("", 20)
+			var status := "On your %s now" % ("walls" if part == "wall" else "floor") if on else ("Owned: put it up" if have else "%d Shells" % int(info.price))
+			row.text = "%s: %s   %s" % ["Walls" if part == "wall" else "Floor", info.n, status]
+			if on:
+				row.disabled = true
+				row.focus_mode = Control.FOCUS_NONE
+			else:
+				row.pressed.connect(_set_style.bind(part, str(k)))
+				if not have and int(save.shells) < int(info.price):
+					row.add_theme_color_override("font_color", UI.DIM)
+			out.append(row)
+	return out
+
+
+func _set_style(part: String, k: String) -> void:
+	var table: Dictionary = Furniture.WALLS if part == "wall" else Furniture.FLOOR_STYLES
+	var info: Dictionary = table[k]
+	var owned: Array = save.hut_styles_owned
+	var key := "%s:%s" % [part, k]
+	if k != "own" and not owned.has(key):
+		if int(save.shells) < int(info.price):
+			_fail("You need %d more Shells." % (int(info.price) - int(save.shells)))
+			return
+		save.shells = int(save.shells) - int(info.price)
+		owned.append(key)
+	var style: Dictionary = save.hut_style
+	style[part] = k
+	_done("Done. Your hut's %s are %s now." % ["walls" if part == "wall" else "floors", str(info.n).to_lower()])
+	_show_tab(_tab)
 
 
 func _project_rows() -> Array[Button]:

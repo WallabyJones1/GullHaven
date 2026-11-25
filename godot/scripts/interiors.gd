@@ -266,6 +266,8 @@ func _go_out() -> void:
 	var door: Vector3 = b.door
 	var node: Node3D = b.node
 	var away := Vector3(door.x - node.global_position.x, 0.0, door.z - node.global_position.z).normalized()
+	if b.has("visit"):
+		node.queue_free.call_deferred()
 	var out := door + away * 0.4
 	out.y = maxf(float(world.height_at(out.x, out.z)), door.y) + 0.1
 	player.global_position = out
@@ -305,7 +307,7 @@ func room_size() -> Vector2:
 
 
 func in_hut() -> bool:
-	return is_inside() and str(inside.get("kind", "")) == "hut"
+	return is_inside() and str(inside.get("kind", "")) == "hut" and not inside.has("visit")
 
 
 func origin() -> Vector3:
@@ -344,7 +346,8 @@ func _build_room(b: Dictionary) -> void:
 		"harbourmaster": Vector2(11.0, 8.0)}
 	var wd: Vector2 = dims.get(key, Vector2(clampf(size.x * 1.5, 8.0, 12.0), clampf(size.z * 1.45, 7.0, 9.0)))
 	if key == "hut":
-		wd = [Vector2(7.0, 6.0), Vector2(8.5, 7.0), Vector2(10.0, 8.0), Vector2(12.0, 9.0)][clampi(int(world.hut_tier), 0, 3)]
+		var tier_now := int((b.get("visit", {}) as Dictionary).get("tier", world.hut_tier))
+		wd = [Vector2(7.0, 6.0), Vector2(8.5, 7.0), Vector2(10.0, 8.0), Vector2(12.0, 9.0)][clampi(tier_now, 0, 3)]
 	_w = wd.x
 	_d = wd.y
 	_keeper_at = Vector3(0.0, 0.0, -_d * 0.5 + 1.7)
@@ -662,18 +665,52 @@ func _cottage(b: Dictionary) -> void:
 
 
 func _hut_room() -> void:
-	var tier := clampi(int(world.hut_tier), 0, 3)
-	_shell(["wood", "wood", "dark", "dark"][tier], "wall_wood", ["wall_wood", "wall_wood_light", "wall_paper", "wall_paper_green"][tier])
+	# someone else's hut (online), or your own
+	var v: Dictionary = inside.get("visit", {})
+	var tier := clampi(int(v.get("tier", world.hut_tier)), 0, 3)
+	var style: Dictionary = v.get("style", save.get("hut_style", {}))
+	var floor_k := str(style.get("floor", "own"))
+	if floor_k == "own" or not FLOORS.has(floor_k):
+		floor_k = ["wood", "wood", "dark", "dark"][tier]
+	var wall_k := str(style.get("wall", "own"))
+	if wall_k == "own" or not Furniture.WALLS.has(wall_k):
+		wall_k = ["wall_wood", "wall_wood_light", "wall_paper", "wall_paper_green"][tier]
+	_shell(floor_k, "wall_wood", wall_k)
 	# fixed: the bed, the trophy board and a window; the rest is yours to arrange
-	_bed(Vector3(-_w * 0.3, 0.0, -_d * 0.5 + 1.2), "quilt_red", true)
-	_trophy("back", _w * 0.15)
+	_bed(Vector3(-_w * 0.3, 0.0, -_d * 0.5 + 1.2), "quilt_red", v.is_empty())
+	if v.is_empty():
+		_trophy("back", _w * 0.15)
 	_wall("window", "back", _w * 0.38, 0.9)
-	var placed: Array = save.furniture
+	var placed: Array = v.get("furniture", save.furniture)
 	for item in placed:
-		place_furniture(item)
-	_things.append({"pos": _to_world(Vector3(-0.9, 0.0, _d * 0.5 - 1.0)), "text": "Space: Arrange your furniture (or press B)",
-		"kind": "arrange", "data": 0})
+		if item is Dictionary:
+			place_furniture(item)
+	if v.is_empty():
+		_things.append({"pos": _to_world(Vector3(-0.9, 0.0, _d * 0.5 - 1.0)), "text": "Space: Arrange your furniture (or press B)",
+			"kind": "arrange", "data": 0})
+	else:
+		_things.append({"pos": _to_world(Vector3(-0.9, 0.0, _d * 0.5 - 1.0)), "text": "Space: Look around",
+			"kind": "look", "data": "%s has made it cosy in here." % str(v.get("owner", "Your friend"))})
 	_keeper_at = Vector3(0.0, 0.0, 0.0)
+
+
+## Online: step into someone else's hut (their tier, walls, floor and furniture). You walk
+## out where you came in.
+func visit_hut(data: Dictionary) -> void:
+	if _busy or is_inside():
+		return
+	var anchor := Node3D.new()
+	anchor.name = "VisitAnchor"
+	add_child(anchor)
+	var here := player.global_position
+	anchor.global_position = here - player.facing * 0.6
+	var b := {"kind": "hut", "role": "", "name": "%s's Hut" % str(data.get("owner", "A friend")), "town": "",
+		"door": here, "node": anchor, "size": Vector3(4.0, 2.6, 3.6), "visit": data}
+	enter(b)
+
+
+func visiting() -> bool:
+	return is_inside() and inside.has("visit")
 
 
 ## Fixed things in your hut that furniture can't overlap: floor rectangles (room-local,
@@ -706,8 +743,8 @@ func place_furniture(item: Dictionary) -> Node3D:
 		var side := str(item.get("side", "back"))
 		var along := float(item.get("along", 0.0))
 		var y := float(data.get("y", 1.2))
-		if id == "fireplace":
-			_fireplace(side, along)
+		if id == "fireplace" or id == "stone_hearth":
+			_fireplace(side, along, id)
 		else:
 			_wall(id, side, along, y)
 	else:
@@ -725,7 +762,7 @@ func place_furniture(item: Dictionary) -> Node3D:
 				_barrels(Vector3(0.0, 0.0, -0.4))
 			"tank":
 				_tank(Vector3.ZERO, Vector3(1.4, 0.9, 0.8), Color(0.25, 0.6, 0.8), _caught_fish(3))
-			"rug_red", "rug_blue", "rug_green":
+			"rug_red", "rug_blue", "rug_green", "rug_hide":
 				var fp := Furniture.footprint(id, 0)
 				_rug(id, Vector3.ZERO, fp)
 			"bookshelf":
@@ -874,8 +911,8 @@ func _decor(tex: String) -> Sprite3D:
 	return s
 
 
-func _fireplace(side: String, along: float) -> void:
-	_wall("fireplace", side, along, 0.0)
+func _fireplace(side: String, along: float, tex := "fireplace") -> void:
+	_wall(tex, side, along, 0.0)
 	var f := _decor("fire")
 	if f:
 		f.hframes = 4
@@ -930,6 +967,7 @@ func _rug(tex: String, at: Vector3, size: Vector2) -> void:
 	var m := StandardMaterial3D.new()
 	m.albedo_texture = load("res://art/decor/%s.png" % tex)
 	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
 	m.roughness = 1.0
 	var q := PlaneMesh.new()
 	q.size = size

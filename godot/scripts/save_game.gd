@@ -45,6 +45,13 @@ static func defaults() -> Dictionary:
 		"story": {"ch": 0, "step": 0, "flags": {}},  # the main story
 		"look": {},  # your character: body, skin, hair, colours, clothes
 		"wardrobe": [],  # clothes you own
+		"hut_style": {"wall": "own", "floor": "own"},  # Tess's Decorate tab
+		"hut_styles_owned": [],  # "wall:wall_stone", "floor:tile"...
+		# Harbour Life: farming, foraging, mining, hunting and crafting (land.gd)
+		"land": {"items": {}, "tools": {}, "skills": {}, "beds": [], "used": {}, "mined": {}, "notes": {},
+			"flags": {}, "bed_count": 6},
+		"land_story": {"ch": 0, "step": 0, "count": 0, "flags": {}},
+		"online": {"name": ""},
 	}
 
 

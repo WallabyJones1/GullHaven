@@ -13,7 +13,8 @@ const Boats := preload("res://scripts/boats.gd")
 
 const BRIDGE := {"price": 400, "mats": {"wood": 30, "rope": 8}}
 const RANGER := {"price": 200, "fish": 4, "zone": "estuary"}
-const EMBER := {"price": 1500, "species": 30, "tier": 3}
+const EMBER := {"price": 1500, "species": 30, "tier": 3, "notes": 12}
+const LandData := preload("res://scripts/land_data.gd")
 
 var world: Node3D
 var town: Node
@@ -95,14 +96,26 @@ func _species() -> int:
 	return n
 
 
+## Different things grown, foraged, mined, hunted and cooked (Harbour Life).
+func _land_notes() -> int:
+	var notes: Dictionary = save.land.notes
+	var n := 0
+	for id in notes:
+		var it: Dictionary = LandData.ITEMS.get(id, {})
+		if not it.is_empty() and str(it.cat) in ["crop", "forage", "ore", "gem", "bar", "game", "meal"]:
+			n += 1
+	return n
+
+
 func _ranger(keeper: String, _title: String, _kind: String) -> void:
 	if has("permit_ranger"):
 		town.say(keeper, "The gate's open for you. Mirrorlake's up the north road past the falls. Mind the cliffs.")
 		return
 	var got := _count_zone(str(RANGER.zone))
 	var need := int(RANGER.fish)
-	if got < need:
-		town.say(keeper, "The highlands are fragile country. Show me you know the river first: catch %d kinds of estuary fish (you've %d). Then the permit's yours for %d Shells." % [need, got, int(RANGER.price)])
+	var vouched := bool((save.land.flags as Dictionary).get("ash_vouched", false))
+	if got < need and not vouched:
+		town.say(keeper, "The highlands are fragile country. Show me you know the river first: catch %d kinds of estuary fish (you've %d), or get Ash the hunter to vouch for you. Then the permit's yours for %d Shells." % [need, got, int(RANGER.price)])
 		audio.play("pin", -6.0)
 		return
 	if int(save.shells) < int(RANGER.price):
@@ -129,10 +142,12 @@ func _harbourmaster(keeper: String, _title: String, _kind: String) -> void:
 	var owned: Array = save.boats
 	for k in owned:
 		best_tier = maxi(best_tier, int(Boats.boat_info(str(k)).get("tier", 0)))
-	if got < need or best_tier < int(EMBER.tier):
+	var notes := _land_notes()
+	var seasoned := got >= need or notes >= int(EMBER.notes)
+	if not seasoned or best_tier < int(EMBER.tier):
 		var wants: Array[String] = []
-		if got < need:
-			wants.append("%d kinds of fish in your Logbook (you've %d)" % [need, got])
+		if not seasoned:
+			wants.append("%d kinds of fish in your Logbook (you've %d), or %d kinds of land finds in your Field Notes (you've %d)" % [need, got, int(EMBER.notes), notes])
 		if best_tier < int(EMBER.tier):
 			wants.append("a Skiff or bigger to get you there")
 		town.say(keeper, "Ember Isle's a live volcano. I only give permits to seasoned fishers: %s. And %d Shells for the paperwork." % [" and ".join(wants), int(EMBER.price)])

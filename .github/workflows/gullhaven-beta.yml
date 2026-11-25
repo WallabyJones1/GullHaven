@@ -14,12 +14,14 @@
 #   push to hd2d, the web build goes to the godot-web branch, which Railway serves as the
 #   public site (see godot/SHARING.md).
 # - You can also run it by hand from the Actions tab (Run workflow, branch hd2d).
+# - Pushes to harbour-life (farming, mining, hunting, crafting and the shared town) build
+#   and test the same way, as downloads on the run's page. Only hd2d publishes the site.
 name: Gullhaven beta builds
 
 on:
   push:
-    branches: [hd2d]
-    paths: ["godot/**", ".github/workflows/gullhaven-beta.yml", ".github/scripts/**"]
+    branches: [hd2d, harbour-life]
+    paths: ["godot/**", "mp-server/**", ".github/workflows/gullhaven-beta.yml", ".github/scripts/**"]
     tags: ["beta-*"]
   release:
     types: [published]
@@ -80,7 +82,17 @@ jobs:
       - name: Play through the game with no one at the controls (smoke test)
         id: smoke
         run: |
-          timeout 600 ./godot-bin --headless --fixed-fps 60 --path godot -- --smoke > smoke.log 2>&1 || true
+          ONLINE=""
+          if [ -f mp-server/server.js ]; then
+            # the shared town: a server and a bot player for the smoke test to meet
+            (cd mp-server && npm install --silent && npm test) || echo "mp-server test failed"
+            (cd mp-server && PORT=8787 DATA_FILE=/tmp/huts.json node server.js > ../mp-server.log 2>&1 &)
+            sleep 1
+            (cd mp-server && node bot.js ws://127.0.0.1:8787 > ../mp-bot.log 2>&1 &)
+            sleep 1
+            ONLINE="--online=ws://127.0.0.1:8787"
+          fi
+          timeout 600 ./godot-bin --headless --fixed-fps 60 --path godot -- --smoke $ONLINE > smoke.log 2>&1 || true
           echo "failed=$(grep -oP 'SMOKE DONE, \K[0-9]+' smoke.log || echo unfinished)" >> "$GITHUB_OUTPUT"
           echo "$(grep -c 'SMOKE CHECK ok' smoke.log) checks passed"
           # (headless Godot can't name keys from the keyboard layout: that noise is dropped)

@@ -9,6 +9,7 @@ extends Node
 
 const Character := preload("res://scripts/character.gd")
 const Sea := preload("res://scripts/sea.gd")
+const LandData := preload("res://scripts/land_data.gd")
 
 var main: Node
 var _steps: Array = []
@@ -70,6 +71,25 @@ func setup(m: Node, quick := false) -> void:
 		["run the story to the end", _story_to_end, 10],
 		["skip the story notes", _skip_talk, 5],
 		["summaries", _summaries, 5],
+		["Harbour Life: meet Farmer Bramble", _land_meet, 5],
+		["finish the talk", _skip_talk, 5],
+		["dig, plant and water a bed", _land_garden, 5],
+		["grow and harvest", _land_harvest, 5],
+		["chop, forage and mine", _land_gather, 10],
+		["fix Gran's workbench and craft", _land_craft, 10],
+		["close the bench", _land_close_menu, 5],
+		["cook at the pot", _land_cook, 10],
+		["close the pot", _land_close_menu, 5],
+		["Bramble's stall", _land_shop, 10],
+		["close the stall", _land_close_menu, 5],
+		["Tess decorates the hut", _decorate, 10],
+		["close the carpenter", _close_trade, 5],
+		["spot a rabbit", _land_hunt, 10],
+		["loose an arrow", _land_shoot, 10],
+		["visit a friend's hut", _visit_hut, 40],
+		["look round it", _visit_check, 5],
+		["leave the friend's hut", _leave_visit, 40],
+		["Harbour Life so far", _land_check, 5],
 		["zoom with the wheel, a trackpad and keys", _zoom, 30],
 		["check the zoom", _zoom_check, 5],
 		["into the lighthouse", _into_lighthouse, 45],
@@ -103,6 +123,17 @@ func setup(m: Node, quick := false) -> void:
 
 
 func _process(_delta: float) -> void:
+	if _i == 0 and not _quick:
+		for a in OS.get_cmdline_user_args():
+			if str(a).begins_with("--online="):
+				var at := 0
+				for k in _steps.size():
+					if str(_steps[k][0]) == "Harbour Life so far":
+						at = k + 1
+				_steps.insert(at, ["join the shared town", _online_join, 120])
+				_steps.insert(at + 1, ["see who's here, chat, visit", _online_check, 90])
+				_steps.insert(at + 2, ["check the visit", _online_visit_check, 40])
+				break
 	if _wait > 0:
 		_wait -= 1
 		return
@@ -138,6 +169,203 @@ func _look_report() -> void:
 
 func _noop() -> void:
 	pass
+
+
+# --- Harbour Life and the shared town ---------------------------------------------------------
+
+func _land_meet() -> void:
+	var b: Dictionary = main.harbour.folk.get("Farmer Bramble", {})
+	_check(not b.is_empty(), "Farmer Bramble is in the world")
+	main.player.global_position = Vector3(423.5, 1.3, 690.0)
+	main.land_story.on_talk("Farmer Bramble")
+
+
+func _land_garden() -> void:
+	var land: Node = main.land
+	_check(int(land.tool_tier("hoe")) > 0 and int(land.tool_tier("can")) > 0, "Bramble gave us Gran's hoe and watering can")
+	land.use({"kind": "bed", "i": 0})
+	land._planted(0, 0, ["seed_turnip"])
+	land.use({"kind": "bed", "i": 0})
+	var bed: Dictionary = main.save.land.beds[0]
+	_check(str(bed.s) == "crop" and float(bed.wet) > float(main.sea.now()), "a bed dug, planted with turnips and watered")
+	_check(int(main.save.land_story.ch) == 0 and int(main.save.land_story.step) >= 4, "the Harbour Life story moved on (step %d)" % int(main.save.land_story.step))
+
+
+func _land_harvest() -> void:
+	var land: Node = main.land
+	var bed: Dictionary = main.save.land.beds[0]
+	bed["grow"] = 99999.0
+	land._refresh_garden()
+	land.use({"kind": "bed", "i": 0})
+	_check(int(land.count("turnip")) >= 2, "harvested turnips (%d)" % int(land.count("turnip")))
+
+
+func _land_gather() -> void:
+	var land: Node = main.land
+	land.set_tool("axe", 1)
+	land.set_tool("pick", 1)
+	var wood := int(land.count("mat:wood"))
+	for what in ["tree", "bush", "fern", "flowers", "stones", "boulder"]:
+		land._use_veg({"what": what, "plant": "oak0", "key": "smoke:" + what, "at": Vector3(411.0, 1.2, 675.0)})
+	_check(int(land.count("mat:wood")) > wood and int(land.count("stone")) > 0 and int(land.count("berries")) > 0, "chopped wood, picked berries, gathered stone")
+	var per := {}
+	for rec in land._rocks:
+		per[str(rec.quarry)] = int(per.get(str(rec.quarry), 0)) + 1
+	print("  rocks per quarry: ", per)
+	_check(land._rocks.size() >= 20, "%d rocks to mine round the coast" % land._rocks.size())
+	for rec in land._rocks:
+		if str(rec.kind) in ["stone", "copper", "coal"] and (rec.node as Node3D).visible:
+			var at: Vector3 = rec.pos
+			main.player.global_position = at + Vector3(1.2, 0.3, 0.0)
+			var it: Dictionary = land._find_near(main.player.global_position, Vector3(-1.0, 0.0, 0.0))
+			_check(str(it.get("kind", "")) == "rock", "standing at a %s rock, it's the thing to use" % str(rec.kind))
+			land._mine(rec)
+			_check(not (rec.node as Node3D).visible, "mined it; rubble until tomorrow")
+			break
+	# the trees and boulders of the world are found by facing them
+	main.player.global_position = Vector3(411.0, 1.3, 676.2)
+	var t: Dictionary = land._veg_near(main.player.global_position, Vector3(0.0, 0.0, -1.0))
+	_check(str(t.get("kind", "")) == "veg", "facing a tree by the hut, there's something to gather (%s)" % str(t.get("what", "nothing")))
+
+
+func _land_craft() -> void:
+	var land: Node = main.land
+	land.add_item("mat:wood", 20)
+	land.add_item("stone", 10)
+	land._use_bench()
+	_check(bool(land.flag("bench_fixed")), "fixed Gran's workbench")
+	land.add_item("copper_bar", 3)
+	land.add_item("hide", 2)
+	land.add_xp("crafting", 60)
+	main.land_menu.open_craft("bench")
+	for t in (main.land_menu._tabs_list as Array).size():
+		main.land_menu._show_tab(t)
+	var recipes: Dictionary = {}
+	for r: Dictionary in LandData.RECIPES:
+		recipes[str(r.id)] = r
+	main.land_menu._make(recipes["axe_copper"], 0)
+	main.land_menu._make(recipes["chair"], 0)
+	main.land_menu._make(recipes["arrows"], 0)
+	_check(int(land.tool_tier("axe")) >= 2, "made a copper axe")
+	_check(int((main.save.furniture_inv as Dictionary).get("chair", 0)) > 0, "made a chair for the hut")
+
+
+func _land_close_menu() -> void:
+	if bool(main.land_menu.is_open):
+		main.land_menu.close()
+	get_tree().paused = false
+
+
+func _land_cook() -> void:
+	var land: Node = main.land
+	land.add_item("herbs", 2)
+	land.add_item("turnip", 2)
+	main.land_menu.open_craft("pot")
+	main.land_menu._show_tab(0)
+	for r: Dictionary in LandData.RECIPES:
+		if str(r.id) == "veg_stew":
+			main.land_menu._make(r, 0)
+	_check(int(land.count("veg_stew")) > 0, "cooked a vegetable stew")
+
+
+func _land_shop() -> void:
+	var land: Node = main.land
+	main.land_menu.open_shop("bramble", "Farmer Bramble")
+	for t in (main.land_menu._tabs_list as Array).size():
+		main.land_menu._show_tab(t)
+	var shells := int(main.save.shells)
+	main.land_menu._buy_item("seed_carrot", 14, 1)
+	main.land_menu._sell("berries", true)
+	_check(int(land.count("seed_carrot")) > 0 and int(land.count("berries")) == 0, "bought carrot seeds and sold the berries")
+	var beds := int(land.bed_count())
+	main.land_menu._buy_bed()
+	_check(int(land.bed_count()) == mini(beds + 1, 12), "Bramble dug another garden bed")
+	print("  shells %d -> %d" % [shells, int(main.save.shells)])
+
+
+func _decorate() -> void:
+	main.trade.open("Tess", "Carpenter", "carpenter")
+	for t in (main.trade.TABS["carpenter"] as Array).size():
+		main.trade._show_tab(t)
+	main.trade._set_style("wall", "wall_stone")
+	main.trade._set_style("floor", "tile")
+	_check(str(main.save.hut_style.wall) == "wall_stone" and str(main.save.hut_style.floor) == "tile", "Tess put up stone walls and a tiled floor")
+
+
+func _close_trade() -> void:
+	if bool(main.trade.is_open):
+		main.trade.close()
+	get_tree().paused = false
+
+
+func _land_hunt() -> void:
+	var land: Node = main.land
+	land.set_tool("bow", 1)
+	land.add_item("arrows", 5)
+	main.player.global_position = Vector3(330.0, 6.0, 300.0)
+	var p: Vector3 = main.player.global_position
+	land._spawn_animal("rabbit", p.x, p.z - 6.0)
+	var a: Dictionary = land._animals.back()
+	main.player.face(Vector3(0.0, 0.0, -1.0))
+	var seen: Dictionary = land._animal_in_sight(main.player.global_position, Vector3(0.0, 0.0, -1.0))
+	_check(str(seen.get("kind", "")) == "animal", "a rabbit in sight, ready to aim at")
+	land._start_aim(a)
+	_check(bool(land._aim_layer.visible) and bool(main.hud.modal), "drew the bow: the aim bar is up")
+
+
+func _land_shoot() -> void:
+	var land: Node = main.land
+	var meat := int(land.count("meat"))
+	if not (land._aim as Dictionary).is_empty():
+		var a: Dictionary = land._aim.a
+		land._bagged(a)
+		land._end_aim()
+	_check(int(land.count("meat")) > meat and not bool(main.hud.modal), "got the rabbit; the bow's lowered")
+
+
+func _visit_hut() -> void:
+	main.player.global_position = Vector3(421.0, 1.3, 682.0)
+	main.interiors.visit_hut({"owner": "Robin", "tier": 2, "style": {"wall": "wall_paper_blue", "floor": "stone"},
+		"furniture": [{"id": "rocking_chair", "x": 1.0, "z": 0.0, "rot": 0}, {"id": "antler_mount", "side": "back", "along": -1.0},
+		{"id": "rug_hide", "x": 0.0, "z": 1.0, "rot": 0}, {"id": "stone_hearth", "side": "left", "along": 0.0}]})
+
+
+func _visit_check() -> void:
+	_check(bool(main.interiors.visiting()) and not bool(main.interiors.in_hut()), "inside Robin's hut, as a visitor (can't rearrange it)")
+	_check(int((main.interiors.furniture_nodes as Array).size()) == 4, "Robin's furniture is all there")
+
+
+func _leave_visit() -> void:
+	main.interiors.leave()
+
+
+func _land_check() -> void:
+	_check(not bool(main.interiors.is_inside()), "back outside after the visit")
+	print("  ", str(main.land.skills_text()).replace("\n", "  "))
+	print("  ", str(main.land_story.summary()), "   notes ", int(main.land.notes_count()))
+	_check(str(main.land.bag_text()).length() > 40, "the bag lists what we've gathered")
+
+
+func _online_join() -> void:
+	var url := ""
+	for a in OS.get_cmdline_user_args():
+		if str(a).begins_with("--online="):
+			url = str(a).substr(9)
+	main.online.connect_to(url, "Smoke")
+
+
+func _online_check() -> void:
+	var o: Node = main.online
+	_check(bool(o.is_online()), "joined the shared town (%s)" % str(o.status_text()))
+	_check((o.remotes as Dictionary).size() >= 1, "someone else is here: %s" % str(o.players_list()))
+	o._send({"t": "chat", "text": "hello from the smoke test"})
+	o.request_visit(int((o.players_list() as Array)[0].id) if not (o.players_list() as Array).is_empty() else -1)
+
+
+func _online_visit_check() -> void:
+	_check(bool(main.interiors.visiting()), "visiting the other player's hut over the network")
+	main.interiors.leave()
+	main.online.leave()
 
 
 func _skip_opening() -> void:

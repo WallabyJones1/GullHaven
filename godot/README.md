@@ -191,6 +191,51 @@ Journal, Map, Controls, Settings, and Save and quit. Screens opened from it come
 
 The save lives in Godot's user folder (`user://gullhaven_save.json`).
 
+## Harbour Life (this branch)
+
+Things to do on land, a second story, and a shared online town. The fishing game is all
+still here and plays the same; none of this gets in its way.
+
+- **Gran's garden.** Farmer Bramble, beside your hut, gives you Gran's hoe and watering can.
+  Face a bed: dig it over, plant seeds, water them (rain does it for you). Turnips take six
+  minutes of watered growing, pumpkins half an hour. Six crops; Bramble sells seeds and
+  digs more beds (up to twelve). Compost makes things grow half again as fast.
+- **Foraging.** Any tree gives wood once a town day (you need an axe), bramble bushes give
+  blackberries, ferns herbs, flowers wildflowers, the little rocks stones, and mushrooms pop
+  up in the woods. Wood counts as driftwood for the hut, the bridge and furniture.
+- **Mining.** Six quarries round the coast (south of the hut, the Willowford hills, the
+  highlands, Gull Rock, Wrecker's Cove and Ember Isle) with stone, coal, copper, iron,
+  silver, gold, quartz, amethyst and ember crystal. Better pickaxes crack harder veins.
+  Rocks come back the next town day.
+- **Hunting.** With a bow, face a rabbit, pheasant, duck, wild boar or red deer and press
+  Space to draw; press it again when the gold line is in the green. Run at them and they
+  bolt. Meat, hides, feathers and antlers.
+- **Crafting and cooking.** Gran's workbench in the yard (fix it first) makes tools, smelts
+  ore, twists wheat into twine (and twine into rope), and makes fifteen new pieces of hut
+  furniture: a rocking chair, hide rug, antler mount, stone hearth, crystal lamp and more.
+  The cook pot makes stews, pies, tarts and a roast dinner.
+- **Buying and selling.** Bramble (by the hut) buys crops, forage and cooking; Delve the
+  smith (Willowford) buys ore, bars and gems; Ash the hunter (Willowford) buys game. Each
+  sells tools.
+- **Five land skills** (farming, foraging, mining, hunting, crafting) level up as you go,
+  and everything earns XP for your level too. Your Field Notes count the different land
+  finds you've gathered.
+- **A second story: the Tideday Fair.** Six chapters with Bramble, Delve and Ash to bring
+  back the spring fair Gran used to run. Its next step shows in green under the main story,
+  with a green beam of light. It opens the map without fishing: Ash vouches for you with
+  the ranger, and the harbourmaster takes 12 kinds of land finds instead of 30 fish.
+- **Your hut.** Tess's new Decorate tab changes your walls and floors (seven walls, five
+  floors; bought once, swapped back free).
+- **Townsfolk requests** no longer sit in the corner of the screen. They're listed in the
+  Journal (Quests), and Settings can put them back in the corner.
+- **Play online.** Main menu, Play online with friends: run the server in `mp-server/`
+  (`npm install`, `npm start`) and join it. You see each other, Enter opens the chat, and
+  the game menu's Online page lets you visit each other's huts. Your own save comes with
+  you. Single player is unchanged.
+
+Art for all of it: `python3 tools/godot_land_art.py` (icons, crops, rocks, animals, the
+yard and the furniture).
+
 ## Layout
 
 ```

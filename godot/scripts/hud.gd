@@ -84,6 +84,11 @@ var clock_label: Label
 var env_label: Label
 var log_label: Label
 var requests_panel: PanelContainer
+var objective2_panel: PanelContainer  # the Harbour Life story's next step
+var objective2_title: Label
+var objective2_label: Label
+var show_requests := false  # townsfolk fish requests in the corner (off unless chosen in Settings)
+var _last_reqs: Array = []
 var requests_list: VBoxContainer
 var bait_label: Label
 var prompt_label: RichTextLabel
@@ -199,6 +204,18 @@ func setup(s: Node, sv: Dictionary) -> void:
 	ocol.add_child(objective_label)
 	objective_panel.visible = false
 	right.add_child(objective_panel)
+	objective2_panel = UI.panel()
+	var o2 := VBoxContainer.new()
+	o2.add_theme_constant_override("separation", 2)
+	objective2_panel.add_child(o2)
+	objective2_title = UI.label("", 18, UI.GOOD, true)
+	o2.add_child(objective2_title)
+	objective2_label = UI.label("", 20, UI.CREAM)
+	objective2_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	objective2_label.custom_minimum_size = Vector2(340.0, 0.0)
+	o2.add_child(objective2_label)
+	objective2_panel.visible = false
+	right.add_child(objective2_panel)
 	requests_panel = UI.panel()
 	right.add_child(requests_panel)
 	var rcol := VBoxContainer.new()
@@ -444,12 +461,29 @@ func set_clock(hour: float) -> void:
 		env_label.text = "%s   %s   %s%s" % [str(e.season).capitalize(), SKY_NAMES.get(e.sky, ""), TIDE_NAMES.get(e.tide_state, ""), moon]
 
 
+## The Harbour Life story's next step, under the main story's.
+func set_objective2(heading: String, text: String) -> void:
+	if objective2_panel == null:
+		return
+	objective2_panel.visible = text != ""
+	objective2_title.text = heading
+	objective2_label.text = Glyphs.plain(text)
+
+
+## Townsfolk requests only sit in the corner if you've asked for them (Settings); otherwise
+## they're in the Journal, and you can just ask people what they're after.
+func set_show_requests(on: bool) -> void:
+	show_requests = on
+	set_requests(_last_reqs)
+
+
 func set_requests(reqs: Array) -> void:
+	_last_reqs = reqs
 	if requests_list == null:
 		return
 	for c in requests_list.get_children():
 		c.queue_free()
-	requests_panel.visible = not reqs.is_empty()
+	requests_panel.visible = show_requests and not reqs.is_empty()
 	for req in reqs:
 		var e: Dictionary = sea.by_id.get(req.id, {})
 		var what := str(e.get("n", req.id))

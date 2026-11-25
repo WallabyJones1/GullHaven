@@ -43,7 +43,8 @@ to everyone playing the beta. Tell us what you find!
 static var fresh_start := false  # New game: skip the menu after the reload and go straight in
 
 var mode := ""  # "title", "intro", "pause", "screen" (something opened from the menu) or ""
-var settings := {"music": 0.8, "effects": 1.0, "fullscreen": false, "quality": true, "seen_opening": false}
+var settings := {"music": 0.8, "effects": 1.0, "fullscreen": false, "quality": true, "seen_opening": false,
+	"show_requests": false, "online_name": "", "online_server": ""}
 var _root: Control
 var _box: VBoxContainer
 var _sub: Label
@@ -71,6 +72,7 @@ func setup(m: Node, h: CanvasLayer, a: Node, p: CharacterBody3D, c: Camera3D) ->
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_load_settings()
 	_apply_settings()
+	hud.set_show_requests(bool(settings.show_requests))
 	# the game menu: a panel in the middle of the screen
 	_root = Control.new()
 	_root.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -200,6 +202,7 @@ func show_title() -> void:
 		_button("New game", _confirm_new)
 	else:
 		_button("Start a new game", _start)
+	_button("Play online with friends", _online_page.bind("title"))
 	_button("Settings", _settings_page.bind("title"))
 	_button("Controls", _controls_page.bind("title"))
 	_button("Watch the opening", _replay_opening)
@@ -299,7 +302,8 @@ func _pause_page() -> void:
 	_box.add_child(grid)
 	for pair in [["Fisher", _fisher_page], ["Bag", _open_screen.bind("bag")], ["Logbook", _open_screen.bind("logbook")],
 			["Journal", _open_screen.bind("journal")], ["Map", _open_screen.bind("map_screen")], ["Controls", _controls_page],
-			["Settings", _settings_page.bind("pause")], ["Save" if OS.has_feature("web") else "Save and quit", _quit]]:
+			["Settings", _settings_page.bind("pause")], ["Online", _online_page.bind("pause")],
+			["Save" if OS.has_feature("web") else "Save and quit", _quit]]:
 		var b := UI.button(str(pair[0]), 24)
 		b.alignment = HORIZONTAL_ALIGNMENT_CENTER
 		b.custom_minimum_size = Vector2(250.0, 0.0)
@@ -465,6 +469,85 @@ func _rich(text: String, width: float) -> RichTextLabel:
 	return t
 
 
+# --- playing online ---------------------------------------------------------------------------
+
+## Join a shared town (see mp-server/ in the repo), see who's there, visit their huts.
+func _online_page(from: String) -> void:
+	_from = from
+	_clear()
+	_page = "online"
+	var online: Node = main.get("online")
+	_sub.text = "Play online"
+	var info := UI.label(str(online.status_text()) if online else "", 20, UI.SKY)
+	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	info.custom_minimum_size = Vector2(560.0, 0.0)
+	_box.add_child(info)
+	if online and online.is_online():
+		var people: Array = online.players_list()
+		if people.is_empty():
+			_box.add_child(UI.label("Nobody else is here yet. Tell a friend the server address!", 20, UI.CREAM))
+		for p in people:
+			_button("Visit %s's hut" % str(p.name), _visit.bind(int(p.id)))
+		_box.add_child(Glyphs.bind(UI.label("", 18, UI.DIM), "Press Enter in the game to chat."))
+		_button("Leave the shared town", _leave_online)
+	else:
+		_box.add_child(UI.label("Your name", 20, UI.GOLD, true))
+		var name_edit := _edit(str(settings.online_name), "Your name in town")
+		_box.add_child(name_edit)
+		_box.add_child(UI.label("Server address", 20, UI.GOLD, true))
+		var server_edit := _edit(str(settings.online_server), "ws://localhost:8787")
+		_box.add_child(server_edit)
+		var note := UI.label("Your own save comes with you. Run the server from mp-server/ in the game's folder (npm start), or ask a friend for theirs.", 17, UI.DIM)
+		note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		note.custom_minimum_size = Vector2(560.0, 0.0)
+		_box.add_child(note)
+		_button("Join", _join_online.bind(name_edit, server_edit))
+	_button("Back", show_title if from == "title" else _pause_page)
+	_focus_first()
+
+
+func _edit(text: String, hint: String) -> LineEdit:
+	var e := LineEdit.new()
+	e.text = text
+	e.placeholder_text = hint
+	e.max_length = 120
+	e.custom_minimum_size = Vector2(560.0, 0.0)
+	e.add_theme_font_override("font", UI.font())
+	e.add_theme_font_size_override("font_size", 22)
+	return e
+
+
+func _join_online(name_edit: LineEdit, server_edit: LineEdit) -> void:
+	var online: Node = main.get("online")
+	if online == null:
+		return
+	var nm := name_edit.text.strip_edges()
+	if nm == "":
+		nm = "Fisher"
+	settings.online_name = nm
+	settings.online_server = server_edit.text.strip_edges()
+	_save_settings()
+	online.call("connect_to", str(settings.online_server), nm)
+	if _from == "title":
+		_start()
+	else:
+		close_pause()
+
+
+func _visit(id: int) -> void:
+	var online: Node = main.get("online")
+	close_pause()
+	if online:
+		online.call("request_visit", id)
+
+
+func _leave_online() -> void:
+	var online: Node = main.get("online")
+	if online:
+		online.call("leave")
+	_online_page(_from)
+
+
 # --- settings -------------------------------------------------------------------------------
 
 func _settings_page(from: String) -> void:
@@ -488,6 +571,13 @@ func _settings_page(from: String) -> void:
 	q.add_theme_font_size_override("font_size", 22)
 	q.toggled.connect(_on_quality)
 	_box.add_child(q)
+	var rq := CheckButton.new()
+	rq.text = "Show townsfolk fish requests in the corner"
+	rq.button_pressed = bool(settings.show_requests)
+	rq.add_theme_font_override("font", UI.font(true))
+	rq.add_theme_font_size_override("font_size", 22)
+	rq.toggled.connect(_on_requests)
+	_box.add_child(rq)
 	_button("Back", show_title if from == "title" else _pause_page)
 	_focus_first()
 
@@ -518,6 +608,12 @@ func _on_fullscreen(on: bool) -> void:
 func _on_quality(on: bool) -> void:
 	settings.quality = on
 	main.set_quality(on, false)
+	_save_settings()
+
+
+func _on_requests(on: bool) -> void:
+	settings.show_requests = on
+	hud.set_show_requests(on)
 	_save_settings()
 
 

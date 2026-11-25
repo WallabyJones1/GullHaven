@@ -18,6 +18,7 @@ var sidequests: Node3D
 var minigames: Node3D
 var companion: Node3D
 var story: Node  # the main story
+var land_story: Node  # Harbour Life
 var is_open := false
 var _tab := 0
 var _tabs: Array[Button] = []
@@ -139,6 +140,20 @@ func _quest_text() -> String:
 	if story:
 		lines.append("[color=#ffd24d][b]The story[/b][/color]")
 		lines.append_array(story.journal_lines())
+		lines.append("")
+	if land_story:
+		lines.append("[color=#8ad08a][b]Harbour Life[/b][/color]")
+		lines.append_array(land_story.journal_lines())
+		lines.append("")
+	var reqs: Array = save.requests
+	if not reqs.is_empty():
+		lines.append("[color=#ffd24d][b]Townsfolk requests[/b][/color] (optional: catch one that fits and bring it over)")
+		for req in reqs:
+			var e: Dictionary = sea.by_id.get(req.id, {})
+			var what := str(e.get("n", req.id))
+			if float(req.get("min", 0.0)) > 0.0:
+				what += " %d cm+" % int(req.min)
+			lines.append("%s wants: %s (%d Shells)%s" % [req.who, what, int(req.get("reward", 0)), "   [color=#8ad08a]Ready![/color]" if req.held else ""])
 		lines.append("")
 	lines.append("[color=#ffd24d][b]Side quests[/b][/color]")
 	lines.append_array(sidequests.journal_lines())
