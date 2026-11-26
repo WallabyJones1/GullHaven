@@ -191,9 +191,12 @@ func _line_done() -> void:
 			_choices.add_child(l)
 			_choice_btns.append(l)
 		_mark_choice()
-		_hint.text = Glyphs.plain("{updown} choose   {action} answer")
+		_hint.text = "Tap an answer" if Glyphs.device == "touch" else Glyphs.plain("{updown} choose   {action} answer")
 	else:
-		_hint.text = Glyphs.plain("{action} next" if _line < lines.size() - 1 else "{action} close")
+		if Glyphs.device == "touch":
+			_hint.text = "Tap to go on" if _line < lines.size() - 1 else "Tap to close"
+		else:
+			_hint.text = Glyphs.plain("{action} next" if _line < lines.size() - 1 else "{action} close")
 
 
 func _tap_choice(event: InputEvent, i: int) -> void:

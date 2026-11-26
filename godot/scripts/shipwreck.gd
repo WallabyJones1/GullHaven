@@ -64,6 +64,7 @@ func stage() -> int:
 
 ## A new game: shipwrecked, or straight into town?
 func ask(then_town: Callable) -> void:
+	_morning()
 	if auto == "town":
 		then_town.call()
 		return
@@ -78,6 +79,14 @@ func ask(then_town: Callable) -> void:
 				begin()
 			else:
 				then_town.call())
+
+
+## A new game starts in the morning, not in the dark (the town clock runs a day every 24 minutes).
+func _morning() -> void:
+	var h := fposmod(float(main.sea.env.get("hour", 12.0)), 24.0)
+	if h < 6.0 or h > 18.5:
+		main.sea.skip_hours(fposmod(7.5 - h, 24.0))
+		main.save["clock_offset"] = float(main.sea.offset)
 
 
 func begin() -> void:
