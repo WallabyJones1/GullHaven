@@ -266,7 +266,13 @@ func _best_boat() -> int:
 	return best
 
 
+var hold := false  # the shipwreck opening is on: wait till you reach Gullhaven
+
+
 func _process(delta: float) -> void:
+	if hold:
+		_beacon.visible = false
+		return
 	_update_beacon()
 	_poll_t -= delta
 	if _poll_t > 0.0:

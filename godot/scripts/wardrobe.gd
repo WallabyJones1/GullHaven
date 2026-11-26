@@ -63,6 +63,8 @@ var _scroll: ScrollContainer
 var _anim_t := 0.0
 
 
+var _leave_btn: Button
+
 func setup(sv: Dictionary, h: CanvasLayer, a: Node, p: CharacterBody3D) -> void:
 	save = sv
 	hud = h
@@ -118,7 +120,28 @@ func setup(sv: Dictionary, h: CanvasLayer, a: Node, p: CharacterBody3D) -> void:
 	col.add_child(_total)
 	_msg = UI.label("", 20, UI.GOOD)
 	col.add_child(_msg)
-	col.add_child(Glyphs.bind(UI.label("", 18, UI.DIM), "{updown} choose   {leftright} change   {action} on the last row to finish   {cancel} leave"))
+	var foot := HBoxContainer.new()
+	foot.add_theme_constant_override("separation", 16)
+	col.add_child(foot)
+	var hint := Glyphs.bind(UI.label("", 18, UI.DIM), "{updown} choose   {leftright} change   {action} on the last row to finish   {cancel} leave")
+	hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	foot.add_child(hint)
+	# buttons too, for touch screens and mice
+	var leave := UI.button("Back", 20)
+	leave.focus_mode = Control.FOCUS_NONE
+	leave.pressed.connect(func() -> void:
+		if is_open and mode == "shop":
+			look = _before
+			_close())
+	foot.add_child(leave)
+	_leave_btn = leave
+	var done := UI.button("Done", 22)
+	done.focus_mode = Control.FOCUS_NONE
+	done.add_theme_color_override("font_color", UI.GOLD)
+	done.pressed.connect(func() -> void:
+		if is_open:
+			_finish())
+	foot.add_child(done)
 
 
 ## A new game: make your fisher. done() runs when you're happy.
@@ -151,6 +174,8 @@ func _open() -> void:
 	_sel = 0
 	is_open = true
 	visible = true
+	if _leave_btn:
+		_leave_btn.visible = mode == "shop"
 	get_tree().paused = true
 	hud.modal = true
 	_msg.text = ""

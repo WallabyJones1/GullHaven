@@ -29,6 +29,9 @@ var _blip_t := 0.0
 var _opened_frame := -1  # ignore the press that opened it
 
 
+var _tapped := false  # the box was tapped (touch screens)
+
+
 func setup(h: CanvasLayer, a: Node, p: CharacterBody3D) -> void:
 	hud = h
 	audio = a
@@ -47,6 +50,7 @@ func setup(h: CanvasLayer, a: Node, p: CharacterBody3D) -> void:
 	_panel.offset_top = -230.0
 	_panel.offset_bottom = -30.0
 	root.add_child(_panel)
+	_panel.gui_input.connect(_tap_box)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 18)
 	_panel.add_child(row)
@@ -81,6 +85,9 @@ func setup(h: CanvasLayer, a: Node, p: CharacterBody3D) -> void:
 	_hint = UI.label("", 18, UI.DIM)
 	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	col.add_child(_hint)
+	# everything inside lets taps through to the box (which moves the talk on)
+	for c in [row, _face, col, _text, _choices, spacer]:
+		(c as Control).mouse_filter = Control.MOUSE_FILTER_PASS
 
 
 ## Queue a conversation. lines: Array of Strings. portrait: a character sheet (the first
@@ -155,7 +162,9 @@ func _process(delta: float) -> void:
 		if Input.is_action_just_pressed("move_down") or Input.is_action_just_pressed("ui_down"):
 			_choice = (_choice + 1) % _choice_btns.size()
 			_mark_choice()
-	if Input.is_action_just_pressed("action"):
+	var tapped := _tapped
+	_tapped = false
+	if Input.is_action_just_pressed("action") or (tapped and _choice_btns.is_empty()):
 		if _text.visible_characters < total and _text.visible_characters >= 0:
 			_text.visible_characters = total
 			_line_done()
@@ -177,12 +186,34 @@ func _line_done() -> void:
 		for c in choices:
 			var l := UI.label("", 22, UI.CREAM, true)
 			l.text = "   " + str(c)
+			l.mouse_filter = Control.MOUSE_FILTER_STOP  # tap an answer to pick it
+			l.gui_input.connect(_tap_choice.bind(_choice_btns.size()))
 			_choices.add_child(l)
 			_choice_btns.append(l)
 		_mark_choice()
 		_hint.text = Glyphs.plain("{updown} choose   {action} answer")
 	else:
 		_hint.text = Glyphs.plain("{action} next" if _line < lines.size() - 1 else "{action} close")
+
+
+func _tap_choice(event: InputEvent, i: int) -> void:
+	if event is InputEventMouseButton and (event as InputEventMouseButton).pressed and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
+		_choice = i
+		_mark_choice()
+		get_viewport().set_input_as_handled()
+		_finish(i)
+
+
+## A tap or click on the box moves the talk on, like the action key.
+func _tap_box(event: InputEvent) -> void:
+	if event is InputEventMouseButton and (event as InputEventMouseButton).pressed and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
+		_tapped = true
+
+
+func _input(event: InputEvent) -> void:
+	# touch screens: a tap anywhere on the box (or the darkened world) moves the talk on
+	if is_open and event is InputEventScreenTouch and (event as InputEventScreenTouch).pressed and _choice_btns.is_empty():
+		_tapped = true
 
 
 func _mark_choice() -> void:

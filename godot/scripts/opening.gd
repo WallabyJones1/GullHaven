@@ -87,12 +87,14 @@ func setup(m: Node) -> void:
 	if _logo.texture:
 		_logo.custom_minimum_size = _logo.texture.get_size() * 6.0
 	_logo.modulate.a = 0.0
+	_logo.mouse_filter = Control.MOUSE_FILTER_IGNORE  # an invisible logo mustn't eat the menu's taps and clicks
 	col.add_child(_logo)
 	_tag = UI.label(TAGLINE, 30, UI.CREAM, true)
 	_tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_tag.add_theme_constant_override("outline_size", 10)
 	_tag.add_theme_color_override("font_outline_color", Color(0.05, 0.06, 0.12))
 	_tag.modulate.a = 0.0
+	_tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	col.add_child(_tag)
 	_caption = UI.label("", 30, UI.CREAM)
 	_caption.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
@@ -101,8 +103,10 @@ func setup(m: Node) -> void:
 	_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_caption.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_caption.modulate.a = 0.0
+	_caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(_caption)
-	_skip = UI.label("Press any key to skip", 18, UI.DIM)
+	_skip = UI.label("Tap to skip" if DisplayServer.is_touchscreen_available() else "Press any key to skip", 18, UI.DIM)
+	_skip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_skip.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	_skip.offset_left = -320.0
 	_skip.offset_right = -24.0
@@ -331,7 +335,7 @@ func _input(event: InputEvent) -> void:
 	if not playing or _t < 0.3 and _shot == 0:
 		return
 	var pressed := false
-	if event is InputEventKey or event is InputEventJoypadButton or event is InputEventMouseButton:
+	if event is InputEventKey or event is InputEventJoypadButton or event is InputEventMouseButton or event is InputEventScreenTouch:
 		pressed = event.is_pressed() and not event.is_echo()
 	if pressed:
 		get_viewport().set_input_as_handled()

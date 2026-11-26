@@ -144,6 +144,18 @@ func setup(m: Node, quick := false) -> void:
 		["check we climbed out", _swim_check, 5],
 		["plan a walk onto every dock", _plan_docks, 2],
 		["plan a tour of every building", _plan_tour, 5],
+		["shipwrecked on Gull Rock", _wreck_begin, 30],
+		["read Gran's soggy letter", _skip_talk, 10],
+		["gather the wreckage", _wreck_gather, 10],
+		["rig Gran's rod", _wreck_rod, 10],
+		["finish the talk", _skip_talk, 10],
+		["catch two fish", _wreck_fish, 5],
+		["light the fire", _wreck_fire, 10],
+		["finish the talk", _skip_talk, 10],
+		["patch the dinghy", _wreck_boat, 10],
+		["row to Gullhaven", _wreck_row, 30],
+		["meet Marlo", _skip_talk, 10],
+		["check we made it", _wreck_check, 5],
 		["watch the opening again", _replay, 60],
 		["skip it", _skip_opening, 10],
 		["start again", _start, 10],
@@ -587,6 +599,83 @@ func _empire_close() -> void:
 	_check(not bool(main.empire.is_menu_open()), "closed the ledger")
 
 
+func _wreck_begin() -> void:
+	var w: Node = main.shipwreck
+	w.begin()
+	_check(int(w.stage()) == 0 and bool(w.active()), "the shipwreck opening started")
+	_check(Vector2(main.player.global_position.x - 566.0, main.player.global_position.z - 476.0).length() < 3.0, "washed up on Gull Rock")
+	_check(bool(main.story.hold), "the main story waits")
+
+
+func _wreck_gather() -> void:
+	var w: Node = main.shipwreck
+	_check((w._piles as Array).size() >= 4, "there's wreckage to gather (%d piles)" % (w._piles as Array).size())
+	for p in (w._piles as Array).duplicate():
+		main.player.global_position = (p.node as Node3D).global_position + Vector3(0.6, 0.3, 0.0)
+		var it: Dictionary = w.near(main.player.global_position, Vector3.FORWARD)
+		if str(it.get("kind", "")) == "wreck_pile":
+			w.use(it)
+		if int(w.stage()) > 0:
+			break
+	_check(int(w.stage()) == 1, "gathered enough wood and rope")
+
+
+func _wreck_rod() -> void:
+	var w: Node = main.shipwreck
+	main.player.global_position = (w._wreck as Node3D).global_position + Vector3(2.0, 0.4, 0.0)
+	var it: Dictionary = w.near(main.player.global_position, Vector3.FORWARD)
+	_check(str(it.get("kind", "")) == "wreck_rod", "the rod's in the wreck (%s)" % str(it.get("text", "nothing")))
+	if not it.is_empty():
+		w.use(it)
+
+
+func _wreck_fish() -> void:
+	var w: Node = main.shipwreck
+	_check(int(w.stage()) == 2, "rod rigged: time to fish")
+	w._on_catch("mackerel" if main.sea.by_id.has("mackerel") else str(main.sea.by_id.keys()[0]), 30.0, "")
+	for id in main.sea.by_id:
+		if str(main.sea.by_id[id].get("cat", "")) == "fish":
+			w._on_catch(str(id), 30.0, "")
+			if int(w.stage()) > 2:
+				break
+	_check(int(w.stage()) == 3, "caught two fish")
+
+
+func _wreck_fire() -> void:
+	var w: Node = main.shipwreck
+	main.save.materials["wood"] = int(main.save.materials.get("wood", 0)) + 3
+	main.player.global_position = (w._fire as Node3D).global_position + Vector3(1.0, 0.3, 0.0)
+	var it: Dictionary = w.near(main.player.global_position, Vector3.FORWARD)
+	_check(str(it.get("kind", "")) == "wreck_fire", "at the campfire (%s)" % str(it.get("text", "nothing")))
+	if not it.is_empty():
+		w.use(it)
+
+
+func _wreck_boat() -> void:
+	var w: Node = main.shipwreck
+	_check(int(w.stage()) == 4, "fed and warm: now the dinghy")
+	main.save.materials["wood"] = int(main.save.materials.get("wood", 0)) + 10
+	main.save.materials["rope"] = int(main.save.materials.get("rope", 0)) + 5
+	w.W()["wood"] = 6
+	w.W()["rope"] = 3
+	main.player.global_position = (w._wreck as Node3D).global_position + Vector3(2.0, 0.4, 0.0)
+	var it: Dictionary = w.near(main.player.global_position, Vector3.FORWARD)
+	_check(str(it.get("kind", "")) == "wreck_boat", "the dinghy can be patched (%s)" % str(it.get("text", "nothing")))
+	if not it.is_empty():
+		w.use(it)
+	_check((main.save.boats as Array).has("row") and int(w.stage()) == 5, "the dinghy floats")
+
+
+func _wreck_row() -> void:
+	main.player.global_position = Vector3(470.0, float(main.harbour.stand_height(462.0, 577.0)) + 0.4, 577.0)
+
+
+func _wreck_check() -> void:
+	var w: Node = main.shipwreck
+	_check(not bool(w.active()), "made it to Gullhaven")
+	_check(not bool(main.story.hold), "the story carries on")
+
+
 func _land_check() -> void:
 	_check(not bool(main.interiors.is_inside()), "back outside after the visit")
 	print("  ", str(main.land.skills_text()).replace("\n", "  "))
@@ -721,6 +810,7 @@ func _show_title() -> void:
 
 
 func _start() -> void:
+	main.shipwreck.auto = "town"  # the main run starts in Gullhaven; the shipwreck has its own steps
 	main.menus._start()
 
 

@@ -198,11 +198,34 @@ const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.
   '.pck': 'application/octet-stream', '.png': 'image/png', '.ico': 'image/x-icon', '.svg': 'image/svg+xml',
   '.json': 'application/json', '.css': 'text/css', '.txt': 'text/plain; charset=utf-8', '.webmanifest': 'application/manifest+json' };
 // The page learns where to connect before the game starts (same host, ws or wss).
-const INJECT = '<script>window.GULLHAVEN_SERVER=(location.protocol==="https:"?"wss://":"ws://")+location.host;</script>' +
-  '<style>#gh-rotate{display:none}@media (orientation:portrait) and (max-width:900px){#gh-rotate{display:flex;position:fixed;' +
+// Injected into the game's page:
+//  - where the town server is;
+//  - sound that works everywhere: every AudioContext the game makes is resumed on the first
+//    tap, click or key (browsers start them muted), and on iPhones the audio session is set to
+//    "playback" so the game isn't silenced by the ring/silent switch;
+//  - no page scrolling, pull-to-refresh, text selection or long-press menus while playing;
+//  - on phones and tablets a "Tap to play" card that goes full screen (and sideways where the
+//    browser allows), and a "turn your phone sideways" note in portrait.
+const INJECT = '<script>window.GULLHAVEN_SERVER=(location.protocol==="https:"?"wss://":"ws://")+location.host;' +
+  '(function(){var AC=window.AudioContext||window.webkitAudioContext,ctxs=[];' +
+  'if(AC){var GH=class extends AC{constructor(o){super(o);ctxs.push(this);}};window.AudioContext=GH;if(window.webkitAudioContext)window.webkitAudioContext=GH;}' +
+  'try{if(navigator.audioSession)navigator.audioSession.type="playback";}catch(e){}' +
+  'function unlock(){ctxs.forEach(function(c){if(c.state!=="running"){try{c.resume();}catch(e){}}});}' +
+  '["pointerdown","pointerup","touchstart","touchend","mousedown","keydown","click"].forEach(function(e){window.addEventListener(e,unlock,{capture:true,passive:true});});' +
+  'document.addEventListener("visibilitychange",function(){if(!document.hidden)unlock();});' +
+  'window.GH_TAP=function(){unlock();var d=document.documentElement,f=d.requestFullscreen||d.webkitRequestFullscreen;' +
+  'try{var p=f&&f.call(d,{navigationUI:"hide"});if(p&&p.then)p.then(function(){try{screen.orientation.lock("landscape").catch(function(){});}catch(e){}}).catch(function(){});}catch(e){}' +
+  'var t=document.getElementById("gh-tap");if(t)t.remove();};' +
+  'window.addEventListener("DOMContentLoaded",function(){var touch=("ontouchstart" in window)||navigator.maxTouchPoints>0;' +
+  'var t=document.getElementById("gh-tap");if(t&&touch)t.style.display="flex";});})();</script>' +
+  '<style>html,body,canvas{touch-action:none;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;' +
+  '-webkit-tap-highlight-color:transparent}#gh-rotate{display:none}@media (orientation:portrait) and (max-width:900px){#gh-rotate{display:flex;position:fixed;' +
   'inset:0;z-index:99;background:#0b1020;color:#f8f0dc;font:600 22px sans-serif;align-items:center;justify-content:center;' +
-  'text-align:center;padding:32px}}</style>';
-const ROTATE = '<div id="gh-rotate">Turn your phone sideways to play Gullhaven</div>';
+  'text-align:center;padding:32px}}#gh-tap{display:none;position:fixed;inset:0;z-index:98;background:rgba(11,16,32,.92);color:#f8f0dc;' +
+  'font:700 26px sans-serif;align-items:center;justify-content:center;flex-direction:column;gap:14px;text-align:center}' +
+  '#gh-tap small{font:500 16px sans-serif;opacity:.75}</style>';
+const ROTATE = '<div id="gh-rotate">Turn your phone sideways to play Gullhaven</div>' +
+  '<div id="gh-tap" onclick="GH_TAP()" ontouchend="GH_TAP();event.preventDefault()">Tap to play Gullhaven<small>Full screen, sound on</small></div>';
 
 function serveFile(req, res) {
   let rel = decodeURIComponent(String(req.url || '/').split('?')[0]);

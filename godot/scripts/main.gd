@@ -54,6 +54,9 @@ const Plots := preload("res://scripts/plots.gd")
 const Monsters := preload("res://scripts/monsters.gd")
 const Treasure := preload("res://scripts/treasure.gd")
 const Empire := preload("res://scripts/empire.gd")
+const Bustle := preload("res://scripts/bustle.gd")
+const TownJobs := preload("res://scripts/townjobs.gd")
+const Shipwreck := preload("res://scripts/shipwreck.gd")
 
 var env: Environment
 var world_env: WorldEnvironment
@@ -105,6 +108,9 @@ var plots: Node3D  # Driftwood Lane: everyone's plot, house and garden
 var monsters: Node3D  # sea monsters out in the deep
 var treasure: Node3D  # treasure maps and buried chests
 var empire: Node3D  # your fleet, crews and dock
+var bustle: Node3D  # Gullhaven's market, townsfolk, animals and boats
+var townjobs: Node3D  # jobs for the townsfolk
+var shipwreck: Node3D  # the shipwrecked start on Gull Rock
 var _first_time := false
 var skip_save := false  # starting a new game: don't write the old save back on the way out
 var save: Dictionary
@@ -351,6 +357,18 @@ func _ready() -> void:
 	empire.name = "Empire"
 	add_child(empire)
 	empire.setup(self)
+	bustle = Bustle.new()
+	bustle.name = "Bustle"
+	add_child(bustle)
+	bustle.setup(self)
+	townjobs = TownJobs.new()
+	townjobs.name = "TownJobs"
+	add_child(townjobs)
+	townjobs.setup(self, bustle)
+	shipwreck = Shipwreck.new()
+	shipwreck.name = "Shipwreck"
+	add_child(shipwreck)
+	shipwreck.setup(self)
 
 	journal = Journal.new()
 	journal.name = "Journal"
@@ -660,8 +678,9 @@ func welcome() -> void:
 
 
 func _created() -> void:
-	hud.toast("Welcome to Gullhaven! Walk with {move}, turn the camera with {camera}. The gold corner says what to do next.")
-	story.intro()
+	shipwreck.ask(func() -> void:
+		hud.toast("Welcome to Gullhaven! Walk with {move}, turn the camera with {camera}. The gold corner says what to do next.")
+		story.intro())
 
 
 func _on_gate_blocked(text: String) -> void:

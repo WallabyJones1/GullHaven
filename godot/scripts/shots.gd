@@ -22,6 +22,19 @@ func setup(m: Node, dir: String) -> void:
 	if dir.ends_with("_quick"):
 		_steps = [[_noop, 60], [_into_game, 30], [_yard, 60], [_shot.bind("yard"), 5], [_online, 60], [_shot.bind("online"), 5], [_quit, 5]]
 		return
+	if dir.ends_with("_wreck"):
+		_steps = [[_noop, 60], [_into_game, 30], [_midday, 5], [_wreck, 90], [_shot.bind("wreck_letter"), 5], [_skip_talk, 30],
+			[_shot.bind("wreck_beach"), 5], [_clear_sky, 5], [_town_view.bind(Vector3(420, 0, 582), 1.2), 120], [_shot.bind("square"), 5], [_quit, 5]]
+		return
+	if dir.ends_with("_town"):
+		_steps = [[_noop, 60], [_into_game, 30], [_midday, 5], [_town_view.bind(Vector3(412, 0, 575), 3.5), 120], [_shot.bind("town_top"), 5],
+			[_town_view.bind(Vector3(436, 0, 568), 1.0), 90], [_shot.bind("town_street"), 5],
+			[_town_view.bind(Vector3(400, 0, 580), 1.0), 90], [_shot.bind("town_west"), 5],
+			[_town_view.bind(Vector3(460, 0, 577), 1.4), 90], [_shot.bind("town_docks"), 5], [_quit, 5]]
+		return
+	if dir.ends_with("_ui"):
+		_steps = [[_noop, 200], [_probe_ui, 30], [_into_game, 60], [_probe_ui, 30], [_quit, 5]]
+		return
 	if dir.ends_with("_sea"):
 		_steps = [[_noop, 60], [_into_game, 30], [_sea.bind("serpent"), 150], [_shot.bind("serpent"), 5], [_sea.bind("kraken"), 150],
 			[_shot.bind("kraken"), 5], [_sea.bind("leviathan"), 150], [_shot.bind("leviathan"), 5], [_quit, 5]]
@@ -66,6 +79,35 @@ func _process(_d: float) -> void:
 	_i += 1
 	(s[0] as Callable).call()
 	_wait = int(s[1])
+
+
+## What's under the pointer on the title menu (finds things that swallow clicks).
+func _probe_ui() -> void:
+	var vp := get_viewport()
+	for p in [Vector2(420, 400), Vector2(420, 455), Vector2(800, 450)]:
+		var mm := InputEventMouseMotion.new()
+		mm.position = p
+		mm.global_position = p
+		Input.parse_input_event(mm)
+		await get_tree().process_frame
+		await get_tree().process_frame
+		var c := vp.gui_get_hovered_control()
+		print("UNDER %s: %s" % [p, c.get_path() if c else "nothing"])
+
+
+func _wreck() -> void:
+	main.shipwreck.begin()
+
+
+func _clear_sky() -> void:
+	if main.sea.has_method("set_weather"):
+		main.sea.set_weather("clear")
+	main.sea.env["sky"] = "clear"
+
+
+func _town_view(at: Vector3, zoom: float) -> void:
+	_stand(Vector3(at.x, float(main.harbour.stand_height(at.x, at.z)) + 0.3, at.z), Vector3(0.0, 0.0, 1.0))
+	main.cam.zoom_by(zoom)
 
 
 func _noop() -> void:

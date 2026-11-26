@@ -6,7 +6,7 @@ extends Node
 ## Older prompt text ("Space: ...", "Esc to ...") is translated too.
 ## Labels registered with bind() update themselves when you switch devices.
 
-static var device := "keyboard"  # or "pad"
+static var device := "keyboard"  # or "pad", or "touch" (the on-screen buttons)
 static var pad_style := "xbox"  # xbox, playstation or nintendo
 static var _bound: Array = []  # [label, raw text]
 static var version := 0  # goes up when the device or a key changes, so cached prompts redraw
@@ -27,6 +27,9 @@ const PAD_COLOURS := {"A": "#3aa84a", "B": "#d0453a", "X": "#3a7ad8", "Y": "#e0b
 	"Square": "#c86ab8", "Triangle": "#3aa88a"}
 # words that aren't single actions
 const PSEUDO_KEYS := {"move": "WASD", "camera": "Q/E", "zoom": "Wheel or - / =", "updown": "Up/Down", "leftright": "Left/Right", "arrows": "Arrows"}
+const TOUCH := {"action": "A", "cancel": "B", "tool": "Kit", "bait": "Bait", "map": "Map", "bag": "Bag", "journal": "Jrnl",
+	"build": "Build", "menu": "Menu", "chat": "Chat", "move": "the stick", "camera": "Drag", "zoom": "Pinch", "updown": "Up/Down",
+	"leftright": "Left/Right", "arrows": "the stick", "move_up": "Up", "move_down": "Down", "move_left": "Left", "move_right": "Right"}
 const PSEUDO_PAD := {"move": "Left stick", "camera": "Right stick", "zoom": "Right stick", "updown": "D-pad", "leftright": "D-pad", "arrows": "D-pad"}
 # old prompt wording -> tokens (order matters)
 const LEGACY := [
@@ -47,7 +50,9 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventJoypadButton or (event is InputEventJoypadMotion and absf((event as InputEventJoypadMotion).axis_value) > 0.4):
 		device = "pad"
 		_pick_style()
-	elif event is InputEventKey or event is InputEventMouseButton:
+	elif event is InputEventScreenTouch:
+		device = "touch"
+	elif event is InputEventKey or (event is InputEventMouseButton and event.device != InputEvent.DEVICE_ID_EMULATION):
 		device = "keyboard"
 	if device != was:
 		refresh()
@@ -68,6 +73,8 @@ static func _pick_style() -> void:
 
 ## The name of the key or button for an action on the current device.
 static func key(action: String) -> String:
+	if device == "touch":
+		return str(TOUCH.get(action, action.capitalize()))
 	if device == "pad":
 		if PSEUDO_PAD.has(action):
 			return PSEUDO_PAD[action]
@@ -103,7 +110,7 @@ static func key(action: String) -> String:
 ## A key name dressed up as a keycap (for RichTextLabel bbcode).
 static func cap(action: String) -> String:
 	var k := key(action)
-	if device == "pad" and PAD_COLOURS.has(k):
+	if (device == "pad" or device == "touch") and PAD_COLOURS.has(k):
 		return "[bgcolor=%s][color=#ffffff][b] %s [/b][/color][/bgcolor]" % [PAD_COLOURS[k], k]
 	return "[bgcolor=#e8dcc0][color=#1a1c2a][b] %s [/b][/color][/bgcolor]" % k
 

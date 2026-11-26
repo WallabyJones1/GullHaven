@@ -14,6 +14,10 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import gull_models as G  # noqa: E402
 
+import gull_town as TW  # noqa: E402
+G.GROUPS["town"] = TW.TOWN
+G.GROUPS["animals"] = TW.ANIMALS
+
 try:
     import gull_fish as F  # noqa: E402
     G.GROUPS["fish"] = F.FISH

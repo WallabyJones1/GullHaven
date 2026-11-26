@@ -110,6 +110,9 @@ var reel_bar: Bar
 var card_box: Control
 var card: PanelContainer
 var card_icon: TextureRect
+var card_view: SubViewportContainer  # the catch, in 3D, turning slowly on the card
+var _card_vp: SubViewport
+var _card_pivot: Node3D
 var card_title: Label
 var card_name: Label
 var card_rarity: Label
@@ -343,7 +346,39 @@ func setup(s: Node, sv: Dictionary) -> void:
 	card_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	card_note.custom_minimum_size = Vector2(420.0, 0.0)
 	var hint := Glyphs.bind(UI.label("", 18, UI.DIM), "{action} to continue")
-	for c in [card_title, card_name, card_rarity, card_icon, card_size, card_tier, card_reward, card_note, hint]:
+	# a little 3D stage for the catch
+	card_view = SubViewportContainer.new()
+	card_view.custom_minimum_size = Vector2(300.0, 190.0)
+	card_view.stretch = true
+	card_view.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	card_view.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card_view.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_card_vp = SubViewport.new()
+	_card_vp.own_world_3d = true
+	_card_vp.transparent_bg = true
+	_card_vp.size = Vector2i(300, 190)
+	_card_vp.render_target_update_mode = SubViewport.UPDATE_WHEN_VISIBLE
+	card_view.add_child(_card_vp)
+	var cam3 := Camera3D.new()
+	cam3.position = Vector3(0.0, 0.18, 1.55)
+	cam3.fov = 40.0
+	cam3.current = true
+	_card_vp.add_child(cam3)
+	var sun := DirectionalLight3D.new()
+	sun.rotation = Vector3(-0.7, 0.5, 0.0)
+	sun.light_energy = 1.3
+	_card_vp.add_child(sun)
+	var env := WorldEnvironment.new()
+	env.environment = Environment.new()
+	env.environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	env.environment.ambient_light_color = Color(0.75, 0.8, 0.95)
+	env.environment.ambient_light_energy = 0.9
+	env.environment.background_mode = Environment.BG_CLEAR_COLOR
+	_card_vp.add_child(env)
+	_card_pivot = Node3D.new()
+	_card_vp.add_child(_card_pivot)
+	card_view.visible = false
+	for c in [card_title, card_name, card_rarity, card_icon, card_view, card_size, card_tier, card_reward, card_note, hint]:
 		ccol.add_child(c)
 		if c is Label:
 			c.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -357,6 +392,8 @@ func setup(s: Node, sv: Dictionary) -> void:
 
 
 func _process(delta: float) -> void:
+	if card_box and card_box.visible and card_view.visible:
+		_card_pivot.rotation.y += delta * 0.9
 	if _toast_t > 0.0:
 		_toast_t -= delta
 		if _toast_t < 0.4:
@@ -631,11 +668,24 @@ func show_catch(info: Dictionary) -> void:
 	card_rarity.add_theme_color_override("font_color", UI.RARITY_COLORS[clampi(r, 0, UI.RARITY_COLORS.size() - 1)])
 	card_icon.texture = info.get("icon")
 	card_icon.modulate = info.get("tint", Color.WHITE)
+	for c in _card_pivot.get_children():
+		c.queue_free()
+	var model: Variant = info.get("model")
+	if model is Node3D:
+		var m := model as Node3D
+		_card_pivot.add_child(m)
+		m.scale = Vector3.ONE * 0.95  # fish models are a metre long
+		m.position = Vector3.ZERO
+		_card_pivot.rotation = Vector3(0.15, -0.5, 0.0)
+	card_view.visible = model is Node3D
+	card_icon.visible = not (model is Node3D)
 	var cm := float(info.get("size", 0.0))
-	card_size.text = "%.1f cm" % cm
 	var style := str(info.get("style", ""))
-	if style != "":
-		card_size.text += ", fought like %s" % style
+	var tail := (", fought like %s" % style) if style != "" else ""
+	card_size.text = "%.1f cm%s" % [cm, tail]
+	if cm > 0.0:  # the tape measure rolls out
+		create_tween().tween_method(func(v: float) -> void: card_size.text = "%.1f cm%s" % [v, tail], 0.0, cm, 0.7) \
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	card_size.visible = cm > 0.0
 	var tier := str(info.get("tier", ""))
 	card_tier.text = "%s catch!" % tier

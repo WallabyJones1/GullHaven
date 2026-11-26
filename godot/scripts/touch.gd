@@ -57,12 +57,38 @@ func setup(m: Node) -> void:
 	get_viewport().size_changed.connect(_layout)
 	var mode := str(main.menus.settings.get("touch", "auto"))
 	set_enabled(mode == "on" or (mode == "auto" and is_touch_device()))
+	_fit_small_screen()
 	_layout()
+
+
+## On a phone the game's 1600 x 900 layout shrinks to under half size, so text is tiny.
+## Scale the whole interface up on small screens (the world view is unchanged).
+func _fit_small_screen() -> void:
+	if not is_touch_device():
+		return
+	var win := get_window()
+	var dpr := 1.0
+	if OS.has_feature("web"):
+		dpr = float(JavaScriptBridge.eval("window.devicePixelRatio || 1", true))
+	var css := Vector2(win.size) / maxf(dpr, 1.0)
+	var short_side := minf(css.x, css.y)
+	if short_side < 520.0:
+		win.content_scale_factor = 1.32  # phones: as if the screen were about 680 tall
+	elif short_side < 800.0:
+		win.content_scale_factor = 1.12  # small tablets
 
 
 func set_enabled(on: bool) -> void:
 	enabled = on
 	visible = on
+	var glyphs := load("res://scripts/input_glyphs.gd")
+	if on:
+		glyphs.device = "touch"
+	elif glyphs.device == "touch":
+		glyphs.device = "keyboard"
+	glyphs.refresh()
+	if main and main.hud and main.hud.get("controls_label"):
+		main.hud.controls_label.visible = not on  # the keyboard hints mean nothing on a phone
 	# on a touch screen a tap is a tap on the UI or the camera, never a cast: the A button casts
 	for ev in InputMap.action_get_events("action"):
 		if ev is InputEventMouseButton and (ev as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
@@ -108,9 +134,13 @@ func _add_button(action: String, text: String, r: float, tint: Color) -> void:
 	else:
 		b.action = action
 	_root.add_child(b)
-	var l := UI.label(text, 18 if r < BIG else 26, UI.CREAM, true)
+	var fs := 18 if r < BIG else 28
+	var l := UI.label(text, fs, UI.CREAM, true)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	l.add_theme_constant_override("outline_size", 6)
+	l.add_theme_color_override("font_outline_color", Color(0.04, 0.05, 0.1))
+	l.custom_minimum_size = Vector2(r * 2.0, r * 2.0)
 	l.size = Vector2(r * 2.0, r * 2.0)
 	b.add_child(l)
 	_buttons.append({"node": b, "action": action, "r": r})
@@ -140,12 +170,12 @@ func _layout() -> void:
 		"tool": Vector2(vp.x - BIG * 2.7 - 40.0, vp.y - BIG * 2.3 - 100.0),
 		"bait": Vector2(vp.x - BIG - 40.0, vp.y - BIG * 3.0 - 110.0),
 		"build": Vector2(vp.x - BIG * 3.9 - 40.0, vp.y - BIG * 1.4 - 80.0),
-		"menu": Vector2(vp.x - SMALL - 24.0, 260.0),
-		"map": Vector2(vp.x - SMALL * 3.4 - 24.0, 260.0),
-		"bag": Vector2(vp.x - SMALL * 5.8 - 24.0, 260.0),
-		"journal": Vector2(vp.x - SMALL * 8.2 - 24.0, 260.0),
-		"chat": Vector2(STICK_R * 2.0 + 90.0, vp.y - SMALL - 40.0),
-		"emote": Vector2(STICK_R * 2.0 + 90.0 + SMALL * 2.6, vp.y - SMALL - 40.0),
+		"menu": Vector2(vp.x * 0.5 + SMALL * 3.6, SMALL + 84.0),
+		"map": Vector2(vp.x * 0.5 + SMALL * 1.2, SMALL + 84.0),
+		"bag": Vector2(vp.x * 0.5 - SMALL * 1.2, SMALL + 84.0),
+		"journal": Vector2(vp.x * 0.5 - SMALL * 3.6, SMALL + 84.0),
+		"chat": Vector2(SMALL + 30.0, vp.y * 0.36),
+		"emote": Vector2(SMALL + 30.0, vp.y * 0.36 + SMALL * 2.5),
 	}
 	for b in _buttons:
 		var node: TouchScreenButton = b.node
@@ -160,7 +190,8 @@ func _process(_delta: float) -> void:
 		return
 	var paused := get_tree().paused
 	var in_menu := str(main.menus.mode) != ""
-	_root.visible = not paused and not in_menu and main.hud.visible
+	var talking: bool = main.dialogue != null and bool(main.dialogue.is_open)  # tap the box to talk on
+	_root.visible = not paused and not in_menu and main.hud.visible and not talking
 	if not _root.visible:
 		_release_stick()
 		_cam_touches.clear()
@@ -176,6 +207,13 @@ func _input(event: InputEvent) -> void:
 		var t := event as InputEventScreenTouch
 		if t.pressed:
 			if t.position.distance_to(_stick_center) < STICK_R * 1.4 and _stick_touch < 0:
+				_stick_touch = t.index
+				_move_stick(t.position)
+			elif t.position.x < get_viewport().get_visible_rect().size.x * 0.42 and _stick_touch < 0 and not _on_button(t.position) \
+					and t.position.y > get_viewport().get_visible_rect().size.y * 0.35:
+				# a floating stick: put your thumb down anywhere on the left and it moves there
+				_stick_center = t.position
+				_stick_bg.position = _stick_center
 				_stick_touch = t.index
 				_move_stick(t.position)
 			elif not _on_button(t.position) and t.position.x > get_viewport().get_visible_rect().size.x * 0.3:
@@ -239,6 +277,8 @@ func _apply(action: String, k: float) -> void:
 
 
 func _release_stick() -> void:
+	if _stick_touch >= 0:
+		_layout()  # the floating stick goes home
 	_stick_touch = -1
 	_stick_vec = Vector2.ZERO
 	if _knob:

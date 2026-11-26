@@ -126,6 +126,16 @@ var _tip := Vector3.ZERO
 var _rod_dir := Vector3.UP
 var _cast_dir := Vector3.BACK
 var _nose := false  # the bait landed right on a fish's nose
+var _tap := false  # a tap anywhere on a touch screen (hooks a bite, closes the catch card)
+var _thrash: Node3D  # the hooked fish breaking the surface now and then
+var _thrash_t := 0.0
+var _thrash_show := 0.0
+var _nibbles := 0
+
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventScreenTouch and (event as InputEventScreenTouch).pressed and state in [State.BITE, State.LANDED]:
+		_tap = true
 
 
 func setup(p: CharacterBody3D, s: Node3D, h: CanvasLayer, c: Camera3D, hb: Node3D, sv: Dictionary, se: Node, a: Node, t: Node) -> void:
@@ -322,6 +332,7 @@ func _casting(delta: float) -> void:
 		if zone == "harbour":
 			where = "the harbour"
 		hud.set_prompt("Fishing %s...   Esc to reel in" % where)
+		_nibbles = 0
 		_set_state(State.WAITING)
 
 
@@ -342,9 +353,15 @@ func _biting(_delta: float) -> void:
 	bobber.global_position = p
 	alert.global_position = player.global_position + Vector3(0.0, 2.35, 0.0)
 	alert.visible = true
-	if Input.is_action_just_pressed("action"):
+	var hit := Input.is_action_just_pressed("action") or _tap
+	_tap = false
+	if hit:
 		alert.visible = false
+		var quick := _state_t < 0.28
 		_hook()
+		if quick:
+			_float_text("Quick hands!", bobber.global_position + Vector3(0.0, 1.4, 0.0))
+			distance = maxf(0.3, distance - 0.12)  # a sharp strike sets the hook deep: less line to win back
 	elif _state_t > BITE_WINDOW:
 		alert.visible = false
 		hud.toast("Missed it! The fish let go.")
@@ -383,6 +400,15 @@ func _hook() -> void:
 	_phase_t = _rng.randf_range(1.0, 1.8) * float(STYLES[style].calm) * (1.15 - 0.07 * difficulty)
 	_warn_t = 0.0
 	school.hooked()
+	if _thrash:
+		_thrash.queue_free()
+	_thrash = Models.make("fish", str(e.id))
+	if _thrash:
+		_thrash.scale = Vector3.ONE * model_length(e)
+		_thrash.visible = false
+		add_child(_thrash)
+	_thrash_t = 0.6
+	_thrash_show = 0.0
 	cam.set_focus(true, bobber.global_position)
 	cam.shake(0.4)
 	_splash(bobber.global_position)
@@ -653,6 +679,32 @@ func _move_bobber(delta: float) -> void:
 		if _splash_t <= 0.0:
 			_splash_t = 0.3
 			_splash(b)
+	_update_thrash(delta, b)
+
+
+## Now and then the hooked fish rolls at the surface: a flash of its side and tail.
+func _update_thrash(delta: float, b: Vector3) -> void:
+	if _thrash == null:
+		return
+	if phase == "jump":
+		_thrash.visible = false
+		return
+	if _thrash_show > 0.0:
+		_thrash_show -= delta
+		var k := 1.0 - _thrash_show / 0.55
+		var wl: float = harbour.water_level_at(b.x, b.z)
+		_thrash.global_position = Vector3(b.x + fish_dir * 0.2, wl - 0.12 + sin(k * PI) * 0.18, b.z - 0.1)
+		_thrash.rotation = Vector3(sin(k * TAU * 2.0) * 0.6, 0.0 if fish_dir > 0.0 else PI, sin(k * TAU * 3.0) * 0.25)
+		if _thrash_show <= 0.0:
+			_thrash.visible = false
+		return
+	_thrash_t -= delta * (2.2 if phase in ["run", "dive"] else 1.0)
+	if _thrash_t <= 0.0:
+		_thrash_t = _rng.randf_range(1.0, 2.2)
+		_thrash_show = 0.55
+		_thrash.visible = true
+		_splash(b)
+		audio.play("splash", -10.0, 1.2, 0.15)
 
 
 func _fight_hud() -> void:
@@ -694,6 +746,9 @@ func _snap() -> void:
 
 func _end_fight() -> void:
 	hud.hide_fight()
+	if _thrash:
+		_thrash.queue_free()
+		_thrash = null
 	if bar_mode:
 		bar_mode = false
 		hud.show_reel_game(false)
@@ -858,8 +913,16 @@ func award(e: Dictionary, cm: float, var_kind: String, tier: String, fought_as :
 		"xp": xp,
 		"note": note,
 		"style": STYLE_NAME.get(fought_as, "") if is_fish else "",
+		"model": _card_model(e),
 	})
 	_set_state(State.LANDED)
+
+
+func _card_model(e: Dictionary) -> Node3D:
+	var m := Models.make("fish", str(e.id))
+	if m and variant != "":
+		Models.tint(m, _tint())
+	return m
 
 
 ## The right fanfare for what you landed.
@@ -882,7 +945,9 @@ func _cheer(e: Dictionary, is_new: bool) -> void:
 func _landed() -> void:
 	player.can_move = false
 	hud.set_prompt("")
-	if _state_t > 0.6 and Input.is_action_just_pressed("action"):
+	var hit := Input.is_action_just_pressed("action") or _tap
+	_tap = false
+	if _state_t > 0.6 and hit:
 		hud.hide_catch()
 		player.hide_held()
 		audio.play("coin", -6.0)
@@ -914,6 +979,12 @@ func _on_nibble() -> void:
 	if state == State.WAITING:
 		_dip = 0.07
 		audio.play("plop", -14.0, 1.7, 0.2)
+		_nibbles += 1
+		if _nibbles == 1:
+			var taker: int = school._taker
+			if taker >= 0 and taker < school.fish.size() and int(school.fish[taker].cls) >= 3:
+				hud.toast("A big shadow's nosing your bait... wait for it...")
+				Input.vibrate_handheld(40)
 
 
 func _on_bite(cls: int) -> void:
@@ -937,8 +1008,11 @@ func _on_bite(cls: int) -> void:
 	variant = Sea.roll_variant(catch_e, _rng.randf(), sea.env)
 	_splash(bobber.global_position)
 	audio.play("bite")
-	cam.shake(0.3)
-	hud.set_prompt("Strike! Press Space")
+	cam.shake(0.35)
+	Input.vibrate_handheld(140)
+	_float_text("BITE!", bobber.global_position + Vector3(0.0, 0.9, 0.0))
+	hud.set_prompt("Strike! Press Space" if not DisplayServer.is_touchscreen_available() else "Strike! Tap now!")
+	_tap = false
 	_set_state(State.BITE)
 
 

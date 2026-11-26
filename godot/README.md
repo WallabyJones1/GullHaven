@@ -245,6 +245,21 @@ still here and plays the same; none of this gets in its way.
   (the same map for everyone that day); monsters leave maps too. A red ring on the world
   map, then warmer, warmer, hot in the corner. Dig on the X with your hoe for Shells,
   gems, gold, garden things or furniture.
+- **Shipwrecked start.** A new game asks how your story begins. Shipwrecked on Gull Rock,
+  you gather driftwood and rope from the wreck, rig Gran's rod, catch two fish, light a
+  campfire and cook them, patch up the ship's dinghy and row to the lights of Gullhaven,
+  where Old Marlo picks up the story. (Or start safe in the harbour, as before.)
+- **A bustling Gullhaven.** A market square with stalls and stallholders, a fountain,
+  bunting and benches; a chapel and bell tower, smokehouse, net loft, the Salty Pillow inn,
+  a schoolhouse, a warehouse and more cottages; lobster pots, drying racks, rowboats,
+  buoys and chimney smoke; townsfolk going about their day (market and docks in the
+  morning, the tavern at night), fishers on the docks who really catch things, children,
+  a busker and a town crier; dogs, chickens, goats, ducks, seals and pelicans; fishing boats
+  moored and sailing out and back. Thirteen jobs for the townsfolk (gold ! over their heads).
+- **Fishing feel.** A big "BITE!" (and a buzz on phones), a quick-hands bonus for a sharp
+  strike, a warning when a big shadow noses your bait, the hooked fish rolling at the
+  surface during the fight, and your catch turning in 3D on the catch card, the tape
+  measure rolling out.
 - **Your fishing empire.** The ledger board at the head of your jetty, by Gran's hut. Buy
   boats for a fleet (they moor at your own dock), hire crews from the harbour, and send them
   out: along the coast (15 minutes), to the islands (an hour), past the reef (four hours) or
@@ -265,9 +280,15 @@ still here and plays the same; none of this gets in its way.
   too), Enter opens the chat, 1-5 are emotes, plots and homes are shared and you can walk
   into anyone's house; the game menu's Online page visits huts. Your own save comes with
   you. Single player is unchanged.
-- **Phones and tablets.** On a touch screen you get a thumbstick and buttons (action, back,
-  tool, bait, bag, map, journal, build, chat, emotes); drag to turn the camera, pinch to
-  zoom. Settings, Touch controls switches them on or off.
+- **Phones and tablets.** On a touch screen you get a thumbstick (it floats to wherever your
+  thumb lands on the left) and buttons (action, back, tool, bait, bag, map, journal, build,
+  chat, emotes); drag to turn the camera, pinch to zoom; tap to talk on, pick answers and
+  strike a bite. The interface is scaled up on phones, prompts name the on-screen buttons,
+  and the hosted page has a "Tap to play" card that goes full screen. Settings, Touch
+  controls switches them on or off.
+- **Sound on the web.** The audio buses are defined up front (default_bus_layout.tres):
+  buses added at run time aren't wired up in the browser's sample playback, which left the
+  web build silent.
 
 Art for all of it: `python3 tools/godot_land_art.py` (icons, crops, rocks, animals, the
 yard and the furniture).
